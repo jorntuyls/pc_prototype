@@ -1,5 +1,7 @@
 # pc_prototype
 
+!! Under development
+
 ## Intallation
 
 Use python 3.5.
@@ -15,7 +17,7 @@ python setup.py install
 ```
 Install other requirements.
 ```
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 
 ### MAC OS X
@@ -33,5 +35,5 @@ python setup.py install
 ```
 Install other requirements.
 ```
-pip install requirements.txt
+pip install -r requirements.txt
 ```
