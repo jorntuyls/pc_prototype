@@ -1,0 +1,7 @@
+
+# ignore pyc files
+*.pyc
+
+# ignore logging files
+*.json
+*.csv
