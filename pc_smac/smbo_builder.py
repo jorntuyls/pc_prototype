@@ -2,10 +2,11 @@
 import numpy as np
 
 from smac.tae.execute_ta_run import StatusType
-from smac.runhistory.runhistory2epm import RunHistory2EPM4Cost
-from smac.smbo.acquisition import EI
+from smac.runhistory.runhistory2epm import RunHistory2EPM4EIPS
+from smac.smbo.acquisition import EIPS
 from smac.smbo.local_search import LocalSearch
 from smac.epm.rf_with_instances import RandomForestWithInstances
+from smac.epm.uncorrelated_mo_rf_with_instances import UncorrelatedMultiObjectiveRandomForestWithInstances
 from smac.scenario.scenario import Scenario
 from smac.intensification.intensification import Intensifier
 from smac.initial_design.random_configuration_design import RandomConfiguration
@@ -14,6 +15,8 @@ from smac.utils.util_funcs import get_types
 from smac.stats.stats import Stats
 
 from pc_smbo import PCSMBO
+from pc_acquisition import PCEIPS
+from pc_local_search import PCLocalSearch
 
 
 
@@ -35,14 +38,18 @@ class SMBOBuilder:
         intensifier = Intensifier(tae_runner, stats, traj_logger, rng, maxR=1)
 
         # Build model
-        model = RandomForestWithInstances(get_types(config_space))
+        #model = RandomForestWithInstances(get_types(config_space))
+        model = UncorrelatedMultiObjectiveRandomForestWithInstances(target_names=['cost','time'], types=get_types(config_space))
 
         # Build acquisition function
-        acquisition_func = EI(model)
+        #acquisition_func = EI(model)
+        #TODO hack config space in here
+        acquisition_func = PCEIPS(model)
 
         # Build runhistory2epm
         num_params = len(scenario.cs.get_hyperparameters())
-        runhistory2epm = RunHistory2EPM4Cost(scenario, num_params, success_states=[StatusType.SUCCESS])
+        # runhistory2epm = RunHistory2EPM4Cost(scenario, num_params, success_states=[StatusType.SUCCESS])
+        runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
 
         # Build initial design
         initial_design = RandomConfiguration(tae_runner=tae_runner,
@@ -56,7 +63,7 @@ class SMBOBuilder:
         num_run = rng.randint(1234567980)
 
         # Build local search
-        local_search = LocalSearch(acquisition_function=acquisition_func,
+        local_search = PCLocalSearch(acquisition_function=acquisition_func,
                                     config_space=config_space)
 
         # Build smbo

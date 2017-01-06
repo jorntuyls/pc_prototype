@@ -8,10 +8,12 @@ from cached_pipeline import CachedPipeline
 
 class PipelineBuilder:
 
-    def __init__(self, pipeline_space):
-        dr = "/Users/jorntuyls/Documents/workspaces/thesis/data/"
+    def __init__(self, pipeline_space, cache_directory=None):
         self.pipeline_space = pipeline_space
-        self.cachedir = tempfile.mkdtemp(dir=dr,prefix="cache_")
+        if cache_directory:
+            self.cachedir = tempfile.mkdtemp(dir=cache_directory, prefix="cache_")
+        else:
+            self.cachedir = tempfile.mkdtemp(prefix="cache_")
         print(self.cachedir)
 
     def build_pipeline(self, config):

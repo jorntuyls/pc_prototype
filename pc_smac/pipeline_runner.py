@@ -1,18 +1,20 @@
 
-import warnings
+import traceback
+import sys
 
 import numpy as np
 import time
-import sys
 
 from smac.tae.execute_ta_run import StatusType
 from smac.tae.execute_ta_run import ExecuteTARun
+
+from sklearn.metrics import precision_score, accuracy_score, confusion_matrix
 
 from pipeline_builder import PipelineBuilder
 
 class PipelineRunner(ExecuteTARun):
 
-    def __init__(self, data, pipeline_space, runhistory, downsampling=None):
+    def __init__(self, data, pipeline_space, runhistory, cache_directory=None, downsampling=None):
         if downsampling:
             self.X_train = data["X_train"][:downsampling]
             self.y_train = data["y_train"][:downsampling]
@@ -23,7 +25,13 @@ class PipelineRunner(ExecuteTARun):
 
         self.pipeline_space = pipeline_space
         self.runhistory = runhistory
-        self.pipeline_builder = PipelineBuilder(pipeline_space)
+        self.pipeline_builder = PipelineBuilder(pipeline_space, cache_directory)
+
+        self.runtime_timing = {}
+        self.cache_hits = {
+            'total': 0,
+            'cache_hits': 0
+        }
 
     def start(self, config,
                     instance=None,
@@ -59,13 +67,15 @@ class PipelineRunner(ExecuteTARun):
 
         print("start tae_runner")
         print(config, instance, cutoff, seed, instance_specific)
-        additional_info = {}
+        # start timer
         start_timer = time.time()
 
-        pipeline = self.pipeline_builder.build_pipeline(config)
-
+        self.runtime_timing = {}
+        additional_info = {}
         status = StatusType.SUCCESS
         score = 0
+
+        pipeline = self.pipeline_builder.build_pipeline(config)
 
         # Cross validation as in scikit-learn:
         #   http://scikit-learn.org/stable/tutorial/statistical_inference/model_selection.html
@@ -82,30 +92,72 @@ class PipelineRunner(ExecuteTARun):
                 y_valid = y_train.pop(k)
                 y_train = np.concatenate(y_train)
                 pipeline.fit(X_train, y_train)
-                print("TIMING: {}".format(pipeline.timing))
-                score = pipeline.score(X_valid, y_valid)
-                print(score)
-                scores.append(score)
+                self._add_runtime_timing(pipeline.pipeline_info.get_preprocessor_timing())
+                print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
+                score_start = time.time()
+                #TODO Does it make sense to cache the validation too? Or doesn't this take much time?
+                yt = pipeline.predict(X_valid)
+                prec_score = precision_score(y_valid, yt, average='macro')
+                score_time = time.time() - score_start
+                print("TIME: {}, SCORE: {}".format(score_time, prec_score))
+                scores.append(prec_score)
             score = np.mean(scores)
         except ValueError as v:
-            print("ValueError: {}".format(v))
+            exc_info = sys.exc_info()
             status = StatusType.CRASHED
             score = 0
+            # Display the *original* exception
+            traceback.print_exception(*exc_info)
+            del exc_info
 
+        # Get reduction in runtime for cached configuration
+        t_rc = self._get_pipeline_steps_timing(self.runtime_timing, config)
+        additional_info['t_rc'] = t_rc
+
+        # Update cache hits
+        self.cache_hits['total'] += pipeline.pipeline_info.get_cache_hits()[0]
+        self.cache_hits['cache_hits'] += pipeline.pipeline_info.get_cache_hits()[1]
+
+        # Calculate score and total runtime
         cost = 1 - score
-        print("cost: {}".format(cost))
         runtime = time.time() - start_timer
-        print("time: {}".format(runtime))
-        print("Status: {}".format(status))
+        print("cost: {}, time: {}, status: {}".format(cost, runtime, status))
+        print("Total function evaluations: {}, cache hits: {}".format(self.cache_hits['total'],
+                                                                      self.cache_hits['cache_hits']))
 
-        #TODO update runhistory
+        # Update runhistory
         self.runhistory.add(config=config,
                             cost=cost, time=runtime, status=status,
                             instance_id=instance, seed=seed,
                             additional_info=additional_info)
 
         print("stop tae_runner")
-        return status, cost, runtime, {}
+        return status, cost, runtime, additional_info
+
+    #### Private methods ####
+
+    def _add_runtime_timing(self, timing):
+        for key in timing.keys():
+            if key in self.runtime_timing.keys():
+                self.runtime_timing[key] += timing[key]
+            else:
+                self.runtime_timing[key] = timing[key]
+
+    def _get_pipeline_steps_timing(self, timing, config):
+        t_rc = []
+        for name in timing.keys():
+            dict = {}
+            splt_name = name.split(":")
+            type = splt_name[0]
+            algo_name = splt_name[1]
+            for hp in config.keys():
+                splt_hp = hp.split(":")
+                if hp == type or (len(splt_hp) == 2 and splt_hp[0] == algo_name):
+                    dict[hp] = config[hp]
+            t_rc.append((dict, timing[name]))
+
+        return t_rc
+
 
 class PipelineTester(object):
 

@@ -10,38 +10,24 @@ from sklearn.base import clone
 from sklearn.externals.joblib import Memory
 from sklearn.externals import six
 
+# Use global variables to calculate the number of cache hits
+FIT_SINGLE_TRANSFORM_EVALUATIONS = 0
+FIT_TRANSFORM_ONE_EVALUATIONS = 0
+
 class CachedPipeline(Pipeline):
 
     def __init__(self, steps, memory=Memory(cachedir=None, verbose=0)):
         self.memory = memory
         if isinstance(memory, six.string_types):
             self.memory = Memory(cachedir=memory, verbose=0)
-        self.timing = {}
+
+        self.pipeline_info = PipelineInfo()
+        global FIT_SINGLE_TRANSFORM_EVALUATIONS
+        FIT_SINGLE_TRANSFORM_EVALUATIONS = 0
+        global FIT_TRANSFORM_ONE_EVALUATIONS
+        FIT_TRANSFORM_ONE_EVALUATIONS = 0
+
         super(CachedPipeline, self).__init__(steps)
-
-    # Make own _fit method from Pipeline to incorporate caching an timing
-    def _own_fit(self, X, y=None, **fit_params):
-        #self._validate_steps()
-
-        fit_params_steps = dict((name, {}) for name, step in self.steps
-                                if step is not None)
-        for pname, pval in six.iteritems(fit_params):
-            step, param = pname.split('__', 1)
-            fit_params_steps[step][param] = pval
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            start_time = time.time()
-            print(name, transform)
-            test = self.memory.cache(self._fit_single_transform)._get_argument_hash([transform, name, Xt,y],{})
-            print("HASH FIT: {}".format(test))
-            Xt = self.memory.cache(self._fit_single_transform)(transform, name, Xt,
-                                y)
-            print(Xt)
-            self.timing[name] =  time.time() - start_time
-
-        if self._final_estimator is None:
-            return Xt, {}
-        return Xt, fit_params_steps[self.steps[-1][0]]
 
     def _fit(self, X, y=None, **fit_params):
         # self._validate_steps()
@@ -60,7 +46,7 @@ class CachedPipeline(Pipeline):
             else:
                 Xt = self._fit_single_transform(transform, name, idx_tr, Xt,
                                                                y, **fit_params_steps[name])
-            self.timing[name] = time.time() - start_time
+            self.pipeline_info.add_preprocessor_timing(name, time.time() - start_time)
 
         if self._final_estimator is None:
             return Xt, {}
@@ -98,8 +84,9 @@ class CachedPipeline(Pipeline):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator is not None:
             start_time = time.time()
+            print(Xt.shape, y.shape)
             self._final_estimator.fit(Xt, y, **fit_params)
-            self.timing[self.steps[-1][0]] = time.time() - start_time
+            self.pipeline_info.add_estimator_timing(self.steps[-1][0], time.time() - start_time)
         return self
 
     def score(self, X, y, sample_weight=None):
@@ -139,10 +126,11 @@ class CachedPipeline(Pipeline):
         return transform.transform(X)
 
     def _fit_single_transform(self, transform, name, idx_tr,  X, y, **fit_params_trans):
-        fit_params_steps = dict((name, {}) for name, step in self.steps
-                                if step is not None)
 
         print("EVALUATE _FIT_SINGLE_TRANSFORM")
+        global FIT_SINGLE_TRANSFORM_EVALUATIONS
+        FIT_SINGLE_TRANSFORM_EVALUATIONS += 1
+
         memory = self.memory
         clone_transformer = clone(transform)
         Xt, transform = memory.cache(_fit_transform_one)(
@@ -153,10 +141,10 @@ class CachedPipeline(Pipeline):
 
         return Xt
 
-
-
 def _fit_transform_one(transformer, name, weight, X, y,
                                **fit_params):
+    global FIT_TRANSFORM_ONE_EVALUATIONS
+    FIT_TRANSFORM_ONE_EVALUATIONS += 1
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
     else:
@@ -165,3 +153,34 @@ def _fit_transform_one(transformer, name, weight, X, y,
     if weight is None:
         return res, transformer
     return res * weight, transformer
+
+
+class PipelineInfo(object):
+
+    def __init__(self):
+        self.timing = {
+            'preprocessors': {},
+            'estimators': {}
+        }
+        self.cache_hits = 0
+
+    def add_preprocessor_timing(self, name, runtime):
+        self.timing['preprocessors'][name] = runtime
+
+    def get_preprocessor_timing(self):
+        return self.timing['preprocessors']
+
+    def add_estimator_timing(self, name, runtime):
+        self.timing['estimators'][name] = runtime
+
+    def get_estimator_timing(self):
+        return self.timing['estimators']
+
+    def get_timing(self):
+        return self.timing
+
+    def get_cache_hits(self):
+        global FIT_TRANSFORM_ONE_EVALUATIONS, FIT_SINGLE_TRANSFORM_EVALUATIONS
+        return  (FIT_SINGLE_TRANSFORM_EVALUATIONS, FIT_SINGLE_TRANSFORM_EVALUATIONS - FIT_TRANSFORM_ONE_EVALUATIONS)
+
+

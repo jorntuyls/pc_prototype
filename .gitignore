@@ -5,3 +5,6 @@
 # ignore logging files
 *.json
 *.csv
+
+# ignore data paths file
+data_paths.py

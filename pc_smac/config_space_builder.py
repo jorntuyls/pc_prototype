@@ -1,9 +1,6 @@
 
 from ConfigSpace.configuration_space import ConfigurationSpace
-from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
-    UniformIntegerHyperparameter, CategoricalHyperparameter, Constant, \
-    UnParametrizedHyperparameter
-from ConfigSpace.conditions import EqualsCondition, InCondition
+from ConfigSpace.hyperparameters import CategoricalHyperparameter
 
 
 class ConfigSpaceBuilder:
@@ -22,3 +19,4 @@ class ConfigSpaceBuilder:
 
         print(cs)
         return cs
+

@@ -8,13 +8,12 @@ from config_space_builder import ConfigSpaceBuilder
 from pipeline_space import PipelineSpace, TestPreprocessingStep, TestClassificationStep
 from pipeline_runner import PipelineRunner, PipelineTester
 from smbo_builder import SMBOBuilder
-from metrics import BACMetric
+from pc_runhistory import PCRunHistory
 
 from smac.runhistory.runhistory import RunHistory
 from smac.smbo.objective import average_cost
 
-
-data_path = "/Users/jorntuyls/Documents/workspaces/thesis/data/554_bac"
+from data_paths import data_path, cache_directory
 
 class Driver:
 
@@ -22,15 +21,17 @@ class Driver:
         self.data_loader = DataLoader(data_path)
         self.data = self.data_loader.get_data()
 
-        self.pipeline_space = self.build_pipeline_space()
+        self.pipeline_space = self._build_pipeline_space()
 
         self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
         config_space = self.cs_builder.build_config_space()
 
         # Build runhistory
-        runhistory = RunHistory(average_cost)
+        runhistory = PCRunHistory(average_cost)
 
-        self.tae_runner = PipelineRunner(self.data, self.pipeline_space, runhistory, downsampling=2000)
+        self.tae_runner = PipelineRunner(self.data, self.pipeline_space, runhistory,
+                                         cache_directory=cache_directory,
+                                         downsampling=2000)
 
         # Build SMBO object
         smbo_builder = SMBOBuilder()
@@ -39,7 +40,7 @@ class Driver:
                                 tae_runner=self.tae_runner,
                                 runhistory=runhistory,
                                 aggregate_func=average_cost,
-                                wallclock_limit=10)
+                                wallclock_limit=3600)
 
     def run(self):
         incumbent = self.smbo.run()
@@ -48,7 +49,7 @@ class Driver:
         #print("Incumbent: {}, Score: {}".format(incumbent, score))
         #return incumbent, score
 
-    def build_pipeline_space(self):
+    def _build_pipeline_space(self):
         ps = PipelineSpace()
         tp = TestPreprocessingStep()
         tc = TestClassificationStep()

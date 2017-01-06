@@ -86,6 +86,9 @@ class Node(object):
     def get_name(self):
         return self.name
 
+    def get_full_name(self):
+        return self.type + ":" + self.name
+
     def get_hyperparameters(self):
         return self.hyperparameters.keys()
 
@@ -117,15 +120,15 @@ class KernelPcaNode(Node):
     def initialize_algorithm(self, hyperparameters):
         from sklearn.decomposition import KernelPCA
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        kernel_pca = KernelPCA()
-                        # n_components=hyperparameters["n_components"],
-                        # kernel=hyperparameters["kernel"],
-                        # gamma=float(hyperparameters["gamma"]),
-                        # degree=int(hyperparameters["degree"]),
-                        # coef0=float(hyperparameters["coef0"]),
-                        # remove_zero_eig=True)
+        kernel_pca = KernelPCA(
+                        n_components=hyperparameters["n_components"],
+                        kernel=hyperparameters["kernel"],
+                        gamma=float(hyperparameters["gamma"]),
+                        degree=int(hyperparameters["degree"]),
+                        coef0=float(hyperparameters["coef0"]),
+                        remove_zero_eig=True)
 
-        return (self.get_name(), kernel_pca)
+        return (self.get_full_name(), kernel_pca)
 
 
     def get_hyperparameter_space(self):
@@ -166,22 +169,22 @@ class SGDNode(Node):
     def initialize_algorithm(self, hyperparameters):
         from sklearn.linear_model.stochastic_gradient import SGDClassifier
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        sgd = SGDClassifier()
-                            # loss=hyperparameters["loss"],
-                            # penalty=hyperparameters["penalty"],
-                            # alpha=float(hyperparameters["alpha"]),
-                            # fit_intercept=bool(hyperparameters["fit_intercept"]),
-                            # n_iter=int(hyperparameters["n_iter"]),
-                            # learning_rate=hyperparameters["learning_rate"],
-                            # l1_ratio=float(hyperparameters["l1_ratio"]),
-                            # epsilon=float(hyperparameters["epsilon"]),
-                            # eta0=float(hyperparameters["eta0"]),
-                            # power_t=float(hyperparameters["power_t"]),
-                            # shuffle=True,
-                            # average=bool(hyperparameters["average"]),
-                            # random_state=None)
+        sgd = SGDClassifier(
+                            loss=hyperparameters["loss"],
+                            penalty=hyperparameters["penalty"],
+                            alpha=float(hyperparameters["alpha"]),
+                            fit_intercept=bool(hyperparameters["fit_intercept"]),
+                            n_iter=int(hyperparameters["n_iter"]),
+                            learning_rate=hyperparameters["learning_rate"],
+                            l1_ratio=float(hyperparameters["l1_ratio"]),
+                            epsilon=float(hyperparameters["epsilon"]),
+                            eta0=float(hyperparameters["eta0"]),
+                            power_t=float(hyperparameters["power_t"]),
+                            shuffle=True,
+                            average=bool(hyperparameters["average"]),
+                            random_state=None)
 
-        return (self.get_name(), sgd)
+        return (self.get_full_name(), sgd)
 
     def get_hyperparameter_space(self):
         cs = ConfigurationSpace()
