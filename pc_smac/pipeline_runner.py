@@ -22,8 +22,6 @@ class PipelineRunner(ExecuteTARun):
             self.X_train = data["X_train"]
             self.y_train = data["y_train"]
 
-
-        self.pipeline_space = pipeline_space
         self.runhistory = runhistory
         self.pipeline_builder = PipelineBuilder(pipeline_space, cache_directory)
 
@@ -167,7 +165,6 @@ class PipelineTester(object):
         self.X_test = data["X_test"]
         self.y_test = data["y_test"]
         self.metric = metric
-        self.pipeline_space = pipeline_space
         self.pipeline_builder = PipelineBuilder(pipeline_space)
 
     def run(self, config):
@@ -179,6 +176,6 @@ class PipelineTester(object):
             prediction = pipeline.predict(self.X_test)
             score = self.metric.calculate_score(self.y_test, prediction)
         else:
-            score = pipeline.score(self.X_test, self.y_test)
+            score = precision_score(self.X_test, self.y_test)
 
         return score
