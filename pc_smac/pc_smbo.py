@@ -117,7 +117,8 @@ class PCSMBO(BaseSolver):
 
             self.logger.debug("Search for next configuration")
             # get all found configurations sorted according to acq
-            challengers = self.choose_next(X, Y, num_configurations_by_random_search_sorted=100)
+            challengers = self.choose_next(X, Y, num_configurations_by_random_search_sorted=100,
+                                            num_configurations_by_local_search=10)
 
             time_spend = time.time() - start_time
             logging.debug(
@@ -125,8 +126,8 @@ class PCSMBO(BaseSolver):
 
             self.logger.debug("Intensify")
 
-            print("RUNHISTORY BEFORE")
-            print(self.runhistory.get_cached_configurations())
+            #print("RUNHISTORY BEFORE")
+            #print(self.runhistory.get_cached_configurations())
 
             self.incumbent, inc_perf = self.intensifier.intensify(
                 challengers=challengers,
@@ -135,8 +136,8 @@ class PCSMBO(BaseSolver):
                 aggregate_func=self.aggregate_func,
                 time_bound=max(0.01, time_spend))
 
-            print("RUNHISTORY AFTER")
-            print(self.runhistory.get_cached_configurations())
+            #print("RUNHISTORY AFTER")
+            #print(self.runhistory.get_cached_configurations())
 
             print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
 
@@ -182,8 +183,8 @@ class PCSMBO(BaseSolver):
         list
             List of 2020 suggested configurations to evaluate.
         """
-        print("train model: {}, {}".format(X, Y))
         self.model.train(X, Y)
+        print("MODEL TRAINING: {}, {}".format(X,Y))
 
         if self.runhistory.empty():
             incumbent_value = 0.0
@@ -193,8 +194,7 @@ class PCSMBO(BaseSolver):
         else:
             incumbent_value = self.runhistory.get_cost(self.incumbent)
 
-        self.acquisition_func.update(model=self.model, eta=incumbent_value,
-                                     cached_configurations=self.runhistory.get_cached_configurations())
+        self.acquisition_func.update(model=self.model, eta=incumbent_value)
 
         # Get configurations sorted by EI
         next_configs_by_random_search_sorted = \
@@ -210,11 +210,25 @@ class PCSMBO(BaseSolver):
 
         # initial SLS by incumbent +
         # best configuration from next_configs_by_random_search_sorted
+        configs_previous_runs = self.runhistory.get_configs_from_previous_runs()
+        previous_configs_sorted = self._get_acq_values_sorted(configs_previous_runs)
+        num_configs_previous_runs_local_search = min(len(configs_previous_runs), num_configurations_by_local_search - 1)
+        num_configs_random_search_local_search = max(0, (num_configurations_by_local_search - 1) - num_configs_previous_runs_local_search)
+
         next_configs_by_local_search = \
             self._get_next_by_local_search(
-                [self.incumbent] +
-                list(map(lambda x: x[1],
-                         next_configs_by_random_search_sorted[:num_configurations_by_local_search - 1])))
+                [self.incumbent]
+                + list(map(lambda x: x[1],
+                         previous_configs_sorted[:num_configs_previous_runs_local_search]))
+                + list(map(lambda x: x[1],
+                         next_configs_by_random_search_sorted[:num_configs_random_search_local_search])))
+        print("CONFIGS: {}".format(next_configs_by_local_search))
+
+        # next_configs_by_local_search = \
+        #     self._get_next_by_local_search(
+        #         [self.incumbent] +
+        #         list(map(lambda x: x[1],
+        #                  next_configs_by_random_search_sorted[:num_configurations_by_local_search - 1])))
 
         next_configs_by_acq_value = next_configs_by_random_search_sorted + \
             next_configs_by_local_search
@@ -252,30 +266,9 @@ class PCSMBO(BaseSolver):
 
         rand_configs = self.config_space.sample_configuration(size=num_points)
         if _sorted:
-            caching_discounts = self._compute_caching_discounts(rand_configs, self.runhistory.get_cached_configurations())
-            #print("CACHING DISCOUNTS: {}".format(caching_discounts))
-
-            imputed_rand_configs = map(ConfigSpace.util.impute_inactive_values,
-                                       rand_configs)
-            imputed_rand_configs = [x.get_array()
-                                    for x in imputed_rand_configs]
-            imputed_rand_configs = np.array(imputed_rand_configs,
-                                            dtype=np.float64)
-
-            acq_values = self.acquisition_func(imputed_rand_configs, caching_discounts)
-            # From here
-            # http://stackoverflow.com/questions/20197990/how-to-make-argsort-result-to-be-random-between-equal-values
-            random = self.rng.rand(len(acq_values))
-            # Last column is primary sort key!
-            indices = np.lexsort((random.flatten(), acq_values.flatten()))
-
             for i in range(len(rand_configs)):
-                rand_configs[i].origin = 'Random Search (sorted)'
-
-            # Cannot use zip here because the indices array cannot index the
-            # rand_configs list, because the second is a pure python list
-            return [(acq_values[ind][0], rand_configs[ind])
-                    for ind in indices[::-1]]
+                rand_configs[i].origin = 'Random Search (Sorted)'
+            return self._get_acq_values_sorted(rand_configs)
         else:
             for i in range(len(rand_configs)):
                 rand_configs[i].origin = 'Random Search'
@@ -313,6 +306,30 @@ class PCSMBO(BaseSolver):
         configs_acq.sort(reverse=True, key=lambda x: x[0])
 
         return configs_acq
+
+    def _get_acq_values_sorted(self, configs):
+        caching_discounts = self._compute_caching_discounts(configs, self.runhistory.get_cached_configurations())
+
+        imputed_configs = map(ConfigSpace.util.impute_inactive_values,
+                              configs)
+        imputed_configs = [x.get_array()
+                           for x in imputed_configs]
+        imputed_configs = np.array(imputed_configs,
+                                   dtype=np.float64)
+        acq_values = self.acquisition_func(imputed_configs, caching_discounts)
+
+        # From here
+        # http://stackoverflow.com/questions/20197990/how-to-make-argsort-result-to-be-random-between-equal-values
+        random = self.rng.rand(len(acq_values))
+        # Last column is primary sort key!
+        indices = np.lexsort((random.flatten(), acq_values.flatten()))
+
+        # Cannot use zip here because the indices array cannot index the
+        # rand_configs list, because the second is a pure python list
+        return [(acq_values[ind][0], configs[ind])
+                for ind in indices[::-1]]
+
+
 
     def _compute_caching_discounts(self, configs, cached_configs):
         runtime_discounts = []
