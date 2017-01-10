@@ -16,7 +16,6 @@ class PCEIPS(EIPS):
                  **kwargs):
 
         super(PCEIPS, self).__init__(model)
-        self.cached_configurations = None
 
     def _compute(self, X, runtime_discount=None, derivative=False, **kwargs):
         """
@@ -54,9 +53,14 @@ class PCEIPS(EIPS):
         s = np.sqrt(v_cost)
         # Take into account runtime discount for cached configuration parts
         if runtime_discount:
-            #print(m_runtime)
-            m_runtime = np.log(np.exp(m_runtime) - runtime_discount)
-            #print(m_runtime)
+            #print("M RUNTIME BEFORE: {}".format(m_runtime))
+            for i in range(0, len(m_runtime)):
+                if np.exp(m_runtime[i]) - runtime_discount[i] < 1:
+                    print(np.exp(m_runtime[i]), runtime_discount[i])
+                m_runtime[i] =\
+                    np.log(np.exp(m_runtime[i]) - runtime_discount[i]) if np.exp(m_runtime[i]) - runtime_discount[i] > 1 else m_runtime[i]
+
+            #print("M RUNTIME AFTER: {}".format(m_runtime))
 
 
         if self.eta is None:
