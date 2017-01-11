@@ -7,10 +7,17 @@ from smac.smbo.local_search import LocalSearch
 
 class PCLocalSearch(LocalSearch):
 
-    def __init__(self, acquisition_function, config_space,
-                 epsilon=0.00001, max_iterations=None, rng=None):
-        super(PCLocalSearch,self).__init__(acquisition_function, config_space,
-                 epsilon=epsilon, max_iterations=max_iterations, rng=rng)
+    def __init__(self,
+                 acquisition_function,
+                 config_space,
+                 epsilon=0.00001,
+                 max_iterations=None,
+                 rng=None):
+        super(PCLocalSearch,self).__init__(acquisition_function,
+                                           config_space,
+                                           epsilon=epsilon,
+                                           max_iterations=max_iterations,
+                                           rng=rng)
 
     def maximize(self, start_point, cached_configs=[], *args):
         """

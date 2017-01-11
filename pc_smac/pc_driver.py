@@ -6,7 +6,7 @@ import sys
 from data_loader import DataLoader
 from config_space_builder import ConfigSpaceBuilder
 from pipeline_space import PipelineSpace, TestPreprocessingStep, TestClassificationStep
-from pipeline_runner import PipelineRunner, PipelineTester
+from pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
 from smbo_builder import SMBOBuilder
 from pc_runhistory import PCRunHistory
 
@@ -17,7 +17,7 @@ from data_paths import data_path, cache_directory
 
 class Driver:
 
-    def __init__(self, data_path):
+    def __init__(self, data_path, caching=True):
         self.data_loader = DataLoader(data_path)
         self.data = self.data_loader.get_data()
 
@@ -29,9 +29,25 @@ class Driver:
         # Build runhistory
         runhistory = PCRunHistory(average_cost)
 
-        self.tae_runner = PipelineRunner(self.data, self.pipeline_space, runhistory,
-                                         cache_directory=cache_directory,
-                                         downsampling=2000)
+        # Set cache directory
+        if caching:
+            cache_dir = cache_directory
+            self.tae_runner = CachedPipelineRunner(self.data, self.pipeline_space, runhistory,
+                                            cache_directory=cache_dir,
+                                            downsampling=2000)
+        else:
+            self.tae_runner = PipelineRunner(self.data, self.pipeline_space, runhistory,
+                                             downsampling=2000)
+
+
+
+        # Choose acquisition function
+        if caching:
+            acq_func_name = "pceips"
+            model_target_names = ['cost','time']
+        else:
+            acq_func_name = "ei"
+            model_target_names = ['cost']
 
         # Build SMBO object
         smbo_builder = SMBOBuilder()
@@ -40,11 +56,13 @@ class Driver:
                                 tae_runner=self.tae_runner,
                                 runhistory=runhistory,
                                 aggregate_func=average_cost,
-                                wallclock_limit=3600)
+                                acq_func_name=acq_func_name,
+                                model_target_names=model_target_names,
+                                wallclock_limit=720)
 
     def run(self):
         incumbent = self.smbo.run()
-        #tester = PipelineTester(self.data, self.pipeline_space, BACMetric())
+        #tester = PipelineTester(self.data, self.pipeline_space)
         #score = tester.run(incumbent)
         #print("Incumbent: {}, Score: {}".format(incumbent, score))
         #return incumbent, score
@@ -61,5 +79,5 @@ class Driver:
 
 if __name__ == "__main__":
     sys
-    d = Driver(data_path)
+    d = Driver(data_path, caching=True)
     d.run()

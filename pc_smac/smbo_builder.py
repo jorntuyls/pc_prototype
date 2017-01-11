@@ -2,8 +2,8 @@
 import numpy as np
 
 from smac.tae.execute_ta_run import StatusType
-from smac.runhistory.runhistory2epm import RunHistory2EPM4EIPS
-from smac.smbo.acquisition import EIPS
+from smac.runhistory.runhistory2epm import RunHistory2EPM4EIPS, RunHistory2EPM4Cost
+from smac.smbo.acquisition import EI, EIPS
 from smac.smbo.local_search import LocalSearch
 from smac.epm.rf_with_instances import RandomForestWithInstances
 from smac.epm.uncorrelated_mo_rf_with_instances import UncorrelatedMultiObjectiveRandomForestWithInstances
@@ -17,6 +17,7 @@ from smac.stats.stats import Stats
 from pc_smbo import PCSMBO
 from pc_acquisition import PCEIPS
 from pc_local_search import PCLocalSearch
+from select_configuration import CachedSelectConfiguration, SelectConfiguration
 
 
 
@@ -25,7 +26,7 @@ class SMBOBuilder:
     def __init__(self):
         pass
 
-    def build_pc_smbo(self, config_space, tae_runner, runhistory, aggregate_func,
+    def build_pc_smbo(self, config_space, tae_runner, runhistory, aggregate_func, acq_func_name, model_target_names,
                         wallclock_limit=60):
         # Build scenario
         args = {'cs': config_space, 'wallclock_limit': wallclock_limit}
@@ -38,18 +39,52 @@ class SMBOBuilder:
         intensifier = Intensifier(tae_runner, stats, traj_logger, rng, maxR=1)
 
         # Build model
-        #model = RandomForestWithInstances(get_types(config_space))
-        model = UncorrelatedMultiObjectiveRandomForestWithInstances(target_names=['cost','time'], types=get_types(config_space))
+        if len(model_target_names) > 1:
+            # model_target_names = ['cost','time']
+            model = UncorrelatedMultiObjectiveRandomForestWithInstances(target_names=model_target_names, types=get_types(config_space))
+        else:
+            model = RandomForestWithInstances(get_types(config_space))
 
-        # Build acquisition function
-        #acquisition_func = EI(model)
-        #TODO hack config space in here
-        acquisition_func = PCEIPS(model)
-
-        # Build runhistory2epm
+        # Build acquisition function, runhistory2epm and local search
         num_params = len(scenario.cs.get_hyperparameters())
-        # runhistory2epm = RunHistory2EPM4Cost(scenario, num_params, success_states=[StatusType.SUCCESS])
-        runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
+        if acq_func_name == 'eips':
+            acquisition_func = EIPS(model)
+            runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
+            local_search = LocalSearch(acquisition_function=acquisition_func,
+                                   config_space=config_space)
+            select_configuration = SelectConfiguration(scenario=scenario,
+                                                       stats=stats,
+                                                       runhistory=runhistory,
+                                                       model=model,
+                                                       acq_optimizer=local_search,
+                                                       acquisition_func=acquisition_func,
+                                                       rng=rng)
+
+        elif acq_func_name == 'pceips':
+            acquisition_func = PCEIPS(model)
+            runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
+            local_search = PCLocalSearch(acquisition_function=acquisition_func,
+                                     config_space=config_space)
+            select_configuration = CachedSelectConfiguration(scenario=scenario,
+                                                       stats=stats,
+                                                       runhistory=runhistory,
+                                                       model=model,
+                                                       acq_optimizer=local_search,
+                                                       acquisition_func=acquisition_func,
+                                                       rng=rng)
+        else:
+            acquisition_func = EI(model)
+            runhistory2epm = RunHistory2EPM4Cost(scenario, num_params, success_states=[StatusType.SUCCESS])
+            local_search = LocalSearch(acquisition_function=acquisition_func,
+                                       config_space=config_space)
+            select_configuration = SelectConfiguration(scenario=scenario,
+                                                       stats=stats,
+                                                       runhistory=runhistory,
+                                                       model=model,
+                                                       acq_optimizer=local_search,
+                                                       acquisition_func=acquisition_func,
+                                                       rng=rng)
+
 
         # Build initial design
         initial_design = RandomConfiguration(tae_runner=tae_runner,
@@ -61,10 +96,6 @@ class SMBOBuilder:
 
         # run id
         num_run = rng.randint(1234567980)
-
-        # Build local search
-        local_search = PCLocalSearch(acquisition_function=acquisition_func,
-                                    config_space=config_space)
 
         # Build smbo
         smbo = PCSMBO(scenario=scenario,
@@ -78,6 +109,7 @@ class SMBOBuilder:
                         model=model,
                         acq_optimizer=local_search,
                         acquisition_func=acquisition_func,
-                        rng=rng)
+                        rng=rng,
+                        select_configuration=select_configuration)
 
         return smbo

@@ -14,7 +14,7 @@ from pipeline_builder import PipelineBuilder
 
 class PipelineRunner(ExecuteTARun):
 
-    def __init__(self, data, pipeline_space, runhistory, cache_directory=None, downsampling=None):
+    def __init__(self, data, pipeline_space, runhistory, downsampling=None):
         if downsampling:
             self.X_train = data["X_train"][:downsampling]
             self.y_train = data["y_train"][:downsampling]
@@ -23,13 +23,7 @@ class PipelineRunner(ExecuteTARun):
             self.y_train = data["y_train"]
 
         self.runhistory = runhistory
-        self.pipeline_builder = PipelineBuilder(pipeline_space, cache_directory)
-
-        self.runtime_timing = {}
-        self.cache_hits = {
-            'total': 0,
-            'cache_hits': 0
-        }
+        self.pipeline_builder = PipelineBuilder(pipeline_space, caching=False, cache_directory=None)
 
     def start(self, config,
                     instance=None,
@@ -90,10 +84,88 @@ class PipelineRunner(ExecuteTARun):
                 y_valid = y_train.pop(k)
                 y_train = np.concatenate(y_train)
                 pipeline.fit(X_train, y_train)
+                yt = pipeline.predict(X_valid)
+                prec_score = precision_score(y_valid, yt, average='macro')
+                print("SCORE: {}".format(prec_score))
+                scores.append(prec_score)
+            score = np.mean(scores)
+        except ValueError as v:
+            exc_info = sys.exc_info()
+            status = StatusType.CRASHED
+            score = 0
+            # Display the *original* exception
+            traceback.print_exception(*exc_info)
+            del exc_info
+
+        # Calculate score and total runtime
+        cost = 1 - score
+        runtime = time.time() - start_timer
+        print("cost: {}, time: {}, status: {}".format(cost, runtime, status))
+
+        # Update runhistory
+        self.runhistory.add(config=config,
+                            cost=cost, time=runtime, status=status,
+                            instance_id=instance, seed=seed,
+                            additional_info=additional_info)
+
+        print("stop tae_runner")
+        return status, cost, runtime, additional_info
+
+
+
+
+
+class CachedPipelineRunner(PipelineRunner):
+
+    def __init__(self, data, pipeline_space, runhistory, cache_directory=None, downsampling=None):
+
+        super(CachedPipelineRunner,self).__init__(data, pipeline_space, runhistory, downsampling=downsampling)
+
+        self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory)
+        self.runtime_timing = {}
+        self.cache_hits = {
+            'total': 0,
+            'cache_hits': 0
+        }
+
+    def start(self, config,
+                    instance=None,
+                    seed=None,
+                    cutoff=np.inf,
+                    instance_specific=None):
+
+        print("start cached tae_runner")
+        print(config, instance, cutoff, seed, instance_specific)
+        # start timer
+        start_timer = time.time()
+
+        self.runtime_timing = {}
+        additional_info = {}
+        status = StatusType.SUCCESS
+        score = 0
+
+        pipeline = self.pipeline_builder.build_pipeline(config)
+
+        # Cross validation as in scikit-learn:
+        #   http://scikit-learn.org/stable/tutorial/statistical_inference/model_selection.html
+        K = 3
+        X_folds = np.array_split(self.X_train, K)
+        y_folds = np.array_split(self.y_train, K)
+        scores = list()
+        try:
+            for k in range(0, K):
+                X_train = list(X_folds)
+                X_valid = X_train.pop(k)
+                X_train = np.concatenate(X_train)
+                y_train = list(y_folds)
+                y_valid = y_train.pop(k)
+                y_train = np.concatenate(y_train)
+                pipeline.fit(X_train, y_train)
+                # TODO Avoid all if statements for caching in this function
                 self._add_runtime_timing(pipeline.pipeline_info.get_preprocessor_timing())
                 print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
                 score_start = time.time()
-                #TODO Does it make sense to cache the validation too? Or doesn't this take much time?
+                # TODO Does it make sense to cache the validation too? Or doesn't this take much time?
                 yt = pipeline.predict(X_valid)
                 prec_score = precision_score(y_valid, yt, average='macro')
                 score_time = time.time() - score_start
@@ -129,7 +201,7 @@ class PipelineRunner(ExecuteTARun):
                             instance_id=instance, seed=seed,
                             additional_info=additional_info)
 
-        print("stop tae_runner")
+        print("stop cached tae_runner")
         return status, cost, runtime, additional_info
 
     #### Private methods ####
@@ -155,6 +227,7 @@ class PipelineRunner(ExecuteTARun):
             t_rc.append((dict, timing[name]))
 
         return t_rc
+
 
 
 class PipelineTester(object):

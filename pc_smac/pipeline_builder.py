@@ -5,16 +5,22 @@ import shutil
 
 from sklearn.externals.joblib import Memory
 from cached_pipeline import CachedPipeline
+from sklearn.pipeline import Pipeline
 
 class PipelineBuilder:
 
-    def __init__(self, pipeline_space, cache_directory=None):
+    def __init__(self, pipeline_space, caching, cache_directory=None):
+        if (caching == False) and (cache_directory != None):
+            raise ValueError("Caching is disabled but a cache directory is given")
+
+        self.caching = caching
         self.pipeline_space = pipeline_space
-        if cache_directory:
+        if self.caching and cache_directory:
             self.cachedir = tempfile.mkdtemp(dir=cache_directory, prefix="cache_")
-        else:
+            print(self.cachedir)
+        elif self.caching:
             self.cachedir = tempfile.mkdtemp(prefix="cache_")
-        print(self.cachedir)
+            print(self.cachedir)
 
     def build_pipeline(self, config):
         pipeline_steps = self.pipeline_space.get_pipeline_step_names()
@@ -30,7 +36,9 @@ class PipelineBuilder:
             step = self.pipeline_space.initialize_algorithm(ps, algo_name, hyperparameters)
             concrete_steps.append(step)
 
-        return CachedPipeline(concrete_steps, memory=Memory(cachedir=self.cachedir, verbose=0))
+        if self.caching:
+            return CachedPipeline(concrete_steps, memory=Memory(cachedir=self.cachedir, verbose=0))
+        return Pipeline(concrete_steps)
 
     def clean_cache(self):
         shutil.rmtree(self.cachedir)
