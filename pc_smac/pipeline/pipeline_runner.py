@@ -22,6 +22,7 @@ class PipelineRunner(ExecuteTARun):
             self.X_train = data["X_train"]
             self.y_train = data["y_train"]
 
+        self.runtime_timing = {}
         self.runhistory = runhistory
         self.statistics = statistics
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=False, cache_directory=None)
@@ -78,6 +79,7 @@ class PipelineRunner(ExecuteTARun):
         scores = list()
         try:
             for k in range(0,K):
+                # Fit pipeline
                 X_train = list(X_folds)
                 X_valid = X_train.pop(k)
                 X_train = np.concatenate(X_train)
@@ -85,6 +87,12 @@ class PipelineRunner(ExecuteTARun):
                 y_valid = y_train.pop(k)
                 y_train = np.concatenate(y_train)
                 pipeline.fit(X_train, y_train)
+
+                # Keep track of timing infomration
+                self.add_runtime_timing(self.runtime_timing, pipeline.pipeline_info.get_timing_flat())
+                print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
+
+                # Validate pipeline
                 y_pred = pipeline.predict(X_valid)
                 prec_score = precision_score(y_valid, y_pred, average='macro')
                 print("SCORE: {}".format(prec_score))
@@ -109,16 +117,23 @@ class PipelineRunner(ExecuteTARun):
                             instance_id=instance, seed=seed,
                             additional_info=additional_info)
 
-        # TODO Move this to a better place
-        # Save temporary results for plotting
+        # Add information of this run to statistics
         run_information = {
             'cost': cost,
             'runtime': runtime,
+            'pipeline_steps_timing': self.runtime_timing
         }
         self.statistics.add_run(config.get_dictionary(), run_information)
 
         print("stop tae_runner")
         return status, cost, runtime, additional_info
+
+    def add_runtime_timing(self, dct, timing):
+        for key in timing.keys():
+            if key in dct.keys():
+                dct[key] += timing[key]
+            else:
+                dct[key] = timing[key]
 
 
 
@@ -128,10 +143,10 @@ class CachedPipelineRunner(PipelineRunner):
 
     def __init__(self, data, pipeline_space, runhistory, statistics, cache_directory=None, downsampling=None):
 
-        super(CachedPipelineRunner,self).__init__(data, pipeline_space, runhistory, downsampling=downsampling)
+        super(CachedPipelineRunner,self).__init__(data, pipeline_space, runhistory, statistics, downsampling=downsampling)
 
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory)
-        self.runtime_timing = {}
+        self.transformer_runtime_timing = {}
         self.cache_hits = {
             'total': 0,
             'cache_hits': 0
@@ -163,6 +178,7 @@ class CachedPipelineRunner(PipelineRunner):
         scores = list()
         try:
             for k in range(0, K):
+                # Fit pipeline
                 X_train = list(X_folds)
                 X_valid = X_train.pop(k)
                 X_train = np.concatenate(X_train)
@@ -170,8 +186,13 @@ class CachedPipelineRunner(PipelineRunner):
                 y_valid = y_train.pop(k)
                 y_train = np.concatenate(y_train)
                 pipeline.fit(X_train, y_train)
-                self._add_runtime_timing(pipeline.pipeline_info.get_preprocessor_timing())
+
+                # Keep track of timing information
+                self.add_runtime_timing(self.transformer_runtime_timing, pipeline.pipeline_info.get_preprocessor_timing())
+                self.add_runtime_timing(self.runtime_timing, pipeline.pipeline_info.get_timing_flat())
                 print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
+
+                # Validate pipeline
                 score_start = time.time()
                 # TODO Does it make sense to cache the validation too? Or doesn't this take much time?
                 y_pred = pipeline.predict(X_valid)
@@ -211,11 +232,11 @@ class CachedPipelineRunner(PipelineRunner):
                             instance_id=instance, seed=seed,
                             additional_info=additional_info)
 
-        # TODO Move this to a better place
-        # Save temporary results for plotting
+        # Add information of this run to statistics
         run_information = {
             'cost': cost,
             'runtime': runtime,
+            'pipeline_steps_timing':  self.runtime_timing,
             'cache_hits': self.cache_hits['cache_hits'],
             'total_evaluations': self.cache_hits['total']
         }
@@ -225,13 +246,6 @@ class CachedPipelineRunner(PipelineRunner):
         return status, cost, runtime, additional_info
 
     #### Private methods ####
-
-    def _add_runtime_timing(self, timing):
-        for key in timing.keys():
-            if key in self.runtime_timing.keys():
-                self.runtime_timing[key] += timing[key]
-            else:
-                self.runtime_timing[key] = timing[key]
 
     '''
     Return: List of tuples (dict, time) where dict is a cached algorithm (part of pipeline) configuration and

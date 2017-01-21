@@ -21,7 +21,7 @@ class CachedPipeline(Pipeline):
         if isinstance(memory, six.string_types):
             self.memory = Memory(cachedir=memory, verbose=0)
 
-        self.pipeline_info = PipelineInfo()
+        self.pipeline_info = PipelineInfo(caching=True)
         global FIT_SINGLE_TRANSFORM_EVALUATIONS
         FIT_SINGLE_TRANSFORM_EVALUATIONS = 0
         global FIT_TRANSFORM_ONE_EVALUATIONS
@@ -52,9 +52,6 @@ class CachedPipeline(Pipeline):
             return Xt, {}
         return Xt, fit_params_steps[self.steps[-1][0]]
 
-    def _test(self, *args, **kwargs):
-        pass
-
     def fit(self, X, y=None, **fit_params):
         """Fit the model
 
@@ -84,7 +81,6 @@ class CachedPipeline(Pipeline):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator is not None:
             start_time = time.time()
-            print(Xt.shape, y.shape)
             self._final_estimator.fit(Xt, y, **fit_params)
             self.pipeline_info.add_estimator_timing(self.steps[-1][0], time.time() - start_time)
         return self
@@ -157,7 +153,8 @@ def _fit_transform_one(transformer, name, weight, X, y,
 
 class PipelineInfo(object):
 
-    def __init__(self):
+    def __init__(self, caching):
+        self.caching = caching
         self.timing = {
             'preprocessors': {},
             'estimators': {}
@@ -179,8 +176,16 @@ class PipelineInfo(object):
     def get_timing(self):
         return self.timing
 
+    def get_timing_flat(self):
+        dct = self.get_preprocessor_timing().copy()
+        dct.update(self.get_estimator_timing())
+        return dct
+
     def get_cache_hits(self):
-        global FIT_TRANSFORM_ONE_EVALUATIONS, FIT_SINGLE_TRANSFORM_EVALUATIONS
-        return  (FIT_SINGLE_TRANSFORM_EVALUATIONS, FIT_SINGLE_TRANSFORM_EVALUATIONS - FIT_TRANSFORM_ONE_EVALUATIONS)
+        if self.caching == True:
+            global FIT_TRANSFORM_ONE_EVALUATIONS, FIT_SINGLE_TRANSFORM_EVALUATIONS
+            return  (FIT_SINGLE_TRANSFORM_EVALUATIONS, FIT_SINGLE_TRANSFORM_EVALUATIONS - FIT_TRANSFORM_ONE_EVALUATIONS)
+        else:
+            return 0
 
 

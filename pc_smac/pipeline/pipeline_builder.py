@@ -5,7 +5,7 @@ import shutil
 
 from sklearn.externals.joblib import Memory
 from pipeline.cached_pipeline import CachedPipeline
-from sklearn.pipeline import Pipeline
+from pipeline.pipeline import OwnPipeline
 
 class PipelineBuilder:
 
@@ -38,7 +38,7 @@ class PipelineBuilder:
 
         if self.caching:
             return CachedPipeline(concrete_steps, memory=Memory(cachedir=self.cachedir, verbose=0))
-        return Pipeline(concrete_steps)
+        return OwnPipeline(concrete_steps)
 
     def clean_cache(self):
         if self.caching == True:
