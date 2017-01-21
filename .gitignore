@@ -8,3 +8,6 @@
 
 # ignore data paths file
 data_paths.py
+
+# ignore plotting script
+plot.sh

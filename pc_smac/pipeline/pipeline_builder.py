@@ -1,17 +1,17 @@
 
-#from sklearn.pipeline import Pipeline
+
 import tempfile
 import shutil
 
 from sklearn.externals.joblib import Memory
-from cached_pipeline import CachedPipeline
+from pipeline.cached_pipeline import CachedPipeline
 from sklearn.pipeline import Pipeline
 
 class PipelineBuilder:
 
     def __init__(self, pipeline_space, caching, cache_directory=None):
         if (caching == False) and (cache_directory != None):
-            raise ValueError("Caching is disabled but a cache directory is given")
+            raise ValueError("Caching is disabled but a cache directory is given!")
 
         self.caching = caching
         self.pipeline_space = pipeline_space
@@ -41,4 +41,7 @@ class PipelineBuilder:
         return Pipeline(concrete_steps)
 
     def clean_cache(self):
-        shutil.rmtree(self.cachedir)
+        if self.caching == True:
+            shutil.rmtree(self.cachedir)
+        else:
+            raise ValueError("There is no cache")

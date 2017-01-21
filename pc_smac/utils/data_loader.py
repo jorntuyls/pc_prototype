@@ -8,9 +8,9 @@ import re
 
 import numpy as np
 
-from constants import MULTILABEL_CLASSIFICATION, \
+from utils.constants import MULTILABEL_CLASSIFICATION, \
     STRING_TO_TASK_TYPES, MULTICLASS_CLASSIFICATION, STRING_TO_METRIC
-from data_util import convert_to_num
+from utils.data_utils import convert_to_num
 
 
 class DataLoader:

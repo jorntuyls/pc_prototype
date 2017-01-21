@@ -8,9 +8,10 @@ import time
 from smac.tae.execute_ta_run import StatusType
 from smac.tae.execute_ta_run import ExecuteTARun
 
-from sklearn.metrics import precision_score, accuracy_score, confusion_matrix
+from sklearn.metrics import precision_score
 
-from pipeline_builder import PipelineBuilder
+from pipeline.pipeline_builder import PipelineBuilder
+from utils.io_utils import append_dict_to_csv
 
 class PipelineRunner(ExecuteTARun):
 
@@ -84,14 +85,14 @@ class PipelineRunner(ExecuteTARun):
                 y_valid = y_train.pop(k)
                 y_train = np.concatenate(y_train)
                 pipeline.fit(X_train, y_train)
-                yt = pipeline.predict(X_valid)
-                prec_score = precision_score(y_valid, yt, average='macro')
+                y_pred = pipeline.predict(X_valid)
+                prec_score = precision_score(y_valid, y_pred, average='macro')
                 print("SCORE: {}".format(prec_score))
                 scores.append(prec_score)
             score = np.mean(scores)
         except ValueError as v:
             exc_info = sys.exc_info()
-            status = StatusType.CRASHED
+            status = StatusType.SUCCESS
             score = 0
             # Display the *original* exception
             traceback.print_exception(*exc_info)
@@ -107,6 +108,15 @@ class PipelineRunner(ExecuteTARun):
                             cost=cost, time=runtime, status=status,
                             instance_id=instance, seed=seed,
                             additional_info=additional_info)
+
+        # TODO Move this to a better place
+        # Save temporary results for plotting
+        d = {
+            'cost': cost,
+            'runtime': runtime,
+        }
+        append_dict_to_csv(d, keys=['runtime', 'cost'],
+                           filename="pipeline_runner_information_no_caching.csv")
 
         print("stop tae_runner")
         return status, cost, runtime, additional_info
@@ -161,32 +171,33 @@ class CachedPipelineRunner(PipelineRunner):
                 y_valid = y_train.pop(k)
                 y_train = np.concatenate(y_train)
                 pipeline.fit(X_train, y_train)
-                # TODO Avoid all if statements for caching in this function
                 self._add_runtime_timing(pipeline.pipeline_info.get_preprocessor_timing())
                 print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
                 score_start = time.time()
                 # TODO Does it make sense to cache the validation too? Or doesn't this take much time?
-                yt = pipeline.predict(X_valid)
-                prec_score = precision_score(y_valid, yt, average='macro')
+                y_pred = pipeline.predict(X_valid)
+                prec_score = precision_score(y_valid, y_pred, average='macro')
                 score_time = time.time() - score_start
                 print("TIME: {}, SCORE: {}".format(score_time, prec_score))
                 scores.append(prec_score)
             score = np.mean(scores)
         except ValueError as v:
             exc_info = sys.exc_info()
-            status = StatusType.CRASHED
+            status = StatusType.SUCCESS
             score = 0
             # Display the *original* exception
             traceback.print_exception(*exc_info)
             del exc_info
 
-        # Get reduction in runtime for cached configuration
-        t_rc = self._get_pipeline_steps_timing(self.runtime_timing, config)
-        additional_info['t_rc'] = t_rc
-
         # Update cache hits
         self.cache_hits['total'] += pipeline.pipeline_info.get_cache_hits()[0]
         self.cache_hits['cache_hits'] += pipeline.pipeline_info.get_cache_hits()[1]
+
+        # Get reduction in runtime for cached configuration if it was not already cached
+        # TODO insert this
+        # if pipeline.pipeline_info.get_cache_hits()[1] == 0:
+        t_rc = self._get_pipeline_steps_timing(self.runtime_timing, config)
+        additional_info['t_rc'] = t_rc
 
         # Calculate score and total runtime
         cost = 1 - score
@@ -201,6 +212,16 @@ class CachedPipelineRunner(PipelineRunner):
                             instance_id=instance, seed=seed,
                             additional_info=additional_info)
 
+        # TODO Move this to a better place
+        # Save temporary results for plotting
+        d = {
+            'cost': cost,
+            'runtime': runtime,
+            'cache_hits': self.cache_hits['cache_hits'],
+            'total_evaluations': self.cache_hits['total']
+        }
+        append_dict_to_csv(d, keys=['runtime', 'cost', 'total_evaluations', 'cache_hits'], filename="pipeline_runner_information.csv")
+
         print("stop cached tae_runner")
         return status, cost, runtime, additional_info
 
@@ -213,6 +234,10 @@ class CachedPipelineRunner(PipelineRunner):
             else:
                 self.runtime_timing[key] = timing[key]
 
+    '''
+    Return: List of tuples (dict, time) where dict is a cached algorithm (part of pipeline) configuration and
+                time is runtime that this algorithm configuration took
+    '''
     def _get_pipeline_steps_timing(self, timing, config):
         t_rc = []
         for name in timing.keys():
@@ -232,23 +257,32 @@ class CachedPipelineRunner(PipelineRunner):
 
 class PipelineTester(object):
 
-    def __init__(self, data, pipeline_space, metric=None):
-        self.X_train = data["X_train"]
-        self.y_train = data["y_train"]
-        self.X_test = data["X_test"]
-        self.y_test = data["y_test"]
-        self.metric = metric
-        self.pipeline_builder = PipelineBuilder(pipeline_space)
+    def __init__(self, data, pipeline_space, downsampling=None):
+        if downsampling:
+            self.X_train = data["X_train"][:downsampling]
+            self.y_train = data["y_train"][:downsampling]
+            self.X_test = data["X_test"][:downsampling]
+            self.y_test = data["y_test"][:downsampling]
+        else:
+            self.X_train = data["X_train"]
+            self.y_train = data["y_train"]
+            self.X_test = data["X_test"]
+            self.y_test = data["y_test"]
+
+        self.pipeline_builder = PipelineBuilder(pipeline_space, caching=False, cache_directory=None)
 
     def run(self, config):
         pipeline = self.pipeline_builder.build_pipeline(config)
 
-        score = 1
-        if self.metric:
+        try:
             pipeline.fit(self.X_train, self.y_train)
-            prediction = pipeline.predict(self.X_test)
-            score = self.metric.calculate_score(self.y_test, prediction)
-        else:
-            score = precision_score(self.X_test, self.y_test)
+            y_pred = pipeline.predict(self.X_test)
+            score = precision_score(self.y_test, y_pred, average='macro')
+        except ValueError as v:
+            score = 1
 
         return score
+
+    def get_performance(self, config):
+        score = self.run(config)
+        return 1 - score

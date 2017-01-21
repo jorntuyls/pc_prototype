@@ -1,6 +1,6 @@
 import numpy as np
 
-# Method is fully copied from autosklearn.util.data
+# Method is fully copied from autosklearn.utils.data
 #   see https://github.com/automl/auto-sklearn
 def convert_to_num(Ybin):
     """

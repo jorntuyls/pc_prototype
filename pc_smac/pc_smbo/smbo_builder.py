@@ -14,10 +14,10 @@ from smac.utils.io.traj_logging import TrajLogger
 from smac.utils.util_funcs import get_types
 from smac.stats.stats import Stats
 
-from pc_smbo import PCSMBO
-from pc_acquisition import PCEIPS
-from pc_local_search import PCLocalSearch
-from select_configuration import CachedSelectConfiguration, SelectConfiguration
+from pc_smbo.pc_smbo import PCSMBO
+from pc_smbo.pc_acquisition import PCEIPS
+from pc_smbo.pc_local_search import PCLocalSearch
+from pc_smbo.select_configuration import CachedSelectConfiguration, SelectConfiguration
 
 
 
@@ -36,7 +36,7 @@ class SMBOBuilder:
         rng = np.random.RandomState()
         stats = Stats(scenario)
         traj_logger = TrajLogger("logging", stats)
-        intensifier = Intensifier(tae_runner, stats, traj_logger, rng, maxR=1)
+        intensifier = Intensifier(tae_runner, stats, traj_logger, rng, instances=[1], maxR=1)
 
         # Build model
         if len(model_target_names) > 1:
@@ -91,13 +91,12 @@ class SMBOBuilder:
                          scenario=scenario,
                          stats=stats,
                          traj_logger=traj_logger,
-                         runhistory=runhistory,
                          rng=rng)
 
         # run id
         num_run = rng.randint(1234567980)
 
-        # Build smbo
+        # Build pc_smbo
         smbo = PCSMBO(scenario=scenario,
                         stats=stats,
                         initial_design=initial_design,

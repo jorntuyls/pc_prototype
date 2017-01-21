@@ -104,11 +104,11 @@ class SelectConfiguration(object):
                            previous_configs_sorted[:num_configs_previous_runs_local_search]))
                 + list(map(lambda x: x[1],
                            next_configs_by_random_search_sorted[:num_configs_random_search_local_search])))
-        # print("CONFIGS: {}".format(next_configs_by_local_search))
+        #print("CONFIGS: {}".format(next_configs_by_local_search))
 
         # next_configs_by_local_search = \
         #     self._get_next_by_local_search(
-        #         [self.incumbent] +
+        #         [incumbent] +
         #         list(map(lambda x: x[1],
         #                  next_configs_by_random_search_sorted[:num_configurations_by_local_search - 1])))
 

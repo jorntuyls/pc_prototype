@@ -1,3 +1,4 @@
+
 import abc
 
 from ConfigSpace.configuration_space import ConfigurationSpace
@@ -5,76 +6,6 @@ from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
     UniformIntegerHyperparameter, CategoricalHyperparameter, Constant, \
     UnParametrizedHyperparameter
 from ConfigSpace.conditions import EqualsCondition, InCondition
-
-class PipelineSpace(object):
-
-    def __init__(self):
-        self.pipeline_steps = []
-
-    def add_pipeline_step(self, pipeline_step):
-        self.pipeline_steps.append(pipeline_steps)
-
-    def add_pipeline_steps(self, pipeline_steps):
-        self.pipeline_steps = self.pipeline_steps + pipeline_steps
-
-    def get_pipeline_steps(self):
-        return self.pipeline_steps
-
-    def get_pipeline_step_names(self):
-        return [ps.get_name() for ps in self.get_pipeline_steps()]
-
-    def initialize_algorithm(self, pipeline_step_name, node_name, hyperparameters):
-        ps = self.get_pipeline_step(pipeline_step_name)
-        return ps.initialize_algorithm(node_name, hyperparameters)
-
-    def get_pipeline_step(self, name):
-        temp = [ps for ps in self.get_pipeline_steps() if ps.get_name() == name]
-        return temp[0]
-
-
-class PipelineStep(object):
-
-    def __init__(self, name, nodes):
-        self.step_name = name
-        self.nodes = nodes
-
-    def get_name(self):
-        return self.step_name
-
-    def get_nodes(self):
-        return self.nodes
-
-    def get_node_names(self):
-        return [node.get_name() for node in self.get_nodes()]
-
-    def initialize_algorithm(self, node_name, hyperparameters):
-        node = self._get_node(node_name)
-        return node.initialize_algorithm(hyperparameters)
-
-    #### Internal methods ####
-    def _get_node(self, node_name):
-        temp = [node for node in self.get_nodes() if node.get_name() == node_name]
-        return temp[0]
-
-
-
-
-
-
-class TestPreprocessingStep(PipelineStep):
-
-    def __init__(self):
-        name = "feature_preprocessor"
-        nodes = {KernelPcaNode()}
-        super(TestPreprocessingStep, self).__init__(name, nodes)
-
-class TestClassificationStep(PipelineStep):
-
-    def __init__(self):
-        name = "classifier"
-        nodes = {SGDNode()}
-        super(TestClassificationStep, self).__init__(name, nodes)
-
 
 class Node(object):
 
@@ -100,11 +31,11 @@ class Node(object):
 
     @abc.abstractmethod
     def initialize_algorithm(self):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_hyperparameter_space(self):
-        pass
+        raise NotImplementedError
 
 
 
@@ -200,7 +131,7 @@ class SGDNode(Node):
         fit_intercept = cs.add_hyperparameter(UnParametrizedHyperparameter(
             "fit_intercept", "True"))
         n_iter = cs.add_hyperparameter(UniformIntegerHyperparameter(
-            "n_iter", 5, 1000, log=True, default=20))
+            "n_iter", 5, 100, log=True, default=20))
         epsilon = cs.add_hyperparameter(UniformFloatHyperparameter(
             "epsilon", 1e-5, 1e-1, default=1e-4, log=True))
         learning_rate = cs.add_hyperparameter(CategoricalHyperparameter(
