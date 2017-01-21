@@ -3,7 +3,7 @@ import argparse
 
 from pc_driver import Driver
 
-from utils.io_utils import save_info_file
+#from utils.io_utils import save_info_file
 from data_paths import data_path, cache_directory
 
 
@@ -34,35 +34,27 @@ if experiment_number == 1:
                    wallclock_limit=wallclock_limit,
                    downsampling=downsampling,
                    run_counter=i,
-                   plot_time=plot_time)
+                   time_precision=plot_time)
         incs.append(inc)
     info = "Name: {}\n caching: {)\n cache_directory: {}\n wallclock_limit: {}\n downsampling: {}\n " \
            "totalruns: {}\n plot_time: {}".format(name, caching, cache_directory, wallclock_limit, downsampling,
                                                  total_runs, plot_time)
 
-    save_info_file(info, filename=name)
+    #save_info_file(info, filename=name)
 elif experiment_number == 2:
     name = "Experiment_2"
     d = Driver(data_path)
     incs = []
     #
-    caching = False
-    wallclock_limit = 1080
-    downsampling = 2000
-    plot_time = 100
-    #
     total_runs = 1
     for i in range(0, total_runs):
-        inc= d.run(caching=caching,
+        inc= d.run(
+                   stamp="experiment2",
+                   caching=False,
                    cache_directory=cache_directory,
-                   wallclock_limit=wallclock_limit,
-                   downsampling=downsampling,
+                   wallclock_limit=10,
+                   downsampling=2000,
                    run_counter=i,
-                   plot_time=plot_time)
+                   time_precision=10)
         incs.append(inc)
-    info = "Name: {}\n caching: {}\n cache_directory: {}\n wallclock_limit: {}\n downsampling: {}\n " \
-           "totalruns: {}\n plot_time: {}".format(name, caching, cache_directory, wallclock_limit, downsampling,
-                                                 total_runs, plot_time)
-
-    save_info_file(info, filename=name)
 

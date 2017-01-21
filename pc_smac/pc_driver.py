@@ -2,7 +2,7 @@
 __author__ = 'jorntuyls'
 
 import os
-
+import time
 
 from utils.data_loader import DataLoader
 from config_space.config_space_builder import ConfigSpaceBuilder
@@ -11,7 +11,8 @@ from pipeline_space.pipeline_step import TestPreprocessingStep, TestClassificati
 from pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
 from pc_smbo.smbo_builder import SMBOBuilder
 from pc_runhistory.pc_runhistory import PCRunHistory
-from utils.io_utils import save_trajectory_to_plotting_format
+from utils.io_utils import save_trajectory_for_plotting
+from utils.statistics import Statistics
 
 from smac.smbo.objective import average_cost
 from smac.utils.io.traj_logging import TrajLogger
@@ -28,15 +29,12 @@ class Driver:
         self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
         self.config_space = self.cs_builder.build_config_space()
 
+        self.output_dir = os.path.dirname(os.path.abspath(__file__)) + "/logging/"
         # TODO make names not hardcoded
         self.trajectory_path_json = os.path.dirname(os.path.abspath(__file__)) + "/logging/traj_aclib2.json"
         self.trajectory_path_csv = os.path.dirname(os.path.abspath(__file__)) + "/logging/traj_old.csv"
 
-    def initialize(self,
-                   caching=True,
-                   cache_directory=None,
-                   wallclock_limit=3600,
-                   downsampling=None):
+    def initialize(self, stamp, caching, cache_directory, wallclock_limit, downsampling, time_precision):
         # Load data
         self.data = self.data_loader.get_data()
 
@@ -44,14 +42,28 @@ class Driver:
         # TODO Does this work correctly for non-caching?
         runhistory = PCRunHistory(average_cost)
 
+        # Setup statistics
+        info = {
+            'stamp': stamp,
+            'caching': caching,
+            'cache_directory': cache_directory,
+            'wallclock_limit': wallclock_limit,
+            'downsampling': downsampling
+        }
+        self.statistics = Statistics(stamp, self.output_dir,
+                                information=info,
+                                total_runtime=wallclock_limit,
+                                time_precision=time_precision)
+
         # Set cache directory
         if caching:
             cache_dir = cache_directory
             self.tae_runner = CachedPipelineRunner(self.data, self.pipeline_space, runhistory,
+                                                   self.statistics,
                                                    cache_directory=cache_dir,
                                                    downsampling=downsampling)
         else:
-            self.tae_runner = PipelineRunner(self.data, self.pipeline_space, runhistory,
+            self.tae_runner = PipelineRunner(self.data, self.pipeline_space, runhistory, self.statistics,
                                              downsampling=downsampling)
 
         # Choose acquisition function
@@ -75,32 +87,42 @@ class Driver:
 
 
     def run(self,
+            stamp=time.time(),
             caching=True,
             cache_directory=None,
             wallclock_limit=3600,
             downsampling=None,
             run_counter=1,
-            plot_time=10):
+            time_precision=10):
         # clean trajectory files
         self._clean_trajectory_files()
 
         # Initialize SMBO
-        self.initialize(caching=caching, cache_directory=cache_directory,
-                        wallclock_limit=wallclock_limit, downsampling=downsampling)
+        self.initialize(stamp=stamp,
+                        caching=caching,
+                        cache_directory=cache_directory,
+                        wallclock_limit=wallclock_limit,
+                        downsampling=downsampling,
+                        time_precision=time_precision)
+        # Start timer
+        self.statistics.start_timer()
 
         # Run SMBO
         incumbent = self.smbo.run()
 
+        # Save statistics
+        self.statistics.save()
+
         # Read trajectory files with incumbents and retrieve test performances
-        self.trajectory = TrajLogger.read_traj_aclib_format(self.trajectory_path_json, self.config_space)
-        self.run_tests(self.trajectory, downsampling=downsampling)
+        #self.trajectory = TrajLogger.read_traj_aclib_format(self.trajectory_path_json, self.config_space)
+        #self.run_tests(self.trajectory, downsampling=downsampling)
         #print(self.trajectory)
         # Save new trajectory for plotting
-        self._save_trajectory_for_plotting(self.trajectory,
-                                           wallclock_limit=wallclock_limit,
-                                           plot_time=plot_time,
-                                           caching=caching,
-                                           run_counter=run_counter)
+        #save_trajectory_for_plotting(self.trajectory,
+        #                                   wallclock_limit=wallclock_limit,
+        #                                   plot_time=time_precision,
+        #                                   caching=caching,
+        #                                   run_counter=run_counter)
 
         return incumbent
 
@@ -113,46 +135,7 @@ class Driver:
 
         return trajectory
 
-    # Internal methods
-
-    def _save_trajectory_for_plotting(self, trajectory, wallclock_limit, plot_time, caching, run_counter=1):
-        filename = "validationResults-traj-caching=" + str(caching) + "-run=" + str(run_counter) + ".csv"
-        destination = os.path.dirname(os.path.abspath(__file__)) + "/results"
-        # Create new trajectory file with choosen timestamps
-        traj_0 = trajectory[0]
-        new_trajectory = [{
-            'wallclock_time': 0.0,
-            'training_performance': traj_0['cost'],
-            'test_performance': traj_0['test_performance']
-        }]
-
-        time = plot_time
-        while time <= wallclock_limit:
-            t = None
-            # find trajectory element that is the incumbent at time 'time'
-            for i in range(0,len(trajectory)-1):
-                traj_i = trajectory[i]
-                traj_i1 = trajectory[i+1]
-                if time >= traj_i['wallclock_time'] and time < traj_i1['wallclock_time'] :
-                    t = traj_i
-                    break
-                elif time > trajectory[-1]['wallclock_time']\
-                        :
-                    t = trajectory[-1]
-            if t:
-                new_trajectory.append({
-                    'wallclock_time': time,
-                    'training_performance': t['cost'],
-                    'test_performance': t['test_performance']
-                })
-            else:
-                raise ValueError("trajectory element should never be none")
-
-            time += plot_time
-        print(new_trajectory)
-        save_trajectory_to_plotting_format(new_trajectory, destination=destination, filename=filename)
-
-
+    #### INTERNAL METHODS ####
 
     def _clean_trajectory_files(self):
         open(self.trajectory_path_json, 'w')

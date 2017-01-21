@@ -99,16 +99,39 @@ def write_list_dicts(lst, keys, destination="results", filename="pipeline_runner
             writer.writerow(row)
 
 
+def save_trajectory_for_plotting(trajectory, wallclock_limit, plot_time, caching, run_counter=1):
+    filename = "validationResults-traj-caching=" + str(caching) + "-run=" + str(run_counter) + ".csv"
+    destination = os.path.dirname(os.path.abspath(__file__)) + "/results"
+    # Create new trajectory file with choosen timestamps
+    traj_0 = trajectory[0]
+    new_trajectory = [{
+        'wallclock_time': 0.0,
+        'training_performance': traj_0['cost'],
+        'test_performance': traj_0['test_performance']
+    }]
 
+    time = plot_time
+    while time <= wallclock_limit:
+        t = None
+        # find trajectory element that is the incumbent at time 'time'
+        for i in range(0, len(trajectory) - 1):
+            traj_i = trajectory[i]
+            traj_i1 = trajectory[i + 1]
+            if time >= traj_i['wallclock_time'] and time < traj_i1['wallclock_time']:
+                t = traj_i
+                break
+            elif time > trajectory[-1]['wallclock_time'] \
+                    :
+                t = trajectory[-1]
+        if t:
+            new_trajectory.append({
+                'wallclock_time': time,
+                'training_performance': t['cost'],
+                'test_performance': t['test_performance']
+            })
+        else:
+            raise ValueError("trajectory element should never be none")
 
-
-def save_info_file(info, destination="results", filename="info.txt"):
-
-    if not os.path.exists(destination):
-        os.makedirs(destination)
-
-    filename = destination + "/" + filename
-
-    f = open(filename, 'w')
-    f.write(info)
-    f.close()
+        time += plot_time
+    print(new_trajectory)
+    save_trajectory_to_plotting_format(new_trajectory, destination=destination, filename=filename)

@@ -11,11 +11,10 @@ from smac.tae.execute_ta_run import ExecuteTARun
 from sklearn.metrics import precision_score
 
 from pipeline.pipeline_builder import PipelineBuilder
-from utils.io_utils import append_dict_to_csv
 
 class PipelineRunner(ExecuteTARun):
 
-    def __init__(self, data, pipeline_space, runhistory, downsampling=None):
+    def __init__(self, data, pipeline_space, runhistory, statistics, downsampling=None):
         if downsampling:
             self.X_train = data["X_train"][:downsampling]
             self.y_train = data["y_train"][:downsampling]
@@ -24,6 +23,7 @@ class PipelineRunner(ExecuteTARun):
             self.y_train = data["y_train"]
 
         self.runhistory = runhistory
+        self.statistics = statistics
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=False, cache_directory=None)
 
     def start(self, config,
@@ -111,12 +111,11 @@ class PipelineRunner(ExecuteTARun):
 
         # TODO Move this to a better place
         # Save temporary results for plotting
-        d = {
+        run_information = {
             'cost': cost,
             'runtime': runtime,
         }
-        append_dict_to_csv(d, keys=['runtime', 'cost'],
-                           filename="pipeline_runner_information_no_caching.csv")
+        self.statistics.add_run(config.get_dictionary(), run_information)
 
         print("stop tae_runner")
         return status, cost, runtime, additional_info
@@ -127,7 +126,7 @@ class PipelineRunner(ExecuteTARun):
 
 class CachedPipelineRunner(PipelineRunner):
 
-    def __init__(self, data, pipeline_space, runhistory, cache_directory=None, downsampling=None):
+    def __init__(self, data, pipeline_space, runhistory, statistics, cache_directory=None, downsampling=None):
 
         super(CachedPipelineRunner,self).__init__(data, pipeline_space, runhistory, downsampling=downsampling)
 
@@ -214,13 +213,13 @@ class CachedPipelineRunner(PipelineRunner):
 
         # TODO Move this to a better place
         # Save temporary results for plotting
-        d = {
+        run_information = {
             'cost': cost,
             'runtime': runtime,
             'cache_hits': self.cache_hits['cache_hits'],
             'total_evaluations': self.cache_hits['total']
         }
-        append_dict_to_csv(d, keys=['runtime', 'cost', 'total_evaluations', 'cache_hits'], filename="pipeline_runner_information.csv")
+        self.statistics.add_run(config.get_dictionary(), run_information)
 
         print("stop cached tae_runner")
         return status, cost, runtime, additional_info
@@ -239,6 +238,17 @@ class CachedPipelineRunner(PipelineRunner):
                 time is runtime that this algorithm configuration took
     '''
     def _get_pipeline_steps_timing(self, timing, config):
+        """
+
+        Parameters
+        ----------
+        timing
+        config
+
+        Returns
+        -------
+
+        """
         t_rc = []
         for name in timing.keys():
             dict = {}
