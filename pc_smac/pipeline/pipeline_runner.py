@@ -135,6 +135,9 @@ class PipelineRunner(ExecuteTARun):
             else:
                 dct[key] = timing[key]
 
+    def update_statistics(self, statistics):
+        self.statistics = statistics
+
 
 
 
