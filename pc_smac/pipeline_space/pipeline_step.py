@@ -1,5 +1,6 @@
 
-from pc_prototype.pc_smac.pipeline_space.node import KernelPcaNode, SGDNode
+from pc_prototype.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
+from pc_prototype.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
 
 
 class PipelineStep(object):
