@@ -6,7 +6,7 @@ import json
 
 class Statistics(object):
 
-    def __init__(self, stamp, output_dir, information: dict, total_runtime, time_precision=10):
+    def __init__(self, stamp, output_dir, information: dict, total_runtime=None, time_precision=None):
         self.stamp = stamp
         self.output_dir = output_dir
         self.stat_information = information
@@ -44,16 +44,19 @@ class Statistics(object):
     def save(self):
         # Create and clean files
         inc_file = self.output_dir + "statistics_incumbents_" + str(self.stamp) + ".json"
-        inc_trans_file = self.output_dir + "statistics_incumbents_transformed_" + str(self.stamp) + ".json"
         run_file = self.output_dir + "statistics_runs_" + str(self.stamp) + ".json"
-        run_trans_file = self.output_dir + "statistics_runs_transformed_" + str(self.stamp) + ".json"
         info_file = self.output_dir + "statistics_info_" + str(self.stamp) + ".json"
-        self._clean_files([inc_file, inc_trans_file, run_file, run_trans_file, info_file])
+        self._clean_files([inc_file, run_file, info_file])
         # Save info to files
         self._save_json(self.incumbents, inc_file)
         self._save_json(self.runs, run_file)
         info_strng = self._transform_dict_to_string(self.stat_information)
         self._save_info_file(info_strng, info_file)
+
+    def save_transformed(self):
+        inc_trans_file = self.output_dir + "statistics_incumbents_transformed_" + str(self.stamp) + ".json"
+        run_trans_file = self.output_dir + "statistics_runs_transformed_" + str(self.stamp) + ".json"
+        self._clean_files([inc_trans_file, run_trans_file])
         transformed_incumbents = self._transform_to_equidistant_time_points(self.incumbents)
         transformed_runs = self._transform_to_equidistant_time_points(self.runs)
         self._save_json(transformed_incumbents, inc_trans_file)
@@ -75,6 +78,9 @@ class Statistics(object):
         lst.append(run)
 
     def _transform_to_equidistant_time_points(self, data_lst):
+        if self.total_runtime == None or self.time_precision == None:
+            raise ValueError("Cannot transform since there is no total runtime or time precision provided!")
+
         new_data_lst = []
         time = 0.0
         while time <= self.total_runtime:
