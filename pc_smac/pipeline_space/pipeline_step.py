@@ -1,5 +1,5 @@
 
-from pipeline_space.node import KernelPcaNode, SGDNode
+from pc_prototype.pc_smac.pipeline_space.node import KernelPcaNode, SGDNode
 
 
 class PipelineStep(object):

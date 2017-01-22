@@ -10,7 +10,7 @@ from smac.tae.execute_ta_run import ExecuteTARun
 
 from sklearn.metrics import precision_score
 
-from pipeline.pipeline_builder import PipelineBuilder
+from pc_prototype.pc_smac.pipeline.pipeline_builder import PipelineBuilder
 
 class PipelineRunner(ExecuteTARun):
 
@@ -244,6 +244,9 @@ class CachedPipelineRunner(PipelineRunner):
 
         print("stop cached tae_runner")
         return status, cost, runtime, additional_info
+
+    def clean_cache(self):
+        self.pipeline_builder.clean
 
     #### Private methods ####
 

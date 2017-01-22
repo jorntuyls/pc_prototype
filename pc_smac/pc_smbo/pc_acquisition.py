@@ -5,8 +5,6 @@ from scipy.stats import norm
 
 from smac.smbo.acquisition import EIPS
 
-from ConfigSpace.configuration_space import Configuration
-
 
 class PCEIPS(EIPS):
 

@@ -14,10 +14,10 @@ from smac.utils.io.traj_logging import TrajLogger
 from smac.utils.util_funcs import get_types
 from smac.stats.stats import Stats
 
-from pc_smbo.pc_smbo import PCSMBO
-from pc_smbo.pc_acquisition import PCEIPS
-from pc_smbo.pc_local_search import PCLocalSearch
-from pc_smbo.select_configuration import CachedSelectConfiguration, SelectConfiguration
+from pc_prototype.pc_smac.pc_smbo.pc_smbo import PCSMBO
+from pc_prototype.pc_smac.pc_smbo.pc_acquisition import PCEIPS
+from pc_prototype.pc_smac.pc_smbo.pc_local_search import PCLocalSearch
+from pc_prototype.pc_smac.pc_smbo.select_configuration import CachedSelectConfiguration, SelectConfiguration
 
 
 

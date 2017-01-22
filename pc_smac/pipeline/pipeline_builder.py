@@ -1,11 +1,11 @@
 
-
+import os
 import tempfile
 import shutil
 
 from sklearn.externals.joblib import Memory
-from pipeline.cached_pipeline import CachedPipeline
-from pipeline.pipeline import OwnPipeline
+from pc_prototype.pc_smac.pipeline.cached_pipeline import CachedPipeline
+from pc_prototype.pc_smac.pipeline.pipeline import OwnPipeline
 
 class PipelineBuilder:
 
@@ -41,7 +41,7 @@ class PipelineBuilder:
         return OwnPipeline(concrete_steps)
 
     def clean_cache(self):
-        if self.caching == True:
+        if self.caching == True and os.path.exists(self.cachedir):
             shutil.rmtree(self.cachedir)
         else:
             raise ValueError("There is no cache")

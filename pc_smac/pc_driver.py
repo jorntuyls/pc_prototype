@@ -4,20 +4,20 @@ __author__ = 'jorntuyls'
 import os
 import time
 
-from utils.data_loader import DataLoader
-from config_space.config_space_builder import ConfigSpaceBuilder
-from pipeline_space.pipeline_space import PipelineSpace
-from pipeline_space.pipeline_step import TestPreprocessingStep, TestClassificationStep
-from pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
-from pc_smbo.smbo_builder import SMBOBuilder
-from pc_runhistory.pc_runhistory import PCRunHistory
-from utils.io_utils import save_trajectory_for_plotting
-from utils.statistics import Statistics
+from pc_prototype.pc_smac.utils.data_loader import DataLoader
+from pc_prototype.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
+from pc_prototype.pc_smac.pipeline_space.pipeline_space import PipelineSpace
+from pc_prototype.pc_smac.pipeline_space.pipeline_step import TestPreprocessingStep, TestClassificationStep
+from pc_prototype.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
+from pc_prototype.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
+from pc_prototype.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
+from pc_prototype.pc_smac.utils.io_utils import save_trajectory_for_plotting
+from pc_prototype.pc_smac.utils.statistics import Statistics
 
 from smac.smbo.objective import average_cost
 from smac.utils.io.traj_logging import TrajLogger
 
-from data_paths import data_path, cache_directory
+from pc_prototype.pc_smac.data_paths import data_path, cache_directory
 
 class Driver:
 
@@ -112,6 +112,7 @@ class Driver:
 
         # Save statistics
         self.statistics.save()
+        self.statistics.save_transformed()
 
         # Read trajectory files with incumbents and retrieve test performances
         #self.trajectory = TrajLogger.read_traj_aclib_format(self.trajectory_path_json, self.config_space)
