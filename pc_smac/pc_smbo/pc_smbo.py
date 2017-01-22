@@ -22,7 +22,7 @@ from smac.runhistory.runhistory2epm import AbstractRunHistory2EPM
 from smac.stats.stats import Stats
 from smac.initial_design.initial_design import InitialDesign
 
-from pc_prototype.pc_smac.pc_smbo.select_configuration import SelectConfiguration
+from pc_smac.pc_smac.pc_smbo.select_configuration import SelectConfiguration
 
 
 class PCSMBO(BaseSolver):

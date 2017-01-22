@@ -4,7 +4,7 @@ import argparse
 from pc_driver import Driver
 
 #from pc_prototype.pc_smac.utils.io_utils import save_info_file
-from pc_prototype.pc_smac.data_paths import data_path, cache_directory
+from pc_smac.pc_smac.data_paths import data_path, cache_directory
 
 
 parser = argparse.ArgumentParser()

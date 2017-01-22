@@ -4,8 +4,8 @@ import tempfile
 import shutil
 
 from sklearn.externals.joblib import Memory
-from pc_prototype.pc_smac.pipeline.cached_pipeline import CachedPipeline
-from pc_prototype.pc_smac.pipeline.pipeline import OwnPipeline
+from pc_smac.pc_smac.pipeline.cached_pipeline import CachedPipeline
+from pc_smac.pc_smac.pipeline.pipeline import OwnPipeline
 
 class PipelineBuilder:
 

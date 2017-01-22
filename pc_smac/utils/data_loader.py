@@ -8,9 +8,9 @@ import re
 
 import numpy as np
 
-from pc_prototype.pc_smac.utils.constants import MULTILABEL_CLASSIFICATION, \
+from pc_smac.pc_smac.utils.constants import MULTILABEL_CLASSIFICATION, \
     STRING_TO_TASK_TYPES, MULTICLASS_CLASSIFICATION, STRING_TO_METRIC
-from pc_prototype.pc_smac.utils.data_utils import convert_to_num
+from pc_smac.pc_smac.utils.data_utils import convert_to_num
 
 
 class DataLoader:

@@ -7,7 +7,7 @@ from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
     UnParametrizedHyperparameter
 from ConfigSpace.conditions import EqualsCondition, InCondition
 
-from pc_prototype.pc_smac.pipeline_space.node import Node
+from pc_smac.pc_smac.pipeline_space.node import Node
 
 class SGDNode(Node):
 

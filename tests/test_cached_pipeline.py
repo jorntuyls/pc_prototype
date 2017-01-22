@@ -9,7 +9,7 @@ import tempfile
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 
-from pc_prototype.pc_smac.pipeline.cached_pipeline import CachedPipeline
+from pc_smac.pc_smac.pipeline.cached_pipeline import CachedPipeline
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline

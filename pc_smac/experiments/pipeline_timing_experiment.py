@@ -1,17 +1,17 @@
 
 import os
 
-from pc_prototype.pc_smac.utils.data_loader import DataLoader
-from pc_prototype.pc_smac.utils.statistics import Statistics
-from pc_prototype.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
-from pc_prototype.pc_smac.pipeline_space.pipeline_space import PipelineSpace
-from pc_prototype.pc_smac.pipeline_space.pipeline_step import TestPreprocessingStep, TestClassificationStep
-from pc_prototype.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
-from pc_prototype.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
+from pc_smac.pc_smac.utils.data_loader import DataLoader
+from pc_smac.pc_smac.utils.statistics import Statistics
+from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
+from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
+from pc_smac.pc_smac.pipeline_space.pipeline_step import TestPreprocessingStep, TestClassificationStep
+from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
+from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 
 from smac.smbo.objective import average_cost
 
-from pc_prototype.pc_smac.data_paths import all_data_paths, cache_directory
+from pc_smac.pc_smac.data_paths import all_data_paths, cache_directory
 
 def run_experiment(nb_configs=100, downsampling=None):
 

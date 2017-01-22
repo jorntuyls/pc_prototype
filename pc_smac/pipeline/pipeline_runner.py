@@ -10,7 +10,7 @@ from smac.tae.execute_ta_run import ExecuteTARun
 
 from sklearn.metrics import precision_score
 
-from pc_prototype.pc_smac.pipeline.pipeline_builder import PipelineBuilder
+from pc_smac.pc_smac.pipeline.pipeline_builder import PipelineBuilder
 
 class PipelineRunner(ExecuteTARun):
 

@@ -3,7 +3,7 @@ import time
 
 from sklearn.pipeline import Pipeline
 
-from pc_prototype.pc_smac.pipeline.cached_pipeline import PipelineInfo
+from pc_smac.pc_smac.pipeline.cached_pipeline import PipelineInfo
 
 from sklearn.externals import six
 
