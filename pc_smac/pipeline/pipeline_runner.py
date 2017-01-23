@@ -249,7 +249,7 @@ class CachedPipelineRunner(PipelineRunner):
         return status, cost, runtime, additional_info
 
     def clean_cache(self):
-        self.pipeline_builder.clean
+        self.pipeline_builder.clean_cache()
 
     #### Private methods ####
 
