@@ -8,7 +8,7 @@ class Statistics(object):
 
     def __init__(self, stamp, output_dir, information: dict, total_runtime=None, time_precision=None):
         self.stamp = stamp
-        self.output_dir = output_dir
+        self.output_dir = self._set_output_dir(output_dir)
         self.stat_information = information
         self.total_runtime = total_runtime
         self.time_precision = time_precision
@@ -17,6 +17,15 @@ class Statistics(object):
         self.incumbents = []
 
         self.start_time = None
+
+        # Output files, incumbent and info files not used for now
+        #self.inc_file = self.output_dir + "statistics_incumbents_" + str(self.stamp) + ".json"
+        self.run_file = self.output_dir + "statistics_runs_" + str(self.stamp) + ".json"
+        #self.info_file = self.output_dir + "statistics_info_" + str(self.stamp) + ".json"
+
+        # Output files for transformed information
+        #self.inc_trans_file = self.output_dir + "statistics_incumbents_transformed_" + str(self.stamp) + ".json"
+        self.run_trans_file = self.output_dir + "statistics_runs_transformed_" + str(self.stamp) + ".json"
 
     def start_timer(self):
         self.start_time = time.time()
@@ -28,39 +37,41 @@ class Statistics(object):
 
     def add_run(self, config, information: dict):
         time_point = self.get_time_point()
-        self._add_run(self.runs, config, time_point, information)
+        run = self._add_run(self.runs, config, time_point, information)
+        # Append run directly to json file
+        self._save_json([run], self.run_file)
+        return time_point
 
     def get_run_trajectory(self):
         return self.runs
 
     def add_new_incumbent(self, incumbent, information: dict):
-        time_point = self.get_time_point()
+        time_point = self.add_run(incumbent, information)
         self._add_run(self.incumbents, incumbent, time_point, information)
-        self._add_run(self.runs, incumbent, time_point, information)
 
     def get_incumbent_trajectory(self):
         return self.incumbents
 
     def save(self):
         # Create and clean files
-        inc_file = self.output_dir + "statistics_incumbents_" + str(self.stamp) + ".json"
-        run_file = self.output_dir + "statistics_runs_" + str(self.stamp) + ".json"
-        info_file = self.output_dir + "statistics_info_" + str(self.stamp) + ".json"
-        self._clean_files([inc_file, run_file, info_file])
+        self._clean_files([self.run_file])
         # Save info to files
-        self._save_json(self.incumbents, inc_file)
-        self._save_json(self.runs, run_file)
-        info_strng = self._transform_dict_to_string(self.stat_information)
-        self._save_info_file(info_strng, info_file)
+        self._save_json(self.runs, self.run_file)
+        # Incumbents are not used for now, they are persisted in the trajectory file of
+        #self._save_json(self.incumbents, inc_file)
+        # Info is not persisted now
+        #info_strng = self._transform_dict_to_string(self.stat_information)
+        #self._save_info_file(info_strng, info_file)
 
     def save_transformed(self):
-        inc_trans_file = self.output_dir + "statistics_incumbents_transformed_" + str(self.stamp) + ".json"
-        run_trans_file = self.output_dir + "statistics_runs_transformed_" + str(self.stamp) + ".json"
-        self._clean_files([inc_trans_file, run_trans_file])
-        transformed_incumbents = self._transform_to_equidistant_time_points(self.incumbents)
+        self._clean_files([self.run_trans_file])
         transformed_runs = self._transform_to_equidistant_time_points(self.runs)
-        self._save_json(transformed_incumbents, inc_trans_file)
-        self._save_json(transformed_runs, run_trans_file)
+        self._save_json(transformed_runs, self.run_trans_file)
+        # transformed_incumbents = self._transform_to_equidistant_time_points(self.incumbents)
+        # self._save_json(transformed_incumbents, inc_trans_file)
+
+    def clean_files(self):
+        self._clean_files([self.run_file])
 
 
     #### INTERNAL METHODS ####
@@ -76,8 +87,20 @@ class Statistics(object):
             'config': config,
         })
         lst.append(run)
+        return run
 
     def _transform_to_equidistant_time_points(self, data_lst):
+        """
+
+        Parameters
+        ----------
+        data_lst : list of dictionaries, each dictionary contains information about one run
+
+        Returns
+        -------
+        list : a new list of dictionaries with information runs, now on equidistant time points
+
+        """
         if self.total_runtime == None or self.time_precision == None:
             raise ValueError("Cannot transform since there is no total runtime or time precision provided!")
 
@@ -137,6 +160,12 @@ class Statistics(object):
     def _open_file(self, file):
         f = open(file, 'w')
         f.close()
+
+    def _set_output_dir(self, output_dir):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        return output_dir
 
 
 
