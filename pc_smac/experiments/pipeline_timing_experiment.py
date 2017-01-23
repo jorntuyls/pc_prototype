@@ -1,6 +1,8 @@
 
 import os
 
+import argparse
+
 from pc_smac.pc_smac.utils.data_loader import DataLoader
 from pc_smac.pc_smac.utils.statistics import Statistics
 from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
@@ -11,9 +13,9 @@ from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 
 from smac.smbo.objective import average_cost
 
-from pc_smac.pc_smac.data_paths import all_data_paths, cache_directory
+from pc_smac.pc_smac.data_paths import cache_directory
 
-def run_experiment(nb_configs=100, downsampling=None):
+def run_experiment(data_id, location, nb_configs=100, seed=None, downsampling=None):
 
     # ouput directory
     output_dir = os.path.dirname(os.path.abspath(__file__)) + "/results/"
@@ -26,24 +28,26 @@ def run_experiment(nb_configs=100, downsampling=None):
 
     # Build configuration space
     cs_builder = ConfigSpaceBuilder(pipeline_space)
-    config_space = cs_builder.build_config_space()
+    config_space = cs_builder.build_config_space(seed=seed) if seed else cs_builder.build_config_space()
 
     # Sample configurations from configuration space
     rand_configs = config_space.sample_configuration(size=nb_configs)
 
-    # Run the random configurations = pipelines on each data set
-    for data_path in all_data_paths:
-        stamp = data_path.split("/")[-1]
-        run_experiment_on_data(stamp=stamp,
-                               data_path=data_path,
-                               output_dir=output_dir,
-                               pipeline_space=pipeline_space,
-                               configs=rand_configs,
-                               downsampling=downsampling)
+    # Run the random configurations = pipelines on data set
+    data_path = location + str(data_id) + "_bac" if location[-1] == "/" else location + "/" + str(data_id) + "_bac"
+    data_set = data_path.split("/")[-1]
+    output_dir = output_dir + data_set + "/"
+    stamp = data_set + "_" + str(seed) + "_seed"
+    run_experiment_on_data(stamp=stamp,
+                           data_path=data_path,
+                           output_dir=output_dir,
+                           pipeline_space=pipeline_space,
+                           configs=rand_configs,
+                           downsampling=downsampling)
 
 def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs, downsampling):
     # Make own output directory for each data set
-    output_dir = output_dir + stamp + "/"
+
     print(output_dir)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -54,7 +58,7 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
 
     for i in range(0, len(configs)):
         ## Run with caching disabled ##
-        new_stamp = stamp + "_nocaching_config_" + str(i+1)
+        new_stamp = stamp + "_nocaching_config"
         info = {
             'stamp': new_stamp,
             'caching': False,
@@ -75,11 +79,11 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         pipeline_runner.start(config=configs[i])
 
         # Save statistics
-        statistics.save()
+        #statistics.save()
 
 
         ## Run with caching enabled first time ##
-        new_stamp = stamp + "_caching_config_" + str(i+1) + "_run_1"
+        new_stamp = stamp + "_caching_config_run_1"
         info = {
             'stamp': new_stamp,
             'caching': True,
@@ -102,11 +106,11 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         cached_pipeline_runner.start(config=configs[i])
 
         # Save statistics
-        statistics.save()
+        #statistics.save()
 
 
         ## Run with caching enabled second time ##
-        new_stamp = stamp + "_caching_config_" + str(i+1) + "_run_2"
+        new_stamp = stamp + "_caching_config_run_2"
         info = {
             'stamp': new_stamp,
             'caching': True,
@@ -125,11 +129,26 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         # Run pipeline
         cached_pipeline_runner.start(config=configs[i])
 
+        # clean cache
+        cached_pipeline_runner.clean_cache()
+
         # Save statistics
-        statistics.save()
+        #statistics.save()
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--nbconfigs", type=int, help="Number of configurations")
+    parser.add_argument("-s", "--seed", type=int, help="Seed for sampling configurations")
+    parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Number of data points to downsample to")
+    parser.add_argument("-d", "--dataid", type=int, help="Dataset id")
+    parser.add_argument("-l", "--location", type=str, help="Dataset directory")
+    args = parser.parse_args()
+
+    return args
 
 
 
 
 if __name__ == "__main__":
-    run_experiment(nb_configs=2, downsampling=2000)
+    args = parse_arguments()
+    run_experiment(args.dataid, args.location, args.nbconfigs, args.seed, args.downsampling)
