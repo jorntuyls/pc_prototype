@@ -17,8 +17,6 @@ from pc_smac.pc_smac.utils.statistics import Statistics
 from smac.smbo.objective import average_cost
 from smac.utils.io.traj_logging import TrajLogger
 
-from pc_smac.pc_smac.data_paths import data_path, cache_directory
-
 class Driver:
 
     def __init__(self, data_path, output_dir=None):
@@ -155,7 +153,3 @@ class Driver:
         ps.add_pipeline_steps([tp, tc])
         return ps
 
-
-if __name__ == "__main__":
-    d = Driver(data_path)
-    d.run(caching=True, cache_directory=cache_directory, wallclock_limit=10, downsampling=2000, run_counter=1)
