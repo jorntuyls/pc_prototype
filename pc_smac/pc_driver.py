@@ -31,8 +31,11 @@ class Driver:
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
         # TODO make names not hardcoded
-        self.trajectory_path_json = os.path.dirname(os.path.abspath(__file__)) + "/logging/traj_aclib2.json"
-        self.trajectory_path_csv = os.path.dirname(os.path.abspath(__file__)) + "/logging/traj_old.csv"
+        trajectory_path = os.path.dirname(os.path.abspath(__file__)) + "/logging"
+        if not os.path.exists(trajectory_path):
+            os.makedirs(trajectory_path)
+        self.trajectory_path_json = trajectory_path + "/traj_aclib2.json"
+        self.trajectory_path_csv = trajectory_path + "/traj_old.csv"
 
     def initialize(self, stamp, acq_func, cache_directory, wallclock_limit, downsampling):
         # Check if caching is enabled
