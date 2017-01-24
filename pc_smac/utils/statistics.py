@@ -19,13 +19,16 @@ class Statistics(object):
         self.start_time = None
 
         # Output files, incumbent and info files not used for now
-        #self.inc_file = self.output_dir + "statistics_incumbents_" + str(self.stamp) + ".json"
-        self.run_file = self.output_dir + "statistics_runs_" + str(self.stamp) + ".json"
-        #self.info_file = self.output_dir + "statistics_info_" + str(self.stamp) + ".json"
+        if self.output_dir[-1] == "/":
+            self.run_file = self.output_dir + "statistics_" + str(self.stamp) + "_runs.json"
+            self.inc_file = self.output_dir + "statistics_" + str(self.stamp) + "_incumbents.json"
+            self.run_trans_file = self.output_dir + "statistics_" + str(self.stamp) + "_runs_transformed.json"
+        else:
+            self.run_file = self.output_dir + "/statistics_" + str(self.stamp) + "_runs.json"
+            self.inc_file = self.output_dir + "/statistics_" + str(self.stamp) + "_incumbents.json"
+            self.run_trans_file = self.output_dir + "/statistics_" + str(self.stamp) + "_runs_transformed.json"
 
-        # Output files for transformed information
-        #self.inc_trans_file = self.output_dir + "statistics_incumbents_transformed_" + str(self.stamp) + ".json"
-        self.run_trans_file = self.output_dir + "statistics_runs_transformed_" + str(self.stamp) + ".json"
+        #self.info_file = self.output_dir + "statistics_info_" + str(self.stamp) + ".json"
 
     def start_timer(self):
         self.start_time = time.time()
@@ -49,6 +52,10 @@ class Statistics(object):
         time_point = self.add_run(incumbent, information)
         self._add_run(self.incumbents, incumbent, time_point, information)
 
+    def add_incumbents_trajectory(self, trajectory):
+        self.incumbents = trajectory
+        self._save_json(self.incumbents, self.inc_file)
+
     def get_incumbent_trajectory(self):
         return self.incumbents
 
@@ -57,21 +64,22 @@ class Statistics(object):
         self._clean_files([self.run_file])
         # Save info to files
         self._save_json(self.runs, self.run_file)
-        # Incumbents are not used for now, they are persisted in the trajectory file of
-        #self._save_json(self.incumbents, inc_file)
+        self._save_json(self.incumbents, self.inc_file)
         # Info is not persisted now
         #info_strng = self._transform_dict_to_string(self.stat_information)
         #self._save_info_file(info_strng, info_file)
 
+    """
     def save_transformed(self):
         self._clean_files([self.run_trans_file])
         transformed_runs = self._transform_to_equidistant_time_points(self.runs)
         self._save_json(transformed_runs, self.run_trans_file)
         # transformed_incumbents = self._transform_to_equidistant_time_points(self.incumbents)
         # self._save_json(transformed_incumbents, inc_trans_file)
+    """
 
     def clean_files(self):
-        self._clean_files([self.run_file])
+        self._clean_files([self.run_file, self.inc_file])
 
 
     #### INTERNAL METHODS ####

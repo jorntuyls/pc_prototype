@@ -309,7 +309,7 @@ class PipelineTester(object):
             y_pred = pipeline.predict(self.X_test)
             score = precision_score(self.y_test, y_pred, average='macro')
         except ValueError as v:
-            score = 1
+            score = 0
 
         return score
 

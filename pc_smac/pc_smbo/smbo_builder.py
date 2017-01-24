@@ -27,7 +27,7 @@ class SMBOBuilder:
         pass
 
     def build_pc_smbo(self, config_space, tae_runner, runhistory, aggregate_func, acq_func_name, model_target_names,
-                        wallclock_limit=60):
+                        logging_directory, wallclock_limit=60):
         # Build scenario
         args = {'cs': config_space, 'wallclock_limit': wallclock_limit}
         scenario = Scenario(args)
@@ -35,7 +35,7 @@ class SMBOBuilder:
         # Build intensifier
         rng = np.random.RandomState()
         stats = Stats(scenario)
-        traj_logger = TrajLogger("logging", stats)
+        traj_logger = TrajLogger(logging_directory, stats)
         intensifier = Intensifier(tae_runner, stats, traj_logger, rng, instances=[1], maxR=1)
 
         # Build model

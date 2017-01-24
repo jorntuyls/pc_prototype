@@ -21,7 +21,7 @@ from pc_smac.pc_smac.data_paths import data_path, cache_directory
 
 class Driver:
 
-    def __init__(self, data_path):
+    def __init__(self, data_path, output_dir=None):
         self.data_loader = DataLoader(data_path)
 
         self.pipeline_space = self._build_pipeline_space()
@@ -29,12 +29,17 @@ class Driver:
         self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
         self.config_space = self.cs_builder.build_config_space()
 
-        self.output_dir = os.path.dirname(os.path.abspath(__file__)) + "/logging/"
+        self.output_dir = output_dir if output_dir else os.path.dirname(os.path.abspath(__file__)) + "/output/"
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
         # TODO make names not hardcoded
         self.trajectory_path_json = os.path.dirname(os.path.abspath(__file__)) + "/logging/traj_aclib2.json"
         self.trajectory_path_csv = os.path.dirname(os.path.abspath(__file__)) + "/logging/traj_old.csv"
 
-    def initialize(self, stamp, caching, cache_directory, wallclock_limit, downsampling, time_precision):
+    def initialize(self, stamp, acq_func, cache_directory, wallclock_limit, downsampling):
+        # Check if caching is enabled
+        caching = True if acq_func[:2] == "pc" else False
+
         # Load data
         self.data = self.data_loader.get_data()
 
@@ -46,33 +51,36 @@ class Driver:
         info = {
             'stamp': stamp,
             'caching': caching,
+            'acquisition_function': acq_func,
             'cache_directory': cache_directory,
             'wallclock_limit': wallclock_limit,
             'downsampling': downsampling
         }
         self.statistics = Statistics(stamp, self.output_dir,
                                 information=info,
-                                total_runtime=wallclock_limit,
-                                time_precision=time_precision)
+                                total_runtime=wallclock_limit)
 
         # Set cache directory
         if caching:
-            cache_dir = cache_directory
+            # Check if directory exists, otherwise create it
+            if cache_directory != None and not os.path.exists(cache_directory):
+                os.makedirs(cache_directory)
             self.tae_runner = CachedPipelineRunner(self.data, self.pipeline_space, runhistory,
                                                    self.statistics,
-                                                   cache_directory=cache_dir,
+                                                   cache_directory=cache_directory,
                                                    downsampling=downsampling)
         else:
             self.tae_runner = PipelineRunner(self.data, self.pipeline_space, runhistory, self.statistics,
                                              downsampling=downsampling)
 
         # Choose acquisition function
-        if caching:
-            acq_func_name = "pceips"
+        if acq_func == "pceips" or acq_func == "eips":
             model_target_names = ['cost', 'time']
+        elif acq_func == "ei":
+            model_target_names = ['cost']
         else:
-            acq_func_name = "eips"
-            model_target_names = ['cost', 'time']
+            # Not a valid acquisition function
+            raise ValueError("The provided acquisition function is not valid")
 
         # Build SMBO object
         smbo_builder = SMBOBuilder()
@@ -81,49 +89,47 @@ class Driver:
             tae_runner=self.tae_runner,
             runhistory=runhistory,
             aggregate_func=average_cost,
-            acq_func_name=acq_func_name,
+            acq_func_name=acq_func,
             model_target_names=model_target_names,
+            logging_directory=os.path.dirname(os.path.abspath(__file__)) + "/logging",
             wallclock_limit=wallclock_limit)
 
 
     def run(self,
             stamp=time.time(),
-            caching=True,
+            acq_func="ei",
             cache_directory=None,
             wallclock_limit=3600,
-            downsampling=None,
-            run_counter=1,
-            time_precision=10):
+            downsampling=None):
         # clean trajectory files
         self._clean_trajectory_files()
 
         # Initialize SMBO
         self.initialize(stamp=stamp,
-                        caching=caching,
+                        acq_func=acq_func,
                         cache_directory=cache_directory,
                         wallclock_limit=wallclock_limit,
-                        downsampling=downsampling,
-                        time_precision=time_precision)
-        # Start timer
+                        downsampling=downsampling)
+
+        # Start timer and clean statistics files
         self.statistics.start_timer()
+        self.statistics.clean_files()
 
         # Run SMBO
         incumbent = self.smbo.run()
 
         # Save statistics
         self.statistics.save()
-        self.statistics.save_transformed()
 
         # Read trajectory files with incumbents and retrieve test performances
-        #self.trajectory = TrajLogger.read_traj_aclib_format(self.trajectory_path_json, self.config_space)
-        #self.run_tests(self.trajectory, downsampling=downsampling)
-        #print(self.trajectory)
-        # Save new trajectory for plotting
-        #save_trajectory_for_plotting(self.trajectory,
-        #                                   wallclock_limit=wallclock_limit,
-        #                                   plot_time=time_precision,
-        #                                   caching=caching,
-        #                                   run_counter=run_counter)
+        self.trajectory = TrajLogger.read_traj_aclib_format(self.trajectory_path_json, self.config_space)
+        trajectory = self.run_tests(self.trajectory, downsampling=downsampling)
+
+        # Save new trajectory to output directory
+        # First transform the configuration to a dictionary
+        for traj in trajectory:
+            traj['incumbent'] = traj['incumbent'].get_dictionary()
+        self.statistics.add_incumbents_trajectory(trajectory)
 
         return incumbent
 

@@ -138,10 +138,10 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--nbconfigs", type=int, help="Number of configurations")
     parser.add_argument("-s", "--seed", type=int, help="Seed for sampling configurations")
-    parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Number of data points to downsample to")
     parser.add_argument("-d", "--dataid", type=int, help="Dataset id")
     parser.add_argument("-l", "--location", type=str, help="Dataset directory")
-    parser.add_argument("-c", "--cache", type=str, help="Cache directory")
+    parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Number of data points to downsample to")
+    parser.add_argument("-cd", "--cachedir", type=str, default=None, help="Cache directory")
     args = parser.parse_args()
 
     return args
@@ -151,4 +151,4 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    run_experiment(args.dataid, args.location, args.nbconfigs, args.seed, args.cache, args.downsampling)
+    run_experiment(args.dataid, args.location, args.nbconfigs, args.seed, args.cachedir, args.downsampling)

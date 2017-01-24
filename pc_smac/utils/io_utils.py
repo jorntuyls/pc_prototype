@@ -1,6 +1,22 @@
 
+
 import csv
+import json
 import os
+
+
+# def save_json(lst, destination_file):
+#     if not os.path.exists(destination_file):
+#         open_file(destination_file)
+#
+#     with open(destination_file, "a") as fp:
+#         for row in lst:
+#             json.dump(row, fp)
+#             fp.write("\n")
+#
+# def open_file(file):
+#     f = open(file, 'w')
+#     f.close()
 
 def save_trajectory_to_plotting_format(trajectory, destination="results", filename="validationResults-traj-run-1.csv"):
 
@@ -99,9 +115,11 @@ def write_list_dicts(lst, keys, destination="results", filename="pipeline_runner
             writer.writerow(row)
 
 
-def save_trajectory_for_plotting(trajectory, wallclock_limit, plot_time, caching, run_counter=1):
-    filename = "validationResults-traj-caching=" + str(caching) + "-run=" + str(run_counter) + ".csv"
+def save_trajectory_for_plotting(trajectory, wallclock_limit, plot_time, caching, run_id=1):
+    filename = "validationResults-traj-caching=" + str(caching) + "-run=" + str(run_id) + ".csv"
     destination = os.path.dirname(os.path.abspath(__file__)) + "/results"
+    if not os.path.exists(destination):
+        os.makedirs(destination)
     # Create new trajectory file with choosen timestamps
     traj_0 = trajectory[0]
     new_trajectory = [{
