@@ -13,9 +13,7 @@ from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 
 from smac.smbo.objective import average_cost
 
-from pc_smac.pc_smac.data_paths import cache_directory
-
-def run_experiment(data_id, location, nb_configs=100, seed=None, downsampling=None):
+def run_experiment(data_id, location, nb_configs=100, seed=None, cache_directory=None, downsampling=None):
 
     # ouput directory
     output_dir = os.path.dirname(os.path.abspath(__file__)) + "/results/"
@@ -43,9 +41,10 @@ def run_experiment(data_id, location, nb_configs=100, seed=None, downsampling=No
                            output_dir=output_dir,
                            pipeline_space=pipeline_space,
                            configs=rand_configs,
+                           cache_directory=cache_directory,
                            downsampling=downsampling)
 
-def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs, downsampling):
+def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs, cache_directory, downsampling):
     # Make own output directory for each data set
 
     print(output_dir)
@@ -142,6 +141,7 @@ def parse_arguments():
     parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Number of data points to downsample to")
     parser.add_argument("-d", "--dataid", type=int, help="Dataset id")
     parser.add_argument("-l", "--location", type=str, help="Dataset directory")
+    parser.add_argument("-c", "--cache", type=str, help="Cache directory")
     args = parser.parse_args()
 
     return args
@@ -151,4 +151,4 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    run_experiment(args.dataid, args.location, args.nbconfigs, args.seed, args.downsampling)
+    run_experiment(args.dataid, args.location, args.nbconfigs, args.seed, args.cache, args.downsampling)
