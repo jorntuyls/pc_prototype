@@ -51,6 +51,7 @@ class Driver:
             'wallclock_limit': wallclock_limit,
             'downsampling': downsampling
         }
+
         self.statistics = Statistics(stamp, self.output_dir,
                                 information=info,
                                 total_runtime=wallclock_limit)
@@ -102,8 +103,6 @@ class Driver:
             cache_directory=None,
             wallclock_limit=3600,
             downsampling=None):
-        # clean trajectory files
-        self._clean_trajectory_files()
 
         # Initialize SMBO
         self.initialize(stamp=stamp,
@@ -111,6 +110,9 @@ class Driver:
                         cache_directory=cache_directory,
                         wallclock_limit=wallclock_limit,
                         downsampling=downsampling)
+
+        # clean trajectory files
+        self._clean_trajectory_files()
 
         # Start timer and clean statistics files
         self.statistics.start_timer()
