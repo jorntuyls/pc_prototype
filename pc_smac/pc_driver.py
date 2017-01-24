@@ -20,6 +20,7 @@ from smac.utils.io.traj_logging import TrajLogger
 class Driver:
 
     def __init__(self, data_path, output_dir=None):
+        self.data_path = data_path
         self.data_loader = DataLoader(data_path)
 
         self.pipeline_space = self._build_pipeline_space()
@@ -78,7 +79,7 @@ class Driver:
             # Not a valid acquisition function
             raise ValueError("The provided acquisition function is not valid")
 
-        trajectory_path = os.path.dirname(os.path.abspath(__file__)) + "/logging/" + str(stamp)
+        trajectory_path = os.path.dirname(os.path.abspath(__file__)) + "/logging/" + self.data_path.split("/")[-1] + "/" + str(stamp)
         if not os.path.exists(trajectory_path):
             os.makedirs(trajectory_path)
         self.trajectory_path_json = trajectory_path + "/traj_aclib2.json"
