@@ -30,12 +30,6 @@ class Driver:
         self.output_dir = output_dir if output_dir else os.path.dirname(os.path.abspath(__file__)) + "/output/"
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
-        # TODO make names not hardcoded
-        trajectory_path = os.path.dirname(os.path.abspath(__file__)) + "/logging"
-        if not os.path.exists(trajectory_path):
-            os.makedirs(trajectory_path)
-        self.trajectory_path_json = trajectory_path + "/traj_aclib2.json"
-        self.trajectory_path_csv = trajectory_path + "/traj_old.csv"
 
     def initialize(self, stamp, acq_func, cache_directory, wallclock_limit, downsampling):
         # Check if caching is enabled
@@ -83,6 +77,12 @@ class Driver:
             # Not a valid acquisition function
             raise ValueError("The provided acquisition function is not valid")
 
+        trajectory_path = os.path.dirname(os.path.abspath(__file__)) + "/logging/" + str(stamp)
+        if not os.path.exists(trajectory_path):
+            os.makedirs(trajectory_path)
+        self.trajectory_path_json = trajectory_path + "/traj_aclib2.json"
+        self.trajectory_path_csv = trajectory_path + "/traj_old.csv"
+
         # Build SMBO object
         smbo_builder = SMBOBuilder()
         self.smbo = smbo_builder.build_pc_smbo(
@@ -92,7 +92,7 @@ class Driver:
             aggregate_func=average_cost,
             acq_func_name=acq_func,
             model_target_names=model_target_names,
-            logging_directory=os.path.dirname(os.path.abspath(__file__)) + "/logging",
+            logging_directory=trajectory_path,
             wallclock_limit=wallclock_limit)
 
 
