@@ -71,3 +71,19 @@ METRICS_SHORT_TO_LONG_FORM = {
     'r2': 'r2_metric',
     'a': 'a_metric'
 }
+
+DENSE = 5
+SPARSE = 6
+PREDICTIONS = 7
+INPUT = 8
+
+SIGNED_DATA = 9
+UNSIGNED_DATA = 10
+
+DATASET_PROPERTIES_TO_STRING = \
+    {DENSE:         'dense',
+     SPARSE:        'sparse',
+     PREDICTIONS:   'predictions',
+     INPUT:         'input',
+     SIGNED_DATA:   'signed data',
+     UNSIGNED_DATA: 'unsigned data'}
