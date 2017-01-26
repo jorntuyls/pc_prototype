@@ -135,6 +135,8 @@ class CachedPipeline(Pipeline):
             **fit_params_trans)
         self.steps[idx_tr] = (name, transform)
 
+        print("END EVALUATE _FIT_SINGLE_TRANSFORM")
+
         return Xt
 
 def _fit_transform_one(transformer, name, weight, X, y,

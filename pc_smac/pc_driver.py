@@ -13,9 +13,11 @@ from pc_smac.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 from pc_smac.pc_smac.utils.io_utils import save_trajectory_for_plotting
 from pc_smac.pc_smac.utils.statistics import Statistics
+from smac.scenario.scenario import Scenario
 
 from smac.smbo.objective import average_cost
 from smac.utils.io.traj_logging import TrajLogger
+from smac.tae.execute_func import ExecuteTAFuncDict
 
 class Driver:
 
@@ -32,7 +34,7 @@ class Driver:
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-    def initialize(self, stamp, acq_func, cache_directory, wallclock_limit, downsampling):
+    def initialize(self, stamp, acq_func, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling):
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
@@ -53,21 +55,22 @@ class Driver:
             'downsampling': downsampling
         }
 
-        self.statistics = Statistics(stamp, self.output_dir,
-                                information=info,
-                                total_runtime=wallclock_limit)
+        self.statistics = Statistics(stamp,
+                                     self.output_dir,
+                                     information=info,
+                                     total_runtime=wallclock_limit)
 
         # Set cache directory
         if caching:
             # Check if directory exists, otherwise create it
             if cache_directory != None and not os.path.exists(cache_directory):
                 os.makedirs(cache_directory)
-            self.tae_runner = CachedPipelineRunner(self.data, self.pipeline_space, runhistory,
+            pr = CachedPipelineRunner(self.data, self.pipeline_space, runhistory,
                                                    self.statistics,
                                                    cache_directory=cache_directory,
                                                    downsampling=downsampling)
         else:
-            self.tae_runner = PipelineRunner(self.data, self.pipeline_space, runhistory, self.statistics,
+            pr = PipelineRunner(self.data, self.pipeline_space, runhistory, self.statistics,
                                              downsampling=downsampling)
 
         # Choose acquisition function
@@ -85,24 +88,37 @@ class Driver:
         self.trajectory_path_json = trajectory_path + "/traj_aclib2.json"
         self.trajectory_path_csv = trajectory_path + "/traj_old.csv"
 
+        # Build scenario
+        args = {'cs': self.config_space,
+                'run_obj': "quality",
+                'runcount_limit': runcount_limit,
+                'wallclock_limit': wallclock_limit,
+                'memory_limit': memory_limit,
+                'cutoff_time': cutoff,
+                'deterministic': "true"
+                }
+        scenario = Scenario(args)
+
         # Build SMBO object
         smbo_builder = SMBOBuilder()
         self.smbo = smbo_builder.build_pc_smbo(
-            config_space=self.config_space,
-            tae_runner=self.tae_runner,
+            execute_func=pr.run,
+            scenario=scenario,
             runhistory=runhistory,
             aggregate_func=average_cost,
             acq_func_name=acq_func,
             model_target_names=model_target_names,
-            logging_directory=trajectory_path,
-            wallclock_limit=wallclock_limit)
+            logging_directory=trajectory_path)
 
 
     def run(self,
             stamp=time.time(),
             acq_func="ei",
-            cache_directory=None,
             wallclock_limit=3600,
+            runcount_limit=10000,
+            memory_limit=6000,
+            cutoff=3600,
+            cache_directory=None,
             downsampling=None):
 
         # Initialize SMBO
@@ -110,6 +126,9 @@ class Driver:
                         acq_func=acq_func,
                         cache_directory=cache_directory,
                         wallclock_limit=wallclock_limit,
+                        runcount_limit=runcount_limit,
+                        memory_limit=memory_limit,
+                        cutoff=cutoff,
                         downsampling=downsampling)
 
         # clean trajectory files
@@ -159,3 +178,14 @@ class Driver:
         ps.add_pipeline_steps([tp, tc])
         return ps
 
+if __name__ == "__main__":
+    from pc_smac.pc_smac.local_data_paths import data_path, output_dir, cache_directory
+    d = Driver(data_path=data_path, output_dir=output_dir)
+    d.run(stamp="test",
+         acq_func="pceips",
+         wallclock_limit=10,
+         runcount_limit=2,
+         memory_limit=4000000,
+         cutoff=3600,
+         cache_directory=cache_directory,
+         downsampling=1000)
