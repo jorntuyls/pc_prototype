@@ -8,6 +8,7 @@ from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
 from ConfigSpace.conditions import EqualsCondition, InCondition
 
 from pc_smac.pc_smac.pipeline_space.node import Node
+from pc_smac.pc_smac.utils.constants import *
 
 class SGDNode(Node):
 
@@ -38,7 +39,7 @@ class SGDNode(Node):
 
         return (self.get_full_name(), sgd)
 
-    def get_hyperparameter_space(self):
+    def get_hyperparameter_search_space(self):
         cs = ConfigurationSpace()
         loss = cs.add_hyperparameter(CategoricalHyperparameter("loss",
             ["hinge", "log", "modified_huber", "squared_hinge", "perceptron"],
@@ -81,3 +82,15 @@ class SGDNode(Node):
         cs.add_condition(power_t_condition)
 
         return cs
+
+    @staticmethod
+    def get_properties(dataset_properties=None):
+        return {'shortname': 'SGD Classifier',
+                'name': 'Stochastic Gradient Descent Classifier',
+                'handles_regression': False,
+                'handles_classification': True,
+                'handles_multiclass': True,
+                'handles_multilabel': False,
+                'is_deterministic': True,
+                'input': (DENSE, SPARSE, UNSIGNED_DATA),
+                'output': (PREDICTIONS,)}

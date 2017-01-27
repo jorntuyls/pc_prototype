@@ -14,7 +14,7 @@ class ConfigSpaceBuilder:
             cs.add_hyperparameter(CategoricalHyperparameter(ps.get_name(),
                 ps.get_node_names()))
             for node in ps.get_nodes():
-                sub_cs = node.get_hyperparameter_space()
+                sub_cs = node.get_hyperparameter_search_space()
                 cs.add_configuration_space(node.get_name(), sub_cs)
 
         print(cs)
