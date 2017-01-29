@@ -27,7 +27,7 @@ class LinearSVMNode(Node):
                                     C=hyperparameters["C"], # real hp
                                     multi_class=hyperparameters["multi_class"],
                                     fit_intercept=hyperparameters["fit_intercept"],
-                                    intercept_scaling=hyperparameters["intercet_scaling"])
+                                    intercept_scaling=hyperparameters["intercept_scaling"])
 
         return (self.get_full_name(), linear_svm)
 
