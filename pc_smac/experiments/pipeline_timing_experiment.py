@@ -39,7 +39,7 @@ def run_experiment(data_id, location, output_dir, nb_configs=100, seed=None, cac
     rand_configs = config_space.sample_configuration(size=nb_configs) if nb_configs > 1 else [config_space.sample_configuration(size=nb_configs)]
 
     # Run the random configurations = pipelines on data set
-    data_path = location + str(data_id) + "_bac" if location[-1] == "/" else location + "/" + str(data_id) + "_bac"
+    data_path = location + str(data_id) if location[-1] == "/" else location + "/" + str(data_id)
     data_set = data_path.split("/")[-1]
     output_dir = output_dir + data_set + "/" if output_dir[-1] == "/" else output_dir + "/" + data_set + "/"
     stamp = data_set + "_seed_" + str(seed)
@@ -145,7 +145,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--nbconfigs", type=int, help="Number of configurations")
     parser.add_argument("-s", "--seed", type=int, help="Seed for sampling configurations")
-    parser.add_argument("-d", "--dataid", type=int, help="Dataset id")
+    parser.add_argument("-d", "--dataid", type=str, help="Dataset id")
     parser.add_argument("-l", "--location", type=str, help="Dataset directory")
     parser.add_argument("-o", "--outputdir", type=str, default=None, help="Output directory")
     parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Number of data points to downsample to")
