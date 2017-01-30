@@ -47,7 +47,7 @@ class TestPreprocessingStep(PipelineStep):
 
     def __init__(self):
         name = "feature_preprocessor"
-        nodes = {ExtraTreesNode(),
+        nodes = [ExtraTreesNode(),
                  FastICANode(),
                  FeatureAgglomerationNode(),
                  KernelPcaNode(),
@@ -59,12 +59,12 @@ class TestPreprocessingStep(PipelineStep):
                  PolynomialFeaturesNode(),
                  RandomTreesEmbeddingNode(),
                  SelectPercentileNode(),
-                 SelectRatesNode()}
+                 SelectRatesNode()]
         super(TestPreprocessingStep, self).__init__(name, nodes)
 
 class TestClassificationStep(PipelineStep):
 
     def __init__(self):
         name = "classifier"
-        nodes = {SGDNode()}
+        nodes = [SGDNode()]
         super(TestClassificationStep, self).__init__(name, nodes)

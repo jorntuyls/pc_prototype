@@ -28,12 +28,7 @@ def run_experiment(data_id, location, output_dir, nb_configs=100, seed=None, cac
     # Build configuration space
     cs_builder = ConfigSpaceBuilder(pipeline_space)
     #print("SEED: {}".format(seed)) if seed else print("NOT SEED: {}".format(seed))
-    config_space = cs_builder.build_config_space(seed=seed) if seed else cs_builder.build_config_space()
-
-    config1 = config_space.sample_configuration(1)
-    config2 = config_space.sample_configuration(1)
-    #print(config1)
-    #print(config2)
+    config_space = cs_builder.build_config_space(seed=seed)
 
     # Sample configurations from configuration space
     rand_configs = config_space.sample_configuration(size=nb_configs) if nb_configs > 1 else [config_space.sample_configuration(size=nb_configs)]
