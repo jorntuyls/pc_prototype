@@ -25,9 +25,13 @@ class Driver:
         self.data_path = data_path
         self.data_loader = DataLoader(data_path)
 
-        self.pipeline = SimpleClassificationPipeline(exclude=["xgradient_boosting"])
-        self.config_space = self.pipeline.get_hyperparameter_search_space()
-        print(self.config_space)
+        self.pipeline_space = self._build_pipeline_space()
+        self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
+        self.config_space = self.cs_builder.build_config_space()
+
+        # self.pipeline = SimpleClassificationPipeline()
+        # self.config_space = self.pipeline.get_hyperparameter_search_space()
+        # print(self.config_space)
 
         self.output_dir = output_dir if output_dir else os.path.dirname(os.path.abspath(__file__)) + "/output/"
         if not os.path.exists(self.output_dir):

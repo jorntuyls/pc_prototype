@@ -28,12 +28,18 @@ class PipelineStep(object):
     def get_nodes(self):
         return self.nodes
 
+    def get_nb_nodes(self):
+        return len(self.nodes)
+
     def get_node_names(self):
         return [node.get_name() for node in self.get_nodes()]
 
     def initialize_algorithm(self, node_name, hyperparameters):
         node = self._get_node(node_name)
         return node.initialize_algorithm(hyperparameters)
+
+    def get_node(self, node_name):
+        return self._get_node(node_name)
 
     #### Internal methods ####
     def _get_node(self, node_name):

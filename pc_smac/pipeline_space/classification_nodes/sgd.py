@@ -39,7 +39,7 @@ class SGDNode(Node):
 
         return (self.get_full_name(), sgd)
 
-    def get_hyperparameter_search_space(self):
+    def get_hyperparameter_search_space(self, dataset_properties=None):
         cs = ConfigurationSpace()
         loss = cs.add_hyperparameter(CategoricalHyperparameter("loss",
             ["hinge", "log", "modified_huber", "squared_hinge", "perceptron"],
