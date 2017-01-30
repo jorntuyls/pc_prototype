@@ -23,8 +23,8 @@ class PcaNode(Node):
 
     def initialize_algorithm(self, hyperparameters):
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        pca = self.algorithm(n_components=hyperparameters["keep_variance"],
-                                            whiten=hyperparameters["whiten"])
+        pca = self.algorithm(keep_variance=hyperparameters["keep_variance"],
+                            whiten=hyperparameters["whiten"])
 
         return (self.get_full_name(), pca)
 
