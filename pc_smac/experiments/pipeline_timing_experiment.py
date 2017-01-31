@@ -7,13 +7,54 @@ from pc_smac.pc_smac.utils.data_loader import DataLoader
 from pc_smac.pc_smac.utils.statistics import Statistics
 from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
 from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
-from pc_smac.pc_smac.pipeline_space.pipeline_step import TestPreprocessingStep, TestClassificationStep
+from pc_smac.pc_smac.pipeline_space.pipeline_step import PipelineStep, OneHotEncodingStep, ImputationStep, RescalingStep, \
+    BalancingStep, PreprocessingStep, ClassificationStep
 from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.extra_rand_trees import ExtraTreesNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.fast_ica import FastICANode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.feature_agglomeration import FeatureAgglomerationNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kitchen_sinks import RandomKitchenSinksNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.linear_svm import LinearSVMNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.nystroem_sampler import NystroemSamplerNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.polynomial import PolynomialFeaturesNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.random_trees_embedding import RandomTreesEmbeddingNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.select_percentile import SelectPercentileNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.select_rates import SelectRatesNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.no_preprocessing import NoPreprocessingNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.pca import PcaNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
+
 from smac.smbo.objective import average_cost
 
-def run_experiment(data_id, location, output_dir, nb_configs=100, seed=None, cache_directory=None, downsampling=None):
+def run_experiment(data_id, location, output_dir, prepr_name=None, nb_configs=100, seed=None, cache_directory=None, downsampling=None):
+    preprocessor_names = ['extra_trees', 'fast_ica', 'feature_agglomeration', 'kernel_pca', 'rand_kitchen_sinks', 'linear_svm',
+                          'no_preprocessing', 'nystroem_sampler', 'pca', 'polynomial_features', 'rand_trees_embedding',
+                          'select_percentile', 'select_rates']
+    preprocessor_nodes =  {
+        'extra_trees': ExtraTreesNode(),
+        'fast_ica': FastICANode(),
+        'feature_agglomeration': FeatureAgglomerationNode(),
+        'kernel_pca': KernelPcaNode(),
+        'rand_kitchen_sinks': RandomKitchenSinksNode(),
+        'linear_svm': LinearSVMNode(),
+        'no_preprocessing': NoPreprocessingNode(),
+        'nystroem_sampler': NystroemSamplerNode(),
+        'pca': PcaNode(),
+        'polynomial_features': PolynomialFeaturesNode(),
+        'rand_trees_embedding': RandomTreesEmbeddingNode(),
+        'select_percentile': SelectPercentileNode(),
+        'select_rates': SelectRatesNode()
+    }
+
+    if prepr_name != None:
+        nodes = [preprocessor_nodes[prepr_name]]
+    else:
+        nodes = []
+        for prepr in preprocessor_names:
+            nodes.append(preprocessor_nodes[prepr])
+        prepr_name = 'all'
 
     # ouput directory
     if output_dir == None:
@@ -21,9 +62,13 @@ def run_experiment(data_id, location, output_dir, nb_configs=100, seed=None, cac
 
     # Build pipeline space
     pipeline_space = PipelineSpace()
-    tp = TestPreprocessingStep()
-    tc = TestClassificationStep()
-    pipeline_space.add_pipeline_steps([tp, tc])
+    o_s = OneHotEncodingStep()
+    i_s = ImputationStep()
+    r_s = RescalingStep()
+    b_s = BalancingStep()
+    p_s = PipelineStep(name='feature_preprocessor', nodes=nodes)
+    c_s = ClassificationStep()
+    pipeline_space.add_pipeline_steps([o_s, i_s, r_s, b_s, p_s, c_s])
 
     # Build configuration space
     cs_builder = ConfigSpaceBuilder(pipeline_space)
@@ -36,7 +81,8 @@ def run_experiment(data_id, location, output_dir, nb_configs=100, seed=None, cac
     # Run the random configurations = pipelines on data set
     data_path = location + str(data_id) if location[-1] == "/" else location + "/" + str(data_id)
     data_set = data_path.split("/")[-1]
-    output_dir = output_dir + data_set + "/" if output_dir[-1] == "/" else output_dir + "/" + data_set + "/"
+    output_dir = output_dir + data_set + "/" + str(prepr_name) + "/" if output_dir[-1] == "/" \
+                                            else output_dir + "/" + data_set + "/" + str(prepr_name) + "/"
     stamp = data_set + "_seed_" + str(seed)
     run_experiment_on_data(stamp=stamp,
                            data_path=data_path,
@@ -142,6 +188,7 @@ def parse_arguments():
     parser.add_argument("-s", "--seed", type=int, help="Seed for sampling configurations")
     parser.add_argument("-d", "--dataid", type=str, help="Dataset id")
     parser.add_argument("-l", "--location", type=str, help="Dataset directory")
+    parser.add_argument("-p", "--pname", type=str, default=None, help="Preprocessor name")
     parser.add_argument("-o", "--outputdir", type=str, default=None, help="Output directory")
     parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Number of data points to downsample to")
     parser.add_argument("-cd", "--cachedir", type=str, default=None, help="Cache directory")
@@ -154,4 +201,11 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
-    run_experiment(args.dataid, args.location, args.outputdir, args.nbconfigs, args.seed, args.cachedir, args.downsampling)
+    run_experiment(data_id=args.dataid,
+                   location=args.location,
+                   output_dir=args.outputdir,
+                   prepr_name=args.pname,
+                   nb_configs=args.nbconfigs,
+                   seed=args.seed,
+                   cache_directory=args.cachedir,
+                   downsampling=args.downsampling)
