@@ -132,7 +132,7 @@ class ExtraTreesPreprocessor(PreprocessingNode):
     def get_hyperparameter_search_space(dataset_properties=None):
         cs = ConfigurationSpace()
 
-        n_estimators = cs.add_hyperparameter(Constant("n_estimators", 100))
+        #n_estimators = cs.add_hyperparameter(Constant("n_estimators", 100))
         criterion = cs.add_hyperparameter(CategoricalHyperparameter(
             "criterion", ["gini", "entropy"], default="gini"))
         max_features = cs.add_hyperparameter(UniformFloatHyperparameter(
@@ -145,8 +145,8 @@ class ExtraTreesPreprocessor(PreprocessingNode):
             "min_samples_split", 2, 20, default=2))
         min_samples_leaf = cs.add_hyperparameter(UniformIntegerHyperparameter(
             "min_samples_leaf", 1, 20, default=1))
-        min_weight_fraction_leaf = cs.add_hyperparameter(Constant(
-            'min_weight_fraction_leaf', 0.))
+        #min_weight_fraction_leaf = cs.add_hyperparameter(Constant(
+        #    'min_weight_fraction_leaf', 0.))
 
         bootstrap = cs.add_hyperparameter(CategoricalHyperparameter(
             "bootstrap", ["True", "False"], default="False"))

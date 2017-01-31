@@ -102,7 +102,7 @@ class RandomTreesEmbedding(PreprocessingNode):
         min_samples_leaf = UniformIntegerHyperparameter(name="min_samples_leaf",
                                                         lower=1, upper=20,
                                                         default=1)
-        min_weight_fraction_leaf = Constant('min_weight_fraction_leaf', 1.0)
+        #min_weight_fraction_leaf = Constant('min_weight_fraction_leaf', 1.0)
         max_leaf_nodes = UnParametrizedHyperparameter(name="max_leaf_nodes",
                                                       value="None")
         cs = ConfigurationSpace()
@@ -110,6 +110,6 @@ class RandomTreesEmbedding(PreprocessingNode):
         cs.add_hyperparameter(max_depth)
         cs.add_hyperparameter(min_samples_split)
         cs.add_hyperparameter(min_samples_leaf)
-        cs.add_hyperparameter(min_weight_fraction_leaf)
+        #cs.add_hyperparameter(min_weight_fraction_leaf)
         cs.add_hyperparameter(max_leaf_nodes)
         return cs

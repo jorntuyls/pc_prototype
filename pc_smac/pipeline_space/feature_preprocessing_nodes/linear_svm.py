@@ -110,7 +110,7 @@ class LibLinear_Preprocessor(PreprocessingNode):
         penalty = cs.add_hyperparameter(Constant("penalty", "l1"))
         loss = cs.add_hyperparameter(CategoricalHyperparameter(
             "loss", ["hinge", "squared_hinge"], default="squared_hinge"))
-        dual = cs.add_hyperparameter(Constant("dual", "False"))
+        #dual = cs.add_hyperparameter(Constant("dual", "False"))
         # This is set ad-hoc
         tol = cs.add_hyperparameter(UniformFloatHyperparameter(
             "tol", 1e-5, 1e-1, default=1e-4, log=True))
@@ -119,8 +119,8 @@ class LibLinear_Preprocessor(PreprocessingNode):
         multi_class = cs.add_hyperparameter(Constant("multi_class", "ovr"))
         # These are set ad-hoc
         fit_intercept = cs.add_hyperparameter(Constant("fit_intercept", "True"))
-        intercept_scaling = cs.add_hyperparameter(Constant(
-            "intercept_scaling", 1))
+        #intercept_scaling = cs.add_hyperparameter(Constant(
+        #    "intercept_scaling", 1))
 
         penalty_and_loss = ForbiddenAndConjunction(
             ForbiddenEqualsClause(penalty, "l1"),
