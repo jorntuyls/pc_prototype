@@ -51,6 +51,9 @@ class Node(object):
 class PreprocessingNode(Node):
     __metaclass__ = abc.ABCMeta
 
+    def __init__(self):
+        self.preprocessor = None
+
     @abc.abstractmethod
     def fit(self, X, Y=None):
         raise NotImplementedError()

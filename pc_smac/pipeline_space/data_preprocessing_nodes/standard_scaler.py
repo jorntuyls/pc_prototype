@@ -1,22 +1,22 @@
-from ConfigSpace.configuration_space import ConfigurationSpace
-from ConfigSpace.hyperparameters import CategoricalHyperparameter
 
+from ConfigSpace.configuration_space import ConfigurationSpace
+
+from scipy import sparse
 
 from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
 from pc_smac.pc_smac.utils.constants import *
 
-class ImputationNode(Node):
+class StandardScalerNode(Node):
 
     def __init__(self):
-        self.name = "imputation"
+        self.name = "standard_scaler"
         self.type = "data_preprocessor"
-        self.hyperparameters = {"strategy": "mean"}
-        self.algorithm = Imputation
+        self.hyperparameters = {}
+        self.algorithm = StandardScaler
 
     def initialize_algorithm(self, hyperparameters):
-        hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        imputation = self.algorithm(strategy=hyperparameters["strategy"])
-        return (self.get_full_name(), imputation)
+        standard_scaler = self.algorithm(random_state=None)
+        return (self.get_full_name(), standard_scaler)
 
     def get_hyperparameter_search_space(self, dataset_properties=None):
         return self.algorithm.get_hyperparameter_search_space(dataset_properties=dataset_properties)
@@ -25,17 +25,9 @@ class ImputationNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class Imputation(PreprocessingNode):
-    def __init__(self, strategy='median', random_state=None):
-        # TODO pay attention to the cases when a copy is made (CSR matrices)
-        self.strategy = strategy
-
+class Rescaling(object):
     def fit(self, X, y=None):
-        import sklearn.preprocessing
-
-        self.preprocessor = sklearn.preprocessing.Imputer(
-            strategy=self.strategy, copy=False)
-        self.preprocessor = self.preprocessor.fit(X)
+        self.preprocessor.fit(X)
         return self
 
     def transform(self, X):
@@ -44,11 +36,28 @@ class Imputation(PreprocessingNode):
         return self.preprocessor.transform(X)
 
     @staticmethod
+    def get_hyperparameter_search_space(dataset_properties=None):
+        cs = ConfigurationSpace()
+        return cs
+
+
+class StandardScaler(Rescaling, PreprocessingNode):
+    def __init__(self, random_state):
+        from sklearn.preprocessing import StandardScaler
+        self.preprocessor = StandardScaler()
+
+    def fit(self, X, y=None):
+        if sparse.isspmatrix(X):
+            self.preprocessor.set_params(with_mean=False)
+
+        return super(StandardScaler, self).fit(X, y)
+
+    @staticmethod
     def get_properties(dataset_properties=None):
-        return {'shortname': 'Imputation',
-                'name': 'Imputation',
-                'handles_missing_values': True,
-                'handles_nominal_values': True,
+        return {'shortname': 'StandardScaler',
+                'name': 'StandardScaler',
+                'handles_missing_values': False,
+                'handles_nominal_values': False,
                 'handles_numerical_features': True,
                 'prefers_data_scaled': False,
                 'prefers_data_normalized': False,
@@ -60,15 +69,9 @@ class Imputation(PreprocessingNode):
                 # TODO find out of this is right!
                 'handles_sparse': True,
                 'handles_dense': True,
-                'input': (DENSE, SPARSE, UNSIGNED_DATA),
+                'input': (SPARSE, DENSE, UNSIGNED_DATA),
                 'output': (INPUT,),
                 'preferred_dtype': None}
 
-    @staticmethod
-    def get_hyperparameter_search_space(dataset_properties=None):
-        # TODO add replace by zero!
-        strategy = CategoricalHyperparameter(
-            "strategy", ["mean", "median", "most_frequent"], default="mean")
-        cs = ConfigurationSpace()
-        cs.add_hyperparameter(strategy)
-        return cs
+
+

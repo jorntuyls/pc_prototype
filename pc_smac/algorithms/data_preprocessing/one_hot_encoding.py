@@ -8,50 +8,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 from sklearn.utils import check_array
 
-from pc_smac.pc_smac.algorithms.algorithm_base import PreprocessingAlgorithm
-
-class OneHotEncoder(PreprocessingAlgorithm):
-    def __init__(self, use_minimum_fraction=True, minimum_fraction=0.01,
-                 categorical_features=None, random_state=None):
-        # TODO pay attention to the cases when a copy is made (CSR matrices)
-        self.use_minimum_fraction = use_minimum_fraction
-        self.minimum_fraction = minimum_fraction
-        self.categorical_features = categorical_features
-
-    def fit(self, X, y=None):
-        if self.use_minimum_fraction is None or \
-                self.use_minimum_fraction is False or \
-                (isinstance(self.use_minimum_fraction, str) and
-                 self.use_minimum_fraction.lower() == 'false'):
-            self.minimum_fraction = None
-        else:
-            self.minimum_fraction = float(self.minimum_fraction)
-
-        if self.categorical_features is None:
-            categorical_features = []
-        else:
-            categorical_features = self.categorical_features
-
-        self.preprocessor = OneHotEncoderImplementation(minimum_fraction=self.minimum_fraction,
-                           categorical_features=categorical_features)
-
-        self.preprocessor = self.preprocessor.fit(X)
-        return self
-
-    def transform(self, X):
-        import scipy.sparse
-
-        is_sparse = scipy.sparse.issparse(X)
-        if self.preprocessor is None:
-            raise NotImplementedError()
-        X = self.preprocessor.transform(X)
-        if is_sparse:
-            return X
-        elif isinstance(X, np.ndarray):
-            return X
-        else:
-            return X.toarray()
-
 
 
 

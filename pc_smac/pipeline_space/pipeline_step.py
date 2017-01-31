@@ -1,5 +1,10 @@
 
 
+from pc_smac.pc_smac.pipeline_space.data_preprocessing_nodes.one_hot_encoding import OneHotEncodeingNode
+from pc_smac.pc_smac.pipeline_space.data_preprocessing_nodes.imputation import ImputationNode
+from pc_smac.pc_smac.pipeline_space.data_preprocessing_nodes.balancing_node import BalancingNode
+from pc_smac.pc_smac.pipeline_space.data_preprocessing_nodes.standard_scaler import StandardScalerNode
+
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.extra_rand_trees import ExtraTreesNode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.fast_ica import FastICANode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.feature_agglomeration import FeatureAgglomerationNode
@@ -13,6 +18,7 @@ from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.select_rates imp
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.no_preprocessing import NoPreprocessingNode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.pca import PcaNode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
+
 from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
 
 
@@ -47,9 +53,35 @@ class PipelineStep(object):
         return temp[0]
 
 
+class OneHotEncodingStep(PipelineStep):
 
+    def __init__(self):
+        name = "one_hot_encoder"
+        nodes = [OneHotEncodeingNode()]
+        super(OneHotEncodingStep, self).__init__(name, nodes)
 
-class TestPreprocessingStep(PipelineStep):
+class ImputationStep(PipelineStep):
+
+    def __init__(self):
+        name = "imputation"
+        nodes = [ImputationNode()]
+        super(ImputationStep, self).__init__(name, nodes)
+
+class RescalingStep(PipelineStep):
+
+    def __init__(self):
+        name = "rescaling"
+        nodes = [StandardScalerNode()]
+        super(RescalingStep, self).__init__(name, nodes)
+
+class BalancingStep(PipelineStep):
+
+    def __init__(self):
+        name = "balancing"
+        nodes = [BalancingNode()]
+        super(BalancingStep, self).__init__(name, nodes)
+
+class PreprocessingStep(PipelineStep):
 
     def __init__(self):
         name = "feature_preprocessor"
@@ -66,11 +98,11 @@ class TestPreprocessingStep(PipelineStep):
                  RandomTreesEmbeddingNode(),
                  SelectPercentileNode(),
                  SelectRatesNode()]
-        super(TestPreprocessingStep, self).__init__(name, nodes)
+        super(PreprocessingStep, self).__init__(name, nodes)
 
-class TestClassificationStep(PipelineStep):
+class ClassificationStep(PipelineStep):
 
     def __init__(self):
         name = "classifier"
         nodes = [SGDNode()]
-        super(TestClassificationStep, self).__init__(name, nodes)
+        super(ClassificationStep, self).__init__(name, nodes)

@@ -7,7 +7,8 @@ import time
 from pc_smac.pc_smac.utils.data_loader import DataLoader
 from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
 from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
-from pc_smac.pc_smac.pipeline_space.pipeline_step import TestPreprocessingStep, TestClassificationStep
+from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, ImputationStep, RescalingStep, \
+    BalancingStep, PreprocessingStep, ClassificationStep
 from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
 from pc_smac.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
@@ -159,8 +160,12 @@ class Driver:
 
     def _build_pipeline_space(self):
         ps = PipelineSpace()
-        tp = TestPreprocessingStep()
-        tc = TestClassificationStep()
-        ps.add_pipeline_steps([tp, tc])
+        o_s = OneHotEncodingStep()
+        i_s = ImputationStep()
+        r_s = RescalingStep()
+        b_s = BalancingStep()
+        p_s = PreprocessingStep()
+        c_s = ClassificationStep()
+        ps.add_pipeline_steps([o_s, i_s, r_s, b_s, p_s, c_s])
         return ps
 
