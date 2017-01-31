@@ -13,7 +13,7 @@ class NoPreprocessingNode(Node):
         self.algorithm = NoPreprocessing
 
     def initialize_algorithm(self, hyperparameters):
-        return (self.get_name(), self.algorithm(None))
+        return (self.get_full_name(), self.algorithm(None))
 
     def get_hyperparameter_search_space(self, dataset_properties=None):
         return self.algorithm.get_hyperparameter_search_space(dataset_properties=dataset_properties)
