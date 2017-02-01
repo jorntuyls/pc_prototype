@@ -89,21 +89,28 @@ class SelectConfiguration(object):
             else:
                 num_configurations_by_local_search = 10
 
-        # initial SLS by incumbent +
-        # best configuration from next_configs_by_random_search_sorted
-        configs_previous_runs = self.runhistory.get_configs_from_previous_runs()
-        previous_configs_sorted = self._get_acq_values_sorted(configs_previous_runs)
-        num_configs_previous_runs_local_search = min(len(configs_previous_runs), num_configurations_by_local_search - 1)
-        num_configs_random_search_local_search = max(0, (
-        num_configurations_by_local_search - 1) - num_configs_previous_runs_local_search)
-
+        # initiate local search with best configurations from previous runs
+        configs_previous_runs = self.runhistory.get_all_configs()
+        configs_previous_runs_sorted = self._sort_configs_by_acq_value(configs_previous_runs)
+        num_configs_local_search = min(len(configs_previous_runs_sorted), num_configurations_by_local_search)
         next_configs_by_local_search = \
             self._get_next_by_local_search(
-                [incumbent]
-                + list(map(lambda x: x[1],
-                           previous_configs_sorted[:num_configs_previous_runs_local_search]))
-                + list(map(lambda x: x[1],
-                           next_configs_by_random_search_sorted[:num_configs_random_search_local_search])))
+                list(map(lambda x: x[1],
+                         configs_previous_runs_sorted[:num_configs_local_search])))
+
+        # configs_previous_runs = self.runhistory.get_configs_from_previous_runs()
+        # previous_configs_sorted = self._sort_configs_by_acq_value(configs_previous_runs)
+        # num_configs_previous_runs_local_search = min(len(configs_previous_runs), num_configurations_by_local_search - 1)
+        # num_configs_random_search_local_search = max(0, (
+        # num_configurations_by_local_search - 1) - num_configs_previous_runs_local_search)
+        #
+        # next_configs_by_local_search = \
+        #     self._get_next_by_local_search(
+        #         [incumbent]
+        #         + list(map(lambda x: x[1],
+        #                    previous_configs_sorted[:num_configs_previous_runs_local_search]))
+        #         + list(map(lambda x: x[1],
+        #                    next_configs_by_random_search_sorted[:num_configs_random_search_local_search])))
         #print("CONFIGS: {}".format(next_configs_by_local_search))
 
         # next_configs_by_local_search = \
@@ -151,7 +158,7 @@ class SelectConfiguration(object):
         if _sorted:
             for i in range(len(rand_configs)):
                 rand_configs[i].origin = 'Random Search (Sorted)'
-            return self._get_acq_values_sorted(rand_configs)
+            return self._sort_configs_by_acq_value(rand_configs)
         else:
             for i in range(len(rand_configs)):
                 rand_configs[i].origin = 'Random Search'
@@ -194,7 +201,7 @@ class SelectConfiguration(object):
     def _optimize_acq(self, start_point):
         return self.acq_optimizer.maximize(start_point)
 
-    def _get_acq_values_sorted(self, configs):
+    def _sort_configs_by_acq_value(self, configs):
 
         imputed_configs = map(ConfigSpace.util.impute_inactive_values,
                               configs)
@@ -258,7 +265,7 @@ class CachedSelectConfiguration(SelectConfiguration):
     def _optimize_acq(self, start_point):
         return self.acq_optimizer.maximize(start_point, self.runhistory.get_cached_configurations())
 
-    def _get_acq_values_sorted(self, configs):
+    def _sort_configs_by_acq_value(self, configs):
         caching_discounts = self._compute_caching_discounts(configs, self.runhistory.get_cached_configurations())
 
         imputed_configs = map(ConfigSpace.util.impute_inactive_values,

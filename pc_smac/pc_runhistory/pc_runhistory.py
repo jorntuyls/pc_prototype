@@ -19,5 +19,5 @@ class PCRunHistory(RunHistory):
     def get_cached_configurations(self):
         return self.cached_configurations
 
-    def get_configs_from_previous_runs(self):
+    def get_all_configs(self):
         return list(self.config_ids.keys())
