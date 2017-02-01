@@ -5,7 +5,7 @@
 
 import os
 import re
-
+import scipy
 import numpy as np
 
 from pc_smac.pc_smac.utils.constants import MULTILABEL_CLASSIFICATION, \
@@ -43,6 +43,7 @@ class DataLoader:
     #### Internal methods ####
 
     def _load_data(self, encode_labels=False, max_memory_in_mb=1048576):
+        print(self.info)
         # apply memory limit here for really large training sets
         Xtr = self._load_data_file(self.data_file_train,
             self.info['train_num'],
@@ -112,6 +113,7 @@ class DataLoader:
             'sparse_binary': data_binary_sparse
         }
 
+        print(self.info['format'])
         data = data_func[self.info['format']](filename, self.feat_type)
 
         # end = time.time()
@@ -154,9 +156,6 @@ class DataLoader:
     def _get_format_data(self, filename, info):
         """Get the data format directly from the data file (in case we do not
         have an info file)"""
-        # Default
-        info['format'] = 'dense'
-        info['is_sparse'] = 0
 
         if 'is_sparse' in info.keys():
             if info['is_sparse'] == 0:
@@ -177,6 +176,12 @@ class DataLoader:
                 for row in range(len(data)):
                     if len(data[row]) != nbr_columns:
                         info['format'] = 'sparse_binary'
+
+        if not 'format' in info.keys():
+            # default
+            info['format'] = 'dense'
+            info['is_sparse'] = 0
+
         return info
 
     def _load_type(self, filename):
