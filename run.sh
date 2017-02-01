@@ -1,2 +1,2 @@
 cd ..
-python -m pc_smac.run -a=pceips -w=3600 -r=1 -c=10 -m=4000 -l=/Users/jorntuyls/Documents/workspaces/thesis/data/1049_bac -s=pceips -o=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output -cd=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/cache -ds=2000
+python -m pc_smac.run -a=ei -w=3600 -r=1 -c=10 -m=4000 -l=/Users/jorntuyls/Documents/workspaces/thesis/data/293_bac -s=ei -o=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output -cd=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/cache
