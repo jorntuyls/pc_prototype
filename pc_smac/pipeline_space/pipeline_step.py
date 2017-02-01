@@ -85,6 +85,7 @@ class PreprocessingStep(PipelineStep):
 
     def __init__(self):
         name = "feature_preprocessor"
+        #nodes = [KernelPcaNode()]
         nodes = [ExtraTreesNode(),
                  FastICANode(),
                  FeatureAgglomerationNode(),
