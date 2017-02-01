@@ -14,6 +14,9 @@ class PipelineSpace(object):
     def get_pipeline_steps(self):
         return self.pipeline_steps
 
+    def get_pipeline_steps_names_and_objects(self):
+        return [(ps.get_name(), ps) for ps in self.get_pipeline_steps()]
+
     def get_pipeline_step_names(self):
         return [ps.get_name() for ps in self.get_pipeline_steps()]
 

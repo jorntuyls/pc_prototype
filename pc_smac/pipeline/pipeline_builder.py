@@ -26,12 +26,12 @@ class PipelineBuilder:
         pipeline_steps = self.pipeline_space.get_pipeline_step_names()
         concrete_steps = []
         for ps in pipeline_steps:
-            algo_name = config[ps]
+            algo_name = config[ps + ':__choice__']
             hyperparameters = {}
             for hp_name in config.keys():
                 splt_hp_name = hp_name.split(":")
                 # if parameter belongs to parameter space of algo
-                if splt_hp_name[0] == algo_name and len(splt_hp_name) == 2:
+                if splt_hp_name[0] == algo_name and splt_hp_name[1] != '__choice__':
                     hyperparameters[splt_hp_name[1]] = config[hp_name]
             step = self.pipeline_space.initialize_algorithm(ps, algo_name, hyperparameters)
             concrete_steps.append(step)

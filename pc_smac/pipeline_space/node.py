@@ -25,11 +25,11 @@ class Node(object):
 
     @abc.abstractmethod
     def initialize_algorithm(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_hyperparameter_space(self):
-        raise NotImplementedError
+    def get_hyperparameter_search_space(self, dataset_properties=None):
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def get_properties(dataset_properties=None):
@@ -46,5 +46,19 @@ class Node(object):
         -------
         dict
         """
+        raise NotImplementedError()
+
+class PreprocessingNode(Node):
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        self.preprocessor = None
+
+    @abc.abstractmethod
+    def fit(self, X, Y=None):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def transform(self, X):
         raise NotImplementedError()
 

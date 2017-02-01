@@ -7,13 +7,16 @@ import time
 from pc_smac.pc_smac.utils.data_loader import DataLoader
 from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
 from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
-from pc_smac.pc_smac.pipeline_space.pipeline_step import TestPreprocessingStep, TestClassificationStep
+from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, ImputationStep, RescalingStep, \
+    BalancingStep, PreprocessingStep, ClassificationStep
 from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
 from pc_smac.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 from pc_smac.pc_smac.utils.io_utils import save_trajectory_for_plotting
 from pc_smac.pc_smac.utils.statistics import Statistics
 from smac.scenario.scenario import Scenario
+
+from pc_smac.pc_smac.pipeline_auto_sklearn import SimpleClassificationPipeline
 
 from smac.smbo.objective import average_cost
 from smac.utils.io.traj_logging import TrajLogger
@@ -26,9 +29,12 @@ class Driver:
         self.data_loader = DataLoader(data_path)
 
         self.pipeline_space = self._build_pipeline_space()
-
         self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
         self.config_space = self.cs_builder.build_config_space()
+
+        # self.pipeline = SimpleClassificationPipeline()
+        # self.config_space = self.pipeline.get_hyperparameter_search_space()
+        # print(self.config_space)
 
         self.output_dir = output_dir if output_dir else os.path.dirname(os.path.abspath(__file__)) + "/output/"
         if not os.path.exists(self.output_dir):
@@ -173,9 +179,13 @@ class Driver:
 
     def _build_pipeline_space(self):
         ps = PipelineSpace()
-        tp = TestPreprocessingStep()
-        tc = TestClassificationStep()
-        ps.add_pipeline_steps([tp, tc])
+        o_s = OneHotEncodingStep()
+        i_s = ImputationStep()
+        r_s = RescalingStep()
+        b_s = BalancingStep()
+        p_s = PreprocessingStep()
+        c_s = ClassificationStep()
+        ps.add_pipeline_steps([o_s, i_s, r_s, b_s, p_s, c_s])
         return ps
 
 if __name__ == "__main__":
