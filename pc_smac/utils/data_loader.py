@@ -5,7 +5,7 @@
 
 import os
 import re
-
+import scipy
 import numpy as np
 
 from pc_smac.pc_smac.utils.constants import MULTILABEL_CLASSIFICATION, \
@@ -155,8 +155,8 @@ class DataLoader:
         """Get the data format directly from the data file (in case we do not
         have an info file)"""
         # Default
-        info['format'] = 'dense'
-        info['is_sparse'] = 0
+        #info['format'] = 'dense'
+        #info['is_sparse'] = 0
 
         if 'is_sparse' in info.keys():
             if info['is_sparse'] == 0:
@@ -177,6 +177,12 @@ class DataLoader:
                 for row in range(len(data)):
                     if len(data[row]) != nbr_columns:
                         info['format'] = 'sparse_binary'
+
+        if not 'format' in info.keys():
+            # default
+            info['format'] = 'dense'
+            info['is_sparse'] = 0
+
         return info
 
     def _load_type(self, filename):
