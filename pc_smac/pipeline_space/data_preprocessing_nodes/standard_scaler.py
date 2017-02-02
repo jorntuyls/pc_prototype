@@ -10,7 +10,7 @@ class StandardScalerNode(Node):
 
     def __init__(self):
         self.name = "standard_scaler"
-        self.type = "data_preprocessor"
+        self.type = "rescaling"
         self.hyperparameters = {}
         self.algorithm = StandardScaler
 
@@ -25,7 +25,11 @@ class StandardScalerNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class Rescaling(object):
+class Rescaling(PreprocessingNode):
+
+    def get_params(self, deep=True):
+        return {}
+
     def fit(self, X, y=None):
         self.preprocessor.fit(X)
         return self
@@ -41,16 +45,27 @@ class Rescaling(object):
         return cs
 
 
-class StandardScaler(Rescaling, PreprocessingNode):
-    def __init__(self, random_state):
-        from sklearn.preprocessing import StandardScaler
-        self.preprocessor = StandardScaler()
+class StandardScaler(PreprocessingNode):
+    def __init__(self, random_state=None):
+        self.random_state = random_state
+
+    def get_params(self, deep=True):
+        return {
+            'random_state': self.random_state
+        }
 
     def fit(self, X, y=None):
+        from sklearn.preprocessing import StandardScaler
+        self.preprocessor = StandardScaler()
         if sparse.isspmatrix(X):
             self.preprocessor.set_params(with_mean=False)
 
-        return super(StandardScaler, self).fit(X, y)
+        return self.preprocessor.fit(X, y)
+
+    def transform(self, X):
+        if self.preprocessor is None:
+            raise NotImplementedError()
+        return self.preprocessor.transform(X)
 
     @staticmethod
     def get_properties(dataset_properties=None):
@@ -72,6 +87,11 @@ class StandardScaler(Rescaling, PreprocessingNode):
                 'input': (SPARSE, DENSE, UNSIGNED_DATA),
                 'output': (INPUT,),
                 'preferred_dtype': None}
+
+    @staticmethod
+    def get_hyperparameter_search_space(dataset_properties=None):
+        cs = ConfigurationSpace()
+        return cs
 
 
 

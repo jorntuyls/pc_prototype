@@ -62,8 +62,6 @@ class PipelineRunner(object):
 
         self.runtime_timing = {}
         additional_info = {}
-        status = StatusType.SUCCESS
-        score = 0
 
         pipeline = self.pipeline_builder.build_pipeline(config)
 
@@ -103,7 +101,7 @@ class PipelineRunner(object):
 
         # Calculate score and total runtime
         runtime = time.time() - start_timer
-        print("cost: {}, time: {}, status: {}".format(cost, runtime, status))
+        print("cost: {}, time: {}".format(cost, runtime))
 
         # Add information of this run to statistics
         run_information = {
@@ -112,6 +110,7 @@ class PipelineRunner(object):
             'pipeline_steps_timing': self.runtime_timing
         }
         self.statistics.add_run(config.get_dictionary(), run_information)
+        print("RUNS: {}".format(self.statistics.get_run_trajectory()))
 
         print("stop tae_runner")
         return cost, additional_info
@@ -152,8 +151,6 @@ class CachedPipelineRunner(PipelineRunner):
 
         self.runtime_timing = {}
         additional_info = {}
-        status = StatusType.SUCCESS
-        score = 0
 
         pipeline = self.pipeline_builder.build_pipeline(config)
 
@@ -202,12 +199,12 @@ class CachedPipelineRunner(PipelineRunner):
         # Get reduction in runtime for cached configuration if it was not already cached
         # TODO insert this
         # if pipeline.pipeline_info.get_cache_hits()[1] == 0:
-        t_rc = self._get_pipeline_steps_timing(self.runtime_timing, config)
+        t_rc = self._get_pipeline_steps_timing(self.transformer_runtime_timing, config)
         additional_info['t_rc'] = t_rc
 
         # Calculate score and total runtime
         runtime = time.time() - start_timer
-        print("cost: {}, time: {}, status: {}".format(cost, runtime, status))
+        print("cost: {}, time: {}".format(cost, runtime))
         print("Total function evaluations: {}, cache hits: {}".format(self.cache_hits['total'],
                                                                       self.cache_hits['cache_hits']))
 
@@ -253,7 +250,8 @@ class CachedPipelineRunner(PipelineRunner):
             algo_name = splt_name[1]
             for hp in config.keys():
                 splt_hp = hp.split(":")
-                if hp == type or (len(splt_hp) == 2 and splt_hp[0] == algo_name):
+                if (splt_hp[0] == type and splt_hp[1] == '__choice__') \
+                        or (splt_hp[0] == type and splt_hp[1] == algo_name):
                     dict[hp] = config[hp]
             t_rc.append((dict, timing[name]))
 

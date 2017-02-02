@@ -15,6 +15,12 @@ class PipelineSpace(object):
         return self.pipeline_steps
 
     def get_pipeline_steps_names_and_objects(self):
+        """
+
+        Returns
+        -------
+            name for each pipeline step in this pipeline space (e.g. 'feature_preprocessor', 'classifier')
+        """
         return [(ps.get_name(), ps) for ps in self.get_pipeline_steps()]
 
     def get_pipeline_step_names(self):

@@ -148,7 +148,7 @@ class Driver:
         incumbent = self.smbo.run()
 
         # Save statistics
-        self.statistics.save()
+        # self.statistics.save()
 
         # Read trajectory files with incumbents and retrieve test performances
         self.trajectory = TrajLogger.read_traj_aclib_format(self.trajectory_path_json, self.config_space)
@@ -185,7 +185,7 @@ class Driver:
         b_s = BalancingStep()
         p_s = PreprocessingStep()
         c_s = ClassificationStep()
-        ps.add_pipeline_steps([o_s, i_s, r_s, b_s, p_s, c_s])
+        ps.add_pipeline_steps([p_s, c_s]) #[o_s, i_s, r_s, b_s, p_s, c_s])
         return ps
 
 if __name__ == "__main__":

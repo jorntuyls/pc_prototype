@@ -43,7 +43,6 @@ class DataLoader:
     #### Internal methods ####
 
     def _load_data(self, encode_labels=False, max_memory_in_mb=1048576):
-        print(self.info)
         # apply memory limit here for really large training sets
         Xtr = self._load_data_file(self.data_file_train,
             self.info['train_num'],
@@ -113,7 +112,6 @@ class DataLoader:
             'sparse_binary': data_binary_sparse
         }
 
-        print(self.info['format'])
         data = data_func[self.info['format']](filename, self.feat_type)
 
         # end = time.time()

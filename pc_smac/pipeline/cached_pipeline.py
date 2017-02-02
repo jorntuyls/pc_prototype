@@ -128,7 +128,7 @@ class CachedPipeline(Pipeline):
         FIT_SINGLE_TRANSFORM_EVALUATIONS += 1
 
         memory = self.memory
-        clone_transformer = clone(transform)
+        clone_transformer = transform # clone(transform)
         Xt, transform = memory.cache(_fit_transform_one)(
             clone_transformer, name,
             None, X, y,
@@ -143,6 +143,7 @@ def _fit_transform_one(transformer, name, weight, X, y,
                                **fit_params):
     global FIT_TRANSFORM_ONE_EVALUATIONS
     FIT_TRANSFORM_ONE_EVALUATIONS += 1
+    print("NO CACHE HIT")
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
     else:

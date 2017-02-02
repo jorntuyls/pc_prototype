@@ -23,7 +23,9 @@ class KernelPcaNode(Node):
         self.algorithm = KernelPCA
 
     def initialize_algorithm(self, hyperparameters):
+        print(hyperparameters)
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
+        print("HYPERPARAMETERS: {}".format(hyperparameters))
         kernel_pca = self.algorithm(n_components=hyperparameters["n_components"],
                                     kernel=hyperparameters["kernel"],
                                     degree=hyperparameters["degree"],
@@ -42,12 +44,24 @@ class KernelPcaNode(Node):
 class KernelPCA(PreprocessingNode):
     def __init__(self, n_components, kernel, degree=3, gamma=0.25, coef0=0.0,
                  random_state=None):
+
         self.n_components = int(n_components)
         self.kernel = kernel
         self.degree = int(degree)
         self.gamma = float(gamma)
         self.coef0 = float(coef0)
         self.random_state = random_state
+
+    # TODO Maybe not necessary, ony when cloning is enabled
+    def get_params(self, deep=True):
+        return {
+            'n_components': self.n_components,
+            'kernel': self.kernel,
+            'degree': self.degree,
+            'gamma': self.gamma,
+            'coef0': self.coef0,
+            'random_state': self.random_state
+        }
 
     def fit(self, X, Y=None):
         import scipy.sparse
@@ -57,6 +71,7 @@ class KernelPCA(PreprocessingNode):
             n_components=self.n_components, kernel=self.kernel,
             degree=self.degree, gamma=self.gamma, coef0=self.coef0,
             remove_zero_eig=True)
+
         if scipy.sparse.issparse(X):
             X = X.astype(np.float64)
         with warnings.catch_warnings():

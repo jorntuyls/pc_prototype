@@ -9,13 +9,13 @@ class ImputationNode(Node):
 
     def __init__(self):
         self.name = "imputation"
-        self.type = "data_preprocessor"
+        self.type = "imputation"
         self.hyperparameters = {"strategy": "mean"}
         self.algorithm = Imputation
 
     def initialize_algorithm(self, hyperparameters):
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        imputation = self.algorithm(strategy=hyperparameters["strategy"])
+        imputation = self.algorithm(strategy=self.hyperparameters["strategy"])
         return (self.get_full_name(), imputation)
 
     def get_hyperparameter_search_space(self, dataset_properties=None):
@@ -29,6 +29,11 @@ class Imputation(PreprocessingNode):
     def __init__(self, strategy='median', random_state=None):
         # TODO pay attention to the cases when a copy is made (CSR matrices)
         self.strategy = strategy
+
+    def get_params(self, deep):
+        return {
+            'strategy': self.strategy
+        }
 
     def fit(self, X, y=None):
         import sklearn.preprocessing

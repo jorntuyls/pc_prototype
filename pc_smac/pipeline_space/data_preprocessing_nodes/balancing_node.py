@@ -13,13 +13,13 @@ class BalancingNode(Node):
 
     def __init__(self):
         self.name = "balancing"
-        self.type = "data_preprocessor"
+        self.type = "balancing"
         self.hyperparameters = {"strategy": "none"}
         self.algorithm = Balancing
 
     def initialize_algorithm(self, hyperparameters):
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        balancing = self.algorithm(strategy=hyperparameters["strategy"])
+        balancing = self.algorithm(strategy=self.hyperparameters["strategy"])
         return (self.get_full_name(), balancing)
 
     def get_hyperparameter_search_space(self, dataset_properties=None):
@@ -33,6 +33,13 @@ class BalancingNode(Node):
 class Balancing(PreprocessingNode):
     def __init__(self, strategy='none', random_state=None):
         self.strategy = strategy
+        self.random_state = random_state
+
+    def get_params(self, deep=True):
+        return {
+            'strategy': self.strategy,
+            'random_state': self.random_state
+        }
 
     def fit(self, X, y=None):
         return self

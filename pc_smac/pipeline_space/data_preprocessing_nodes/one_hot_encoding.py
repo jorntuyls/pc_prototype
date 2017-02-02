@@ -13,14 +13,14 @@ class OneHotEncodeingNode(Node):
 
     def __init__(self):
         self.name = "one_hot_encoding"
-        self.type = "data_preprocessor"
+        self.type = "one_hot_encoder"
         self.hyperparameters = {"use_minimum_fraction": "True", "minimum_fraction": 0.01}
         self.algorithm = OneHotEncoder
 
     def initialize_algorithm(self, hyperparameters):
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        one_hot_encoder = self.algorithm(use_minimum_fraction=hyperparameters["use_minimum_fraction"],
-                                        minimum_fraction=hyperparameters["minimum_fraction"])
+        one_hot_encoder = self.algorithm(use_minimum_fraction=self.hyperparameters["use_minimum_fraction"],
+                                        minimum_fraction=self.hyperparameters["minimum_fraction"])
         return (self.get_full_name(), one_hot_encoder)
 
     def get_hyperparameter_search_space(self, dataset_properties=None):
@@ -37,6 +37,13 @@ class OneHotEncoder(PreprocessingNode):
         self.use_minimum_fraction = use_minimum_fraction
         self.minimum_fraction = minimum_fraction
         self.categorical_features = categorical_features
+
+    def get_params(self, deep=True):
+        return {
+            'use_minimum_fraction': self.use_minimum_fraction,
+            'minimum_fraction': self.minimum_fraction,
+            'categorical_features': self.categorical_features
+        }
 
     def fit(self, X, y=None):
         if self.use_minimum_fraction is None or \

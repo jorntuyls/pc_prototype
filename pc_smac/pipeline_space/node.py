@@ -61,4 +61,7 @@ class PreprocessingNode(Node):
     @abc.abstractmethod
     def transform(self, X):
         raise NotImplementedError()
+    @abc.abstractmethod
+    def get_params(self, deep=True):
+        pass
 

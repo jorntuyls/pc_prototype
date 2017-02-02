@@ -23,16 +23,19 @@ class PipelineBuilder:
             print(self.cachedir)
 
     def build_pipeline(self, config):
+        # pipeline_steps is a list of pipeline step names (e.g. feature_preprocessor, classifier)
         pipeline_steps = self.pipeline_space.get_pipeline_step_names()
         concrete_steps = []
         for ps in pipeline_steps:
+            # TODO Remove this hardcoded '__choice__'
             algo_name = config[ps + ':__choice__']
             hyperparameters = {}
             for hp_name in config.keys():
                 splt_hp_name = hp_name.split(":")
-                # if parameter belongs to parameter space of algo
-                if splt_hp_name[0] == algo_name and splt_hp_name[1] != '__choice__':
-                    hyperparameters[splt_hp_name[1]] = config[hp_name]
+                # the hyperparameters we are interested in are of the format:
+                #   'pipelines_step_name:algorithm_name:hyperparameter'
+                if splt_hp_name[0] == ps and splt_hp_name[1] == algo_name:
+                    hyperparameters[splt_hp_name[2]] = config[hp_name]
             step = self.pipeline_space.initialize_algorithm(ps, algo_name, hyperparameters)
             concrete_steps.append(step)
 
