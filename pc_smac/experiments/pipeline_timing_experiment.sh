@@ -1,2 +1,2 @@
 cd /Users/jorntuyls/Documents/workspaces/thesis
-python -m pc_smac.pc_smac.experiments.pipeline_timing_experiment -n=1 -s=1 -ds=2000 -d=554_bac -p=kernel_pca -l=/Users/jorntuyls/Documents/workspaces/thesis/data -o=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output -cd=/Users/jorntuyls/Documents/workspaces/thesis/data
+python -m pc_smac.pc_smac.experiments.pipeline_timing_experiment -n=1 -s=1 -ds=2000 -d=554_bac -p=kernel_pca -l=/Users/jorntuyls/Documents/workspaces/thesis/data -o=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output -cd=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/cache

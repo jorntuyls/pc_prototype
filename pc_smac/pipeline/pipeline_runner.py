@@ -110,7 +110,6 @@ class PipelineRunner(object):
             'pipeline_steps_timing': self.runtime_timing
         }
         self.statistics.add_run(config.get_dictionary(), run_information)
-        print("RUNS: {}".format(self.statistics.get_run_trajectory()))
 
         print("stop tae_runner")
         return cost, additional_info

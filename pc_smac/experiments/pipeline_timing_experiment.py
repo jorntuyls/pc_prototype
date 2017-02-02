@@ -123,64 +123,64 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         statistics.start_timer()
 
         # Run pipeline
-        pipeline_runner.start(config=configs[i])
+        pipeline_runner.run(config=configs[i], instance=None, seed=None)
 
         # Save statistics
         #statistics.save()
 
 
-        # ## Run with caching enabled first time ##
-        # new_stamp = stamp + "_caching_config_run_1"
-        # info = {
-        #     'stamp': new_stamp,
-        #     'caching': True,
-        #     'cache_directory': cache_directory,
-        #     'downsampling': downsampling
-        # }
-        # statistics = Statistics(new_stamp, output_dir,
-        #                         information=info)
-        # # Build runhistory
-        # runhistory = PCRunHistory(average_cost)
-        #
-        # # Build pipeline runner
-        # cached_pipeline_runner = CachedPipelineRunner(data, pipeline_space, runhistory, statistics,
-        #                                        cache_directory=cache_directory,
-        #                                        downsampling=downsampling)
-        # # Start timer
-        # statistics.start_timer()
-        #
-        # # Run pipeline
-        # cached_pipeline_runner.start(config=configs[i])
-        #
-        # # Save statistics
-        # #statistics.save()
-        #
-        #
-        # ## Run with caching enabled second time ##
-        # new_stamp = stamp + "_caching_config_run_2"
-        # info = {
-        #     'stamp': new_stamp,
-        #     'caching': True,
-        #     'cache_directory': cache_directory,
-        #     'downsampling': downsampling
-        # }
-        # statistics = Statistics(new_stamp, output_dir,
-        #                         information=info)
-        #
-        # # Give pipelinerunner new statistics object
-        # cached_pipeline_runner.update_statistics(statistics)
-        #
-        # # Start timer
-        # statistics.start_timer()
-        #
-        # # Run pipeline
-        # cached_pipeline_runner.start(config=configs[i])
-        #
-        # # clean cache
-        # cached_pipeline_runner.clean_cache()
-        #
-        # # Save statistics
-        # #statistics.save()
+        ## Run with caching enabled first time ##
+        new_stamp = stamp + "_caching_config_run_1"
+        info = {
+            'stamp': new_stamp,
+            'caching': True,
+            'cache_directory': cache_directory,
+            'downsampling': downsampling
+        }
+        statistics = Statistics(new_stamp, output_dir,
+                                information=info)
+        # Build runhistory
+        runhistory = PCRunHistory(average_cost)
+
+        # Build pipeline runner
+        cached_pipeline_runner = CachedPipelineRunner(data, pipeline_space, runhistory, statistics,
+                                               cache_directory=cache_directory,
+                                               downsampling=downsampling)
+        # Start timer
+        statistics.start_timer()
+
+        # Run pipeline
+        cached_pipeline_runner.run(config=configs[i], instance=None, seed=None)
+
+        # Save statistics
+        #statistics.save()
+
+
+        ## Run with caching enabled second time ##
+        new_stamp = stamp + "_caching_config_run_2"
+        info = {
+            'stamp': new_stamp,
+            'caching': True,
+            'cache_directory': cache_directory,
+            'downsampling': downsampling
+        }
+        statistics = Statistics(new_stamp, output_dir,
+                                information=info)
+
+        # Give pipelinerunner new statistics object
+        cached_pipeline_runner.update_statistics(statistics)
+
+        # Start timer
+        statistics.start_timer()
+
+        # Run pipeline
+        cached_pipeline_runner.run(config=configs[i], instance=None, seed=None)
+
+        # clean cache
+        cached_pipeline_runner.clean_cache()
+
+        # Save statistics
+        #statistics.save()
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
