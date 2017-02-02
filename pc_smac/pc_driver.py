@@ -16,8 +16,6 @@ from pc_smac.pc_smac.utils.io_utils import save_trajectory_for_plotting
 from pc_smac.pc_smac.utils.statistics import Statistics
 from smac.scenario.scenario import Scenario
 
-from pc_smac.pc_smac.pipeline_auto_sklearn import SimpleClassificationPipeline
-
 from smac.smbo.objective import average_cost
 from smac.utils.io.traj_logging import TrajLogger
 from smac.tae.execute_func import ExecuteTAFuncDict
