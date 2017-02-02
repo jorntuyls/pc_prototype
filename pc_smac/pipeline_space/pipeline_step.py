@@ -85,20 +85,20 @@ class PreprocessingStep(PipelineStep):
 
     def __init__(self):
         name = "feature_preprocessor"
-        nodes = [KernelPcaNode()]
-        # nodes = [ExtraTreesNode(),
-        #          FastICANode(),
-        #          FeatureAgglomerationNode(),
-        #          KernelPcaNode(),
-        #          RandomKitchenSinksNode(),
-        #          LinearSVMNode(),
-        #          NoPreprocessingNode(),
-        #          NystroemSamplerNode(),
-        #          PcaNode(),
-        #          PolynomialFeaturesNode(),
-        #          RandomTreesEmbeddingNode(),
-        #          SelectPercentileNode(),
-        #          SelectRatesNode()]
+        #nodes = [KernelPcaNode()]
+        nodes = [ExtraTreesNode(),
+                 FastICANode(),
+                 FeatureAgglomerationNode(),
+                 KernelPcaNode(),
+                 RandomKitchenSinksNode(),
+                 LinearSVMNode(),
+                 NoPreprocessingNode(),
+                 NystroemSamplerNode(),
+                 PcaNode(),
+                 PolynomialFeaturesNode(),
+                 RandomTreesEmbeddingNode(),
+                 SelectPercentileNode(),
+                 SelectRatesNode()]
         super(PreprocessingStep, self).__init__(name, nodes)
 
 class ClassificationStep(PipelineStep):
