@@ -42,6 +42,10 @@ class Driver:
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
+        # Check if cache_directory exists
+        if cache_directory and not os.path.exists(cache_directory):
+            os.makedirs(cache_directory)
+
         # Load data
         self.data = self.data_loader.get_data()
 
