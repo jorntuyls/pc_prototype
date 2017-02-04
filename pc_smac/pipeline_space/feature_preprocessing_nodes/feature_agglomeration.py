@@ -8,7 +8,7 @@ from ConfigSpace.forbidden import ForbiddenInClause, \
     ForbiddenAndConjunction, ForbiddenEqualsClause
 from ConfigSpace.conditions import EqualsCondition, InCondition
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class FeatureAgglomerationNode(Node):
@@ -36,7 +36,7 @@ class FeatureAgglomerationNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class FeatureAgglomeration(PreprocessingNode):
+class FeatureAgglomeration(PreprocessingAlgorithm):
     def __init__(self, n_clusters, affinity, linkage, pooling_func,
         random_state=None):
         self.n_clusters = int(n_clusters)

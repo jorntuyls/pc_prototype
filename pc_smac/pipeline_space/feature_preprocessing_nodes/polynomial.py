@@ -6,7 +6,7 @@ from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
     UniformIntegerHyperparameter, CategoricalHyperparameter
 
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class PolynomialFeaturesNode(Node):
@@ -32,7 +32,7 @@ class PolynomialFeaturesNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class PolynomialFeatures(PreprocessingNode):
+class PolynomialFeatures(PreprocessingAlgorithm):
     def __init__(self, degree, interaction_only, include_bias, random_state=None):
         self.degree = int(degree)
         self.interaction_only = interaction_only.lower() == 'true'

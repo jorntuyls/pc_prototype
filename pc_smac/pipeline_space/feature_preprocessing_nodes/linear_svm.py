@@ -6,7 +6,7 @@ from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
 from ConfigSpace.forbidden import ForbiddenEqualsClause, \
     ForbiddenAndConjunction
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class LinearSVMNode(Node):
@@ -38,7 +38,7 @@ class LinearSVMNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class LibLinear_Preprocessor(PreprocessingNode):
+class LibLinear_Preprocessor(PreprocessingAlgorithm):
     # Liblinear is not deterministic as it uses a RNG inside
     def __init__(self, penalty, loss, dual, tol, C, multi_class,
                  fit_intercept, intercept_scaling, class_weight=None,

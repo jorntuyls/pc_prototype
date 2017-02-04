@@ -10,7 +10,7 @@ from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
     UnParametrizedHyperparameter
 from ConfigSpace.conditions import EqualsCondition, InCondition
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class KernelPcaNode(Node):
@@ -41,7 +41,7 @@ class KernelPcaNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class KernelPCA(PreprocessingNode):
+class KernelPCA(PreprocessingAlgorithm):
     def __init__(self, n_components, kernel, degree=3, gamma=0.25, coef0=0.0,
                  random_state=None):
 

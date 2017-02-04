@@ -5,7 +5,7 @@ from ConfigSpace.configuration_space import ConfigurationSpace
 from ConfigSpace.hyperparameters import CategoricalHyperparameter
 
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 
@@ -30,7 +30,7 @@ class BalancingNode(Node):
 
 
 
-class Balancing(PreprocessingNode):
+class Balancing(PreprocessingAlgorithm):
     def __init__(self, strategy='none', random_state=None):
         self.strategy = strategy
         self.random_state = random_state

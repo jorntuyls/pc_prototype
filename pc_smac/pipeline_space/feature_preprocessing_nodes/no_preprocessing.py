@@ -1,7 +1,7 @@
 
 from ConfigSpace.configuration_space import ConfigurationSpace
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class NoPreprocessingNode(Node):
@@ -22,7 +22,7 @@ class NoPreprocessingNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class NoPreprocessing(PreprocessingNode):
+class NoPreprocessing(PreprocessingAlgorithm):
 
     def __init__(self, random_state):
         """ This preprocessors does not change the data """

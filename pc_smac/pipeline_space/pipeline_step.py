@@ -20,6 +20,8 @@ from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.pca import PcaNo
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
 
 from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.random_forest import RandomForestNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.gradient_boosting import GradientBoostingNode
 
 
 class PipelineStep(object):
@@ -105,5 +107,8 @@ class ClassificationStep(PipelineStep):
 
     def __init__(self):
         name = "classifier"
-        nodes = [SGDNode()]
+        #nodes = [GradientBoostingNode()]
+        nodes = [SGDNode(),
+                 RandomForestNode(),
+                 GradientBoostingNode()]
         super(ClassificationStep, self).__init__(name, nodes)

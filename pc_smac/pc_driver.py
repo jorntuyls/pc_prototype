@@ -12,7 +12,6 @@ from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, Imp
 from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
 from pc_smac.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
-from pc_smac.pc_smac.utils.io_utils import save_trajectory_for_plotting
 from pc_smac.pc_smac.utils.statistics import Statistics
 from smac.scenario.scenario import Scenario
 

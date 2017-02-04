@@ -2,7 +2,7 @@ from ConfigSpace.configuration_space import ConfigurationSpace
 from ConfigSpace.hyperparameters import UniformIntegerHyperparameter, \
     UnParametrizedHyperparameter, Constant
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class RandomTreesEmbeddingNode(Node):
@@ -32,7 +32,7 @@ class RandomTreesEmbeddingNode(Node):
     def get_properties(self, dataset_properties=None):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
-class RandomTreesEmbedding(PreprocessingNode):
+class RandomTreesEmbedding(PreprocessingAlgorithm):
 
     def __init__(self, n_estimators, max_depth, min_samples_split,
                  min_samples_leaf, min_weight_fraction_leaf, max_leaf_nodes,

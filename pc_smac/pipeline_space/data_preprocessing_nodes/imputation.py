@@ -2,7 +2,7 @@ from ConfigSpace.configuration_space import ConfigurationSpace
 from ConfigSpace.hyperparameters import CategoricalHyperparameter
 
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class ImputationNode(Node):
@@ -25,7 +25,7 @@ class ImputationNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class Imputation(PreprocessingNode):
+class Imputation(PreprocessingAlgorithm):
     def __init__(self, strategy='median', random_state=None):
         # TODO pay attention to the cases when a copy is made (CSR matrices)
         self.strategy = strategy

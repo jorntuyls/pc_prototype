@@ -5,7 +5,7 @@ from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
     UniformIntegerHyperparameter, CategoricalHyperparameter
 from ConfigSpace.conditions import InCondition, EqualsCondition, AndConjunction
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 
@@ -37,7 +37,7 @@ class NystroemSamplerNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class Nystroem(PreprocessingNode):
+class Nystroem(PreprocessingAlgorithm):
     def __init__(self, kernel, n_components, gamma=1.0, degree=3,
                  coef0=1, random_state=None):
         self.kernel = kernel

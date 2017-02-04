@@ -6,7 +6,7 @@ from ConfigSpace.hyperparameters import UniformFloatHyperparameter, CategoricalH
 from ConfigSpace.conditions import EqualsCondition
 
 from pc_smac.pc_smac.algorithms.data_preprocessing.one_hot_encoding import OneHotEncoderImplementation
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class OneHotEncodeingNode(Node):
@@ -30,7 +30,7 @@ class OneHotEncodeingNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class OneHotEncoder(PreprocessingNode):
+class OneHotEncoder(PreprocessingAlgorithm):
     def __init__(self, use_minimum_fraction=True, minimum_fraction=0.01,
                  categorical_features=None, random_state=None):
         # TODO pay attention to the cases when a copy is made (CSR matrices)

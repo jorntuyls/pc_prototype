@@ -3,7 +3,7 @@ from ConfigSpace.configuration_space import ConfigurationSpace
 
 from scipy import sparse
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class StandardScalerNode(Node):
@@ -25,7 +25,7 @@ class StandardScalerNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class Rescaling(PreprocessingNode):
+class Rescaling(PreprocessingAlgorithm):
 
     def get_params(self, deep=True):
         return {}
@@ -45,7 +45,7 @@ class Rescaling(PreprocessingNode):
         return cs
 
 
-class StandardScaler(PreprocessingNode):
+class StandardScaler(PreprocessingAlgorithm):
     def __init__(self, random_state=None):
         self.random_state = random_state
 

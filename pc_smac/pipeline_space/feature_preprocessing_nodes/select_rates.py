@@ -4,7 +4,7 @@ from ConfigSpace.configuration_space import ConfigurationSpace
 from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
     CategoricalHyperparameter, Constant
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class SelectRatesNode(Node):
@@ -30,7 +30,7 @@ class SelectRatesNode(Node):
 
 
 
-class SelectRates(PreprocessingNode):
+class SelectRates(PreprocessingAlgorithm):
     def __init__(self, alpha, mode='fpr',
                  score_func="chi2", random_state=None):
         import sklearn.feature_selection

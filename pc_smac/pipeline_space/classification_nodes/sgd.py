@@ -1,14 +1,17 @@
 
-# The hyperparameter spaces come from https://github.com/automl/auto-sklearn
+# The algorithm and hyperparameter spaces come from https://github.com/automl/auto-sklearn
+
+import numpy as np
 
 from ConfigSpace.configuration_space import ConfigurationSpace
 from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
-    UniformIntegerHyperparameter, CategoricalHyperparameter, Constant, \
-    UnParametrizedHyperparameter
-from ConfigSpace.conditions import EqualsCondition, InCondition
+    CategoricalHyperparameter, UnParametrizedHyperparameter, \
+    UniformIntegerHyperparameter
+from ConfigSpace.conditions import EqualsCondition
 
-from pc_smac.pc_smac.pipeline_space.node import Node
+from pc_smac.pc_smac.pipeline_space.node import Node, ClassificationAlgorithm
 from pc_smac.pc_smac.utils.constants import *
+from pc_smac.pc_smac.utils.util_implementations import softmax
 
 class SGDNode(Node):
 
@@ -18,29 +21,138 @@ class SGDNode(Node):
         self.hyperparameters = {"loss": "log", "penalty": "l2", "alpha": 1e-4, "l1_ratio": 0.15,
                 "fit_intercept": True, "n_iter": 20, "epsilon": 1e-4, "learning_rate": "optimal",
                 "eta0": 0.01, "power_t": 0.25, "average": "False"}
+        self.algorithm = SGD
 
     def initialize_algorithm(self, hyperparameters):
-        from sklearn.linear_model.stochastic_gradient import SGDClassifier
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        sgd = SGDClassifier(
+        sgd = self.algorithm(
                             loss=hyperparameters["loss"],
                             penalty=hyperparameters["penalty"],
-                            alpha=float(hyperparameters["alpha"]),
-                            fit_intercept=bool(hyperparameters["fit_intercept"]),
-                            n_iter=int(hyperparameters["n_iter"]),
+                            alpha=hyperparameters["alpha"],
+                            fit_intercept=hyperparameters["fit_intercept"],
+                            n_iter=hyperparameters["n_iter"],
                             learning_rate=hyperparameters["learning_rate"],
-                            l1_ratio=float(hyperparameters["l1_ratio"]),
-                            epsilon=float(hyperparameters["epsilon"]),
-                            eta0=float(hyperparameters["eta0"]),
-                            power_t=float(hyperparameters["power_t"]),
-                            shuffle=True,
-                            average=bool(hyperparameters["average"]),
+                            l1_ratio=hyperparameters["l1_ratio"],
+                            epsilon=hyperparameters["epsilon"],
+                            eta0=hyperparameters["eta0"],
+                            power_t=hyperparameters["power_t"],
+                            average=hyperparameters["average"],
                             random_state=None)
 
         return (self.get_full_name(), sgd)
 
     def get_hyperparameter_search_space(self, dataset_properties=None):
+        return self.algorithm.get_hyperparameter_search_space(dataset_properties=dataset_properties)
+
+    def get_properties(self, dataset_properties=None):
+        return self.algorithm.get_properties(dataset_properties=dataset_properties)
+
+
+
+class SGD(ClassificationAlgorithm):
+    def __init__(self, loss, penalty, alpha, fit_intercept, n_iter,
+                 learning_rate, l1_ratio=0.15, epsilon=0.1,
+                 eta0=0.01, power_t=0.5, average=False, random_state=None):
+        self.loss = loss
+        self.penalty = penalty
+        self.alpha = alpha
+        self.fit_intercept = fit_intercept
+        self.n_iter = n_iter
+        self.learning_rate = learning_rate
+        self.l1_ratio = l1_ratio
+        self.epsilon = epsilon
+        self.eta0 = eta0
+        self.power_t = power_t
+        self.random_state = random_state
+        self.average = average
+        self.estimator = None
+
+    def fit(self, X, y, sample_weight=None):
+        while not self.configuration_fully_fitted():
+            self.iterative_fit(X, y, n_iter=1, sample_weight=sample_weight)
+
+        return self
+
+    def iterative_fit(self, X, y, n_iter=1, refit=False, sample_weight=None):
+        from sklearn.linear_model.stochastic_gradient import SGDClassifier
+
+        if refit:
+            self.estimator = None
+
+        if self.estimator is None:
+            self._iterations = 0
+
+            self.alpha = float(self.alpha)
+            self.fit_intercept = self.fit_intercept == 'True'
+            self.n_iter = int(self.n_iter)
+            self.l1_ratio = float(self.l1_ratio) if self.l1_ratio is not None else 0.15
+            self.epsilon = float(self.epsilon) if self.epsilon is not None else 0.1
+            self.eta0 = float(self.eta0)
+            self.power_t = float(self.power_t) if self.power_t is not None else 0.25
+            self.average = self.average == 'True'
+
+            self.estimator = SGDClassifier(loss=self.loss,
+                                           penalty=self.penalty,
+                                           alpha=self.alpha,
+                                           fit_intercept=self.fit_intercept,
+                                           n_iter=1,
+                                           learning_rate=self.learning_rate,
+                                           l1_ratio=self.l1_ratio,
+                                           epsilon=self.epsilon,
+                                           eta0=self.eta0,
+                                           power_t=self.power_t,
+                                           shuffle=True,
+                                           average=self.average,
+                                           random_state=self.random_state,)
+
+        self.estimator.n_iter = n_iter
+        self.estimator.partial_fit(X, y, classes=np.unique(y),
+                                   sample_weight=sample_weight)
+
+        if self._iterations >= self.n_iter:
+            self.fully_fit_ = True
+        self._iterations += n_iter
+        return self
+
+    def configuration_fully_fitted(self):
+        if self.estimator is None:
+            return False
+        elif not hasattr(self, 'fully_fit_'):
+            return False
+        else:
+            return self.fully_fit_
+
+    def predict(self, X):
+        if self.estimator is None:
+            raise NotImplementedError()
+        return self.estimator.predict(X)
+
+    def predict_proba(self, X):
+        if self.estimator is None:
+            raise NotImplementedError()
+
+        if self.loss in ["log", "modified_huber"]:
+            return self.estimator.predict_proba(X)
+        else:
+            df = self.estimator.decision_function(X)
+            return softmax(df)
+
+    @staticmethod
+    def get_properties(dataset_properties=None):
+        return {'shortname': 'SGD Classifier',
+                'name': 'Stochastic Gradient Descent Classifier',
+                'handles_regression': False,
+                'handles_classification': True,
+                'handles_multiclass': True,
+                'handles_multilabel': False,
+                'is_deterministic': True,
+                'input': (DENSE, SPARSE, UNSIGNED_DATA),
+                'output': (PREDICTIONS,)}
+
+    @staticmethod
+    def get_hyperparameter_search_space(dataset_properties=None):
         cs = ConfigurationSpace()
+
         loss = cs.add_hyperparameter(CategoricalHyperparameter("loss",
             ["hinge", "log", "modified_huber", "squared_hinge", "perceptron"],
             default="log"))
@@ -53,7 +165,7 @@ class SGDNode(Node):
         fit_intercept = cs.add_hyperparameter(UnParametrizedHyperparameter(
             "fit_intercept", "True"))
         n_iter = cs.add_hyperparameter(UniformIntegerHyperparameter(
-            "n_iter", 5, 100, log=True, default=20))
+            "n_iter", 5, 1000, log=True, default=20))
         epsilon = cs.add_hyperparameter(UniformFloatHyperparameter(
             "epsilon", 1e-5, 1e-1, default=1e-4, log=True))
         learning_rate = cs.add_hyperparameter(CategoricalHyperparameter(
@@ -83,14 +195,3 @@ class SGDNode(Node):
 
         return cs
 
-    @staticmethod
-    def get_properties(dataset_properties=None):
-        return {'shortname': 'SGD Classifier',
-                'name': 'Stochastic Gradient Descent Classifier',
-                'handles_regression': False,
-                'handles_classification': True,
-                'handles_multiclass': True,
-                'handles_multilabel': False,
-                'is_deterministic': True,
-                'input': (DENSE, SPARSE, UNSIGNED_DATA),
-                'output': (PREDICTIONS,)}

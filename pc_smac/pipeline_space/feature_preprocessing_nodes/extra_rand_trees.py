@@ -5,7 +5,7 @@ from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
     UniformIntegerHyperparameter, CategoricalHyperparameter, \
     UnParametrizedHyperparameter, Constant
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class ExtraTreesNode(Node):
@@ -38,7 +38,7 @@ class ExtraTreesNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class ExtraTreesPreprocessor(PreprocessingNode):
+class ExtraTreesPreprocessor(PreprocessingAlgorithm):
 
     def __init__(self, n_estimators, criterion, min_samples_leaf,
                  min_samples_split, max_features,

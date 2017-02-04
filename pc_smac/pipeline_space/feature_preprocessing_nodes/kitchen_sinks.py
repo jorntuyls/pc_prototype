@@ -2,7 +2,7 @@ from ConfigSpace.configuration_space import ConfigurationSpace
 from ConfigSpace.hyperparameters import UniformFloatHyperparameter, \
     UniformIntegerHyperparameter
 
-from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingNode
+from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
 class RandomKitchenSinksNode(Node):
@@ -28,7 +28,7 @@ class RandomKitchenSinksNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class RandomKitchenSinks(PreprocessingNode):
+class RandomKitchenSinks(PreprocessingAlgorithm):
 
     def __init__(self, gamma, n_components, random_state=None):
         """ Parameters:

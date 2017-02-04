@@ -33,22 +33,24 @@ class Node(object):
 
     @abc.abstractmethod
     def get_properties(dataset_properties=None):
-        """Get the properties of the underlying algorithm.
-
-        Find more information at :ref:`get_properties`
-
-        Parameters
-        ----------
-
-        dataset_properties : dict, optional (default=None)
-
-        Returns
-        -------
-        dict
-        """
         raise NotImplementedError()
 
-class PreprocessingNode(Node):
+
+
+class Algorithm(object):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def get_hyperparameter_search_space(dataset_properties=None):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_properties(dataset_properties=None):
+        raise NotImplementedError()
+
+
+
+class PreprocessingAlgorithm(Algorithm):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
@@ -61,7 +63,29 @@ class PreprocessingNode(Node):
     @abc.abstractmethod
     def transform(self, X):
         raise NotImplementedError()
+
+    # TODO Not necessary anymore
     @abc.abstractmethod
     def get_params(self, deep=True):
-        pass
+        raise NotImplementedError()
+
+class ClassificationAlgorithm(Algorithm):
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self):
+        self.estimator = None
+
+    @abc.abstractmethod
+    def predict(self, X):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def predict_proba(self, X):
+        raise NotImplementedError()
+
+    def get_estimator(self):
+        return self.estimator
+
+
+
 
