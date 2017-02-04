@@ -24,20 +24,35 @@ class SGDNode(Node):
         self.algorithm = SGD
 
     def initialize_algorithm(self, hyperparameters):
+        from sklearn.linear_model.stochastic_gradient import SGDClassifier
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        sgd = self.algorithm(
+        sgd = SGDClassifier(
                             loss=hyperparameters["loss"],
                             penalty=hyperparameters["penalty"],
-                            alpha=hyperparameters["alpha"],
-                            fit_intercept=hyperparameters["fit_intercept"],
-                            n_iter=hyperparameters["n_iter"],
+                            alpha=float(hyperparameters["alpha"]),
+                            fit_intercept=bool(hyperparameters["fit_intercept"]),
+                            n_iter=int(hyperparameters["n_iter"]),
                             learning_rate=hyperparameters["learning_rate"],
-                            l1_ratio=hyperparameters["l1_ratio"],
-                            epsilon=hyperparameters["epsilon"],
-                            eta0=hyperparameters["eta0"],
-                            power_t=hyperparameters["power_t"],
-                            average=hyperparameters["average"],
+                            l1_ratio=float(hyperparameters["l1_ratio"]),
+                            epsilon=float(hyperparameters["epsilon"]),
+                            eta0=float(hyperparameters["eta0"]),
+                            power_t=float(hyperparameters["power_t"]),
+                            shuffle=True,
+                            average=bool(hyperparameters["average"]),
                             random_state=None)
+        # sgd = self.algorithm(
+        #                     loss=hyperparameters["loss"],
+        #                     penalty=hyperparameters["penalty"],
+        #                     alpha=hyperparameters["alpha"],
+        #                     fit_intercept=hyperparameters["fit_intercept"],
+        #                     n_iter=hyperparameters["n_iter"],
+        #                     learning_rate=hyperparameters["learning_rate"],
+        #                     l1_ratio=hyperparameters["l1_ratio"],
+        #                     epsilon=hyperparameters["epsilon"],
+        #                     eta0=hyperparameters["eta0"],
+        #                     power_t=hyperparameters["power_t"],
+        #                     average=hyperparameters["average"],
+        #                     random_state=None)
 
         return (self.get_full_name(), sgd)
 
@@ -165,7 +180,7 @@ class SGD(ClassificationAlgorithm):
         fit_intercept = cs.add_hyperparameter(UnParametrizedHyperparameter(
             "fit_intercept", "True"))
         n_iter = cs.add_hyperparameter(UniformIntegerHyperparameter(
-            "n_iter", 5, 1000, log=True, default=20))
+            "n_iter", 5, 100, log=True, default=20))
         epsilon = cs.add_hyperparameter(UniformFloatHyperparameter(
             "epsilon", 1e-5, 1e-1, default=1e-4, log=True))
         learning_rate = cs.add_hyperparameter(CategoricalHyperparameter(
