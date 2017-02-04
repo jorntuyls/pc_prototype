@@ -23,9 +23,7 @@ class KernelPcaNode(Node):
         self.algorithm = KernelPCA
 
     def initialize_algorithm(self, hyperparameters):
-        print(hyperparameters)
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        print("HYPERPARAMETERS: {}".format(hyperparameters))
         kernel_pca = self.algorithm(n_components=hyperparameters["n_components"],
                                     kernel=hyperparameters["kernel"],
                                     degree=hyperparameters["degree"],
