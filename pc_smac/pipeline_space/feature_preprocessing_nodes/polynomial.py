@@ -12,7 +12,7 @@ from pc_smac.pc_smac.utils.constants import *
 class PolynomialFeaturesNode(Node):
 
     def __init__(self):
-        self.name = "polynomial"
+        self.name = "polynomial_features"
         self.type = "feature_preprocessor"
         self.hyperparameters = {"degree": 2, "interaction_only": "False", "include_bias": "True"}
         self.algorithm = PolynomialFeatures
