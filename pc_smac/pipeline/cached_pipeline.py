@@ -123,7 +123,7 @@ class CachedPipeline(Pipeline):
 
     def _fit_single_transform(self, transform, name, idx_tr,  X, y, **fit_params_trans):
 
-        print("EVALUATE _FIT_SINGLE_TRANSFORM")
+        #print("EVALUATE _FIT_SINGLE_TRANSFORM")
         global FIT_SINGLE_TRANSFORM_EVALUATIONS
         FIT_SINGLE_TRANSFORM_EVALUATIONS += 1
 
@@ -135,7 +135,7 @@ class CachedPipeline(Pipeline):
             **fit_params_trans)
         self.steps[idx_tr] = (name, transform)
 
-        print("END EVALUATE _FIT_SINGLE_TRANSFORM")
+        #print("END EVALUATE _FIT_SINGLE_TRANSFORM")
 
         return Xt
 
@@ -143,7 +143,7 @@ def _fit_transform_one(transformer, name, weight, X, y,
                                **fit_params):
     global FIT_TRANSFORM_ONE_EVALUATIONS
     FIT_TRANSFORM_ONE_EVALUATIONS += 1
-    print("NO CACHE HIT")
+    #print("NO CACHE HIT")
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
     else:

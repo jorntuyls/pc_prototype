@@ -26,18 +26,25 @@ from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.no_preprocessing
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.pca import PcaNode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
 
+from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.random_forest import RandomForestNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.gradient_boosting import GradientBoostingNode
+
 from smac.smbo.objective import average_cost
 
-def run_experiment(data_id, location, output_dir, prepr_name=None, nb_configs=100, seed=None, cache_directory=None, downsampling=None):
-    preprocessor_names = ['extra_trees', 'fast_ica', 'feature_agglomeration', 'kernel_pca', 'rand_kitchen_sinks', 'linear_svm',
+def run_experiment(data_id, location, output_dir, prepr_name=None, class_name=None, nb_configs=100, seed=None, cache_directory=None, downsampling=None):
+
+    preprocessor_names = ['extra_rand_trees', 'fast_ica', 'feature_agglomeration', 'kernel_pca', 'kitchen_sinks', 'linear_svm',
                           'no_preprocessing', 'nystroem_sampler', 'pca', 'polynomial_features', 'rand_trees_embedding',
                           'select_percentile', 'select_rates']
+    class_names = ['sgd', 'random_forest', 'gradient_boosting']
+
     preprocessor_nodes =  {
-        'extra_trees': ExtraTreesNode(),
+        'extra_rand_trees': ExtraTreesNode(),
         'fast_ica': FastICANode(),
         'feature_agglomeration': FeatureAgglomerationNode(),
         'kernel_pca': KernelPcaNode(),
-        'rand_kitchen_sinks': RandomKitchenSinksNode(),
+        'kitchen_sinks': RandomKitchenSinksNode(),
         'linear_svm': LinearSVMNode(),
         'no_preprocessing': NoPreprocessingNode(),
         'nystroem_sampler': NystroemSamplerNode(),
@@ -48,13 +55,27 @@ def run_experiment(data_id, location, output_dir, prepr_name=None, nb_configs=10
         'select_rates': SelectRatesNode()
     }
 
+    classifier_nodes = {
+        'sgd': SGDNode(),
+        'random_forest': RandomForestNode(),
+        'gradient_boosting': GradientBoostingNode()
+    }
+
     if prepr_name != None:
-        nodes = [preprocessor_nodes[prepr_name]]
+        prepr_nodes = [preprocessor_nodes[prepr_name]]
     else:
-        nodes = []
+        prepr_nodes = []
         for prepr in preprocessor_names:
-            nodes.append(preprocessor_nodes[prepr])
+            prepr_nodes.append(preprocessor_nodes[prepr])
         prepr_name = 'all'
+
+    if class_name != None:
+        class_nodes = [classifier_nodes[class_name]]
+    else:
+        class_nodes = []
+        for c_name in class_names:
+            class_nodes.append(classifier_nodes[c_name])
+        class_name = 'all'
 
     # ouput directory
     if output_dir == None:
@@ -66,8 +87,8 @@ def run_experiment(data_id, location, output_dir, prepr_name=None, nb_configs=10
     i_s = ImputationStep()
     r_s = RescalingStep()
     b_s = BalancingStep()
-    p_s = PipelineStep(name='feature_preprocessor', nodes=nodes)
-    c_s = ClassificationStep()
+    p_s = PipelineStep(name='feature_preprocessor', nodes=prepr_nodes)
+    c_s = PipelineStep(name='classifier', nodes=class_nodes)
     pipeline_space.add_pipeline_steps([o_s, i_s, r_s, b_s, p_s, c_s])
 
     # Build configuration space
@@ -81,8 +102,8 @@ def run_experiment(data_id, location, output_dir, prepr_name=None, nb_configs=10
     # Run the random configurations = pipelines on data set
     data_path = location + str(data_id) if location[-1] == "/" else location + "/" + str(data_id)
     data_set = data_path.split("/")[-1]
-    output_dir = output_dir + data_set + "/" + str(prepr_name) + "/" if output_dir[-1] == "/" \
-                                            else output_dir + "/" + data_set + "/" + str(prepr_name) + "/"
+    output_dir = output_dir + data_set + "/" + str(prepr_name) + "_" + str(class_name) + "/" if output_dir[-1] == "/" \
+                                            else output_dir + "/" + data_set + "/" + str(prepr_name) + "_" + str(class_name) + "/"
     stamp = data_set + "_seed_" + str(seed)
     run_experiment_on_data(stamp=stamp,
                            data_path=data_path,
@@ -98,6 +119,8 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
     print(output_dir)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    if not os.path.exists(cache_directory):
+        os.makedirs(cache_directory)
 
     # load data
     data_loader = DataLoader(data_path)
@@ -189,6 +212,7 @@ def parse_arguments():
     parser.add_argument("-d", "--dataid", type=str, help="Dataset id")
     parser.add_argument("-l", "--location", type=str, help="Dataset directory")
     parser.add_argument("-p", "--pname", type=str, default=None, help="Preprocessor name")
+    parser.add_argument("-c", "--cname", type=str, default=None, help="Classifier name")
     parser.add_argument("-o", "--outputdir", type=str, default=None, help="Output directory")
     parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Number of data points to downsample to")
     parser.add_argument("-cd", "--cachedir", type=str, default=None, help="Cache directory")
@@ -205,6 +229,7 @@ if __name__ == "__main__":
                    location=args.location,
                    output_dir=args.outputdir,
                    prepr_name=args.pname,
+                   class_name=args.cname,
                    nb_configs=args.nbconfigs,
                    seed=args.seed,
                    cache_directory=args.cachedir,
