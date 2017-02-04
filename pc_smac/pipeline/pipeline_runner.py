@@ -15,6 +15,7 @@ from pc_smac.pc_smac.pipeline.pipeline_builder import PipelineBuilder
 class PipelineRunner(object):
 
     def __init__(self, data, pipeline_space, runhistory, statistics, downsampling=None):
+        # TODO Remove runhistory from arguments
         if downsampling:
             self.X_train = data["X_train"][:downsampling]
             self.y_train = data["y_train"][:downsampling]

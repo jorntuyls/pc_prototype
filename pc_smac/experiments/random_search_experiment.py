@@ -17,9 +17,15 @@ from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
 
 
 def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, output_dir=None, cache_directory=None, downsampling=None):
+    # data set
+    data_set = data_path.split("/")[-1]
+
     # ouput directory
     if output_dir == None:
         output_dir = os.path.dirname(os.path.abspath(__file__)) + "/results/"
+    else:
+        output_dir = output_dir + data_set + "/"  if output_dir[-1] == "/" \
+                else output_dir + "/" + data_set + "/"
 
     # load data
     data_loader = DataLoader(data_path)
@@ -31,7 +37,7 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
     i_s = ImputationStep()
     r_s = RescalingStep()
     b_s = BalancingStep()
-    p_s = PipelineStep(name='feature_preprocessr', node=[KernelPcaNode()])
+    p_s = PipelineStep(name='feature_preprocessor', nodes=[KernelPcaNode()])
     c_s = PipelineStep(name='classifier', nodes=[SGDNode()])
     pipeline_space.add_pipeline_steps([o_s, i_s, r_s, b_s, p_s, c_s])
 
@@ -84,9 +90,27 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
     incumbent = random_search.run()
     print("... end random search")
 
-    # TODO test performance of incumbents
+    # test performance of incumbents
+    incumbent_trajectory = statistics.get_incumbent_trajectory(config_space=config_space)
+    trajectory = run_tests(data, incumbent_trajectory, pipeline_space, downsampling=downsampling)
+    print(trajectory)
+
+    # Save new trajectory to output directory
+    # First transform the configuration to a dictionary
+    for traj in trajectory:
+        traj['incumbent'] = traj['incumbent'].get_dictionary()
+    statistics.add_incumbents_trajectory(trajectory)
+
+    return incumbent
 
 
+def run_tests(data, trajectory, pipeline_space, downsampling=None):
+    pt = PipelineTester(data, pipeline_space, downsampling=downsampling)
+
+    for traj in trajectory:
+        traj['test_performance'] = pt.get_performance(traj['incumbent'])
+
+    return trajectory
 
 
 def parse_arguments():
@@ -95,7 +119,7 @@ def parse_arguments():
     parser.add_argument("-w", "--wallclock", type=int, help="Wallclock limit")
     parser.add_argument("-l", "--location", type=str, help="Data location")
     parser.add_argument("-st", "--stamp", type=str, default="stamp", help="Stamp for output files")
-    parser.add_argument("-s", "--seed", type=int, default=None, help="Stamp for output files")
+    parser.add_argument("-s", "--seed", type=int, default=None, help="Seed for random")
     parser.add_argument("-o", "--outputdir", type=str, default=None, help="Output directory")
     parser.add_argument("-cd", "--cachedir", type=str, default=None, help="Cache directory")
     parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Downsampling of data")

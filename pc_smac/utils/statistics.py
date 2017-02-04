@@ -3,6 +3,9 @@ import os
 import time
 import json
 
+from ConfigSpace.configuration_space import ConfigurationSpace, Configuration
+from ConfigSpace.hyperparameters import FloatHyperparameter, IntegerHyperparameter
+
 
 class Statistics(object):
 
@@ -32,13 +35,14 @@ class Statistics(object):
 
     def start_timer(self):
         self.start_time = time.time()
+        return self.start_time
 
     def get_time_point(self):
         if self.start_time == None:
             raise ValueError("Timer is not yet started!")
         return time.time() - self.start_time
 
-    def add_run(self, config, information: dict):
+    def add_run(self, config: dict, information: dict):
         time_point = self.get_time_point()
         run = self._add_run(self.runs, config, time_point, information)
         # Append run directly to json file
@@ -48,16 +52,27 @@ class Statistics(object):
     def get_run_trajectory(self):
         return self.runs
 
-    def add_new_incumbent(self, incumbent, information: dict):
-        time_point = self.add_run(incumbent, information)
-        self._add_run(self.incumbents, incumbent, time_point, information)
+    def add_new_incumbent(self, incumbent: dict, information: dict):
+        time_point = self.get_time_point()
+        inc_run = self._add_incumbent(self.incumbents, incumbent, time_point, information)
+        # Append run directly to json file
+        self._save_json([inc_run], self.inc_file)
+        return time_point
 
     def add_incumbents_trajectory(self, trajectory):
         self.incumbents = trajectory
+        self._open_file(self.inc_file)
         self._save_json(self.incumbents, self.inc_file)
 
-    def get_incumbent_trajectory(self):
-        return self.incumbents
+    def get_incumbent_trajectory(self, config_space=None):
+        if config_space == None:
+            raise ValueError("config space should not be none")
+        if self.incumbents != []:
+            for line in self.incumbents:
+                line['incumbent'] = self._convert_dict_to_config(line['incumbent'], config_space=config_space)
+            return self.incumbents
+        else:
+            return self._read_incumbent_file(self.inc_file, config_space)
 
     def save(self):
         # Create and clean files
@@ -69,20 +84,27 @@ class Statistics(object):
         #info_strng = self._transform_dict_to_string(self.stat_information)
         #self._save_info_file(info_strng, info_file)
 
-    """
-    def save_transformed(self):
-        self._clean_files([self.run_trans_file])
-        transformed_runs = self._transform_to_equidistant_time_points(self.runs)
-        self._save_json(transformed_runs, self.run_trans_file)
-        # transformed_incumbents = self._transform_to_equidistant_time_points(self.incumbents)
-        # self._save_json(transformed_incumbents, inc_trans_file)
-    """
+    def is_budget_exhausted(self):
+        return time.time() - self.start_time > self.total_runtime
 
     def clean_files(self):
         self._clean_files([self.run_file, self.inc_file])
 
 
     #### INTERNAL METHODS ####
+
+    def _add_incumbent(self, lst, config, time_point, information):
+        if 'time' in information.keys() or 'config' in information.keys() \
+                or 'eval' in information.keys():
+            raise ValueError("information should not contain the 'time' or 'config' key!")
+        run = information.copy()
+        run.update({
+            'time': time_point,
+            'eval': len(lst) + 1,
+            'incumbent': config,
+        })
+        lst.append(run)
+        return run
 
     def _add_run(self, lst, config, time_point, information):
         if 'time' in information.keys() or 'config' in information.keys()\
@@ -97,46 +119,31 @@ class Statistics(object):
         lst.append(run)
         return run
 
-    def _transform_to_equidistant_time_points(self, data_lst):
-        """
+    def _read_incumbent_file(self, filename, config_space):
+        incumbent_trajectory = []
+        with open(filename) as fp:
+            for line in fp:
+                entry = json.loads(line)
+                entry["config"] = self._convert_dict_to_config(
+                    entry["config"], cs=config_space)
+                incumbent_trajectory.append(entry)
+        return incumbent_trajectory
 
-        Parameters
-        ----------
-        data_lst : list of dictionaries, each dictionary contains information about one run
+    def _convert_dict_to_config(self, config_dict, config_space):
+        # # Method come from SMAC3
+        # for key in config_dict:
+        #     value = config_dict[key]
+        #     print(key, value)
+        #     hp = config_space.get_hyperparameter(key)
+        #     if isinstance(hp, FloatHyperparameter):
+        #         value = float(value)
+        #     elif isinstance(hp, IntegerHyperparameter):
+        #         value = int(value)
+        #     config_dict[key] = value
 
-        Returns
-        -------
-        list : a new list of dictionaries with information runs, now on equidistant time points
-
-        """
-        if self.total_runtime == None or self.time_precision == None:
-            raise ValueError("Cannot transform since there is no total runtime or time precision provided!")
-
-        new_data_lst = []
-        time = 0.0
-        while time <= self.total_runtime:
-            time_count = 0
-            for i in range(0, len(data_lst) - 1):
-                elemi = data_lst[i]
-                elemi1 = data_lst[i + 1]
-                time_count += float(elemi['time'])
-                if time < float(data_lst[0]['time']):
-                    new_data_lst.append({
-                        'time': time
-                    })
-                    break
-                elif time > time_count and time <= time_count + float(elemi1['time']):
-                    new_elem = elemi.copy()
-                    new_elem['time'] = time
-                    new_data_lst.append(new_elem)
-                    break
-                elif i == len(data_lst) - 2 and time > time_count + float(elemi1['time']):
-                    new_elem = elemi1.copy()
-                    new_elem['time'] = time
-                    new_data_lst.append(new_elem)
-                    break
-            time += self.time_precision
-        return new_data_lst
+        config = Configuration(configuration_space=config_space, values=config_dict)
+        config.origin = "External Trajectory"
+        return config
 
     def _transform_dict_to_string(self, dct):
         strng = ""
