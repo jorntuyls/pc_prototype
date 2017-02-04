@@ -11,19 +11,20 @@ class RandomTreesEmbeddingNode(Node):
         self.name = "random_trees_embedding"
         self.type = "feature_preprocessor"
         self.hyperparameters = {"n_estimators": 10, "max_depth": 5, "min_samples_split": 2,
-                                "min_samples_leaf": 1, "min_weight_fraction_leaf": 1.0}
+                                "min_samples_leaf": 1, "min_weight_fraction_leaf": 1.0, "max_leaf_nodes":"None"}
         self.algorithm = RandomTreesEmbedding
 
     def initialize_algorithm(self, hyperparameters):
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        polynomial_features = self.algorithm(n_estimators=hyperparameters["n_estimators"],
+        print("TEST")
+        random_trees_embedding = self.algorithm(n_estimators=hyperparameters["n_estimators"],
                                              max_depth=hyperparameters["max_depth"],
                                              min_samples_split=hyperparameters["min_samples_split"],
                                              min_samples_leaf=hyperparameters["min_samples_leaf"],
                                              min_weight_fraction_leaf=hyperparameters["min_weight_fraction_leaf"],
-                                             max_leaf_nodes=None)
+                                             max_leaf_nodes="None")
 
-        return (self.get_full_name(), polynomial_features)
+        return (self.get_full_name(), random_trees_embedding)
 
     def get_hyperparameter_search_space(self, dataset_properties=None):
         return self.algorithm.get_hyperparameter_search_space(dataset_properties=dataset_properties)
@@ -53,7 +54,7 @@ class RandomTreesEmbedding(PreprocessingNode):
             self.max_depth = None
         else:
             self.max_depth = int(self.max_depth)
-        if self.max_leaf_nodes == "None":
+        if self.max_leaf_nodes == "None" or self.max_leaf_nodes == None:
             self.max_leaf_nodes = None
         else:
             self.max_leaf_nodes = int(self.max_leaf_nodes)
