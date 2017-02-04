@@ -89,7 +89,7 @@ class Driver:
             # Not a valid acquisition function
             raise ValueError("The provided acquisition function is not valid")
 
-        trajectory_path = self.output_dir + "/logging/" # + self.data_path.split("/")[-1] + "/" + str(stamp)
+        trajectory_path = self.output_dir + "/logging/" + stamp + "/" # + self.data_path.split("/")[-1] + "/" + str(stamp)
         if not os.path.exists(trajectory_path):
             os.makedirs(trajectory_path)
         self.trajectory_path_json = trajectory_path + "/traj_aclib2.json"
