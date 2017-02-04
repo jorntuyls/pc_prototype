@@ -15,15 +15,14 @@ class ConfigSpaceBuilder:
 
     def __init__(self, pipeline_space):
         self.pipeline_space = pipeline_space
-        self.config_space = None
 
     def build_config_space(self, seed=None, dataset_properties=None):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         pipeline = self.pipeline_space.get_pipeline_steps_names_and_objects()
         vanilla_cs = self._get_hyperparameter_search_space(cs, {}, exclude=None, include=None, pipeline=pipeline)
-        self.config_space = self.add_forbidden_clauses(vanilla_cs, pipeline, dataset_properties)
-        print(self.config_space)
-        return self.config_space
+        cs = self.add_forbidden_clauses(vanilla_cs, pipeline, dataset_properties)
+        print(cs)
+        return cs
 
     # def build_vanilla_config_space(self, cs):
     #     for ps in self.pipeline_space.get_pipeline_steps():
