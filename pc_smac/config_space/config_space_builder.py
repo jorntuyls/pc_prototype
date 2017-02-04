@@ -15,16 +15,15 @@ class ConfigSpaceBuilder:
 
     def __init__(self, pipeline_space):
         self.pipeline_space = pipeline_space
+        self.config_space = None
 
     def build_config_space(self, seed=None, dataset_properties=None):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         pipeline = self.pipeline_space.get_pipeline_steps_names_and_objects()
-        vanilla_cs = self._get_hyperparameter_search_space(cs, {}, exclude=None, include=None,
-                                                   pipeline=pipeline)
-        cs = self.add_forbidden_clauses(vanilla_cs, pipeline, dataset_properties)
-        print(cs)
-
-        return cs
+        vanilla_cs = self._get_hyperparameter_search_space(cs, {}, exclude=None, include=None, pipeline=pipeline)
+        self.config_space = self.add_forbidden_clauses(vanilla_cs, pipeline, dataset_properties)
+        print(self.config_space)
+        return self.config_space
 
     # def build_vanilla_config_space(self, cs):
     #     for ps in self.pipeline_space.get_pipeline_steps():
@@ -119,6 +118,7 @@ class ConfigSpaceBuilder:
         return cs
 
     def add_forbidden_clauses(self, cs, pipeline, dataset_properties):
+        # TODO Make classifier and feature_preprocessor names not hardcoded !!
         classifiers = cs.get_hyperparameter('classifier:__choice__').choices
         preprocessors = cs.get_hyperparameter('feature_preprocessor:__choice__').choices
         available_classifiers = pipeline[-1][1]
