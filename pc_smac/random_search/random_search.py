@@ -28,7 +28,7 @@ class RandomSearch(object):
             if cost < incumbent_cost:
                 incumbent = rand_config
                 incumbent_cost = cost
-                self.statistics.add_new_incumbent(incumbent, {'cost': incumbent_cost})
+                self.statistics.add_new_incumbent(incumbent.get_dictionary(), {'cost': incumbent_cost})
 
         return incumbent
 

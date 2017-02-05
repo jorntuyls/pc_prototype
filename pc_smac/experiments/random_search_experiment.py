@@ -20,6 +20,10 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
     # data set
     data_set = data_path.split("/")[-1]
 
+    # cache directory
+    if not os.path.exists(cache_directory):
+        os.makedirs(cache_directory)
+
     # ouput directory
     if output_dir == None:
         output_dir = os.path.dirname(os.path.abspath(__file__)) + "/results/"
@@ -65,6 +69,7 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
                                                pipeline_space=pipeline_space,
                                                runhistory=None,
                                                statistics=statistics,
+                                               cache_directory=cache_directory,
                                                downsampling=downsampling)
         random_search = TreeRandomSearch(config_space=config_space,
                                          pipeline_runner=pipeline_runner,
