@@ -27,9 +27,6 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
     # ouput directory
     if output_dir == None:
         output_dir = os.path.dirname(os.path.abspath(__file__)) + "/results/"
-    else:
-        output_dir = output_dir + data_set + "/"  if output_dir[-1] == "/" \
-                else output_dir + "/" + data_set + "/"
 
     # load data
     data_loader = DataLoader(data_path)
