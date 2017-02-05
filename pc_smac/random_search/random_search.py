@@ -21,6 +21,7 @@ class RandomSearch(object):
 
         incumbent = self.config_space.sample_configuration()
         incumbent_cost, _ = self.pipeline_runner.run(incumbent, instance=None, seed=None)
+        self.statistics.add_new_incumbent(incumbent.get_dictionary(), {'cost': incumbent_cost})
 
         while not(self.statistics.is_budget_exhausted()):
             rand_config = self.config_space.sample_configuration()
