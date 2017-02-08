@@ -99,7 +99,7 @@ class Statistics(object):
             raise ValueError("information should not contain the 'time' or 'config' key!")
         run = information.copy()
         run.update({
-            'time': time_point,
+            'wallclock_time': time_point,
             'eval': len(lst) + 1,
             'incumbent': config,
         })
@@ -112,7 +112,7 @@ class Statistics(object):
             raise ValueError("information should not contain the 'time' or 'config' key!")
         run = information.copy()
         run.update({
-            'time': time_point,
+            'wallclock_time': time_point,
             'eval': len(lst) + 1,
             'config': config,
         })
