@@ -11,8 +11,6 @@ from smac.intensification.intensification import Intensifier
 from smac.initial_design.random_configuration_design import RandomConfiguration
 from smac.utils.io.traj_logging import TrajLogger
 from smac.utils.util_funcs import get_types
-from smac.stats.stats import Stats
-from smac.tae.execute_func import ExecuteTAFuncDict
 
 from pc_smac.pc_smac.pc_smbo.pc_smbo import PCSMBO
 from pc_smac.pc_smac.pc_smbo.pc_acquisition import PCEIPS
@@ -26,18 +24,8 @@ class SMBOBuilder:
     def __init__(self):
         pass
 
-    def build_pc_smbo(self, execute_func, scenario, runhistory, aggregate_func, acq_func_name, model_target_names,
+    def build_pc_smbo(self, tae_runner, stats, scenario, runhistory, aggregate_func, acq_func_name, model_target_names,
                         logging_directory):
-
-        # Build stats
-        stats = Stats(scenario)
-
-        # Build tae runner
-        tae_runner = ExecuteTAFuncDict(ta=execute_func,
-                                       stats=stats,
-                                       runhistory=runhistory,
-                                       run_obj=scenario.run_obj,
-                                       memory_limit=scenario.memory_limit)
 
 
         # Build intensifier

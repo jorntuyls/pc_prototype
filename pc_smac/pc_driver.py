@@ -15,6 +15,7 @@ from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 from pc_smac.pc_smac.utils.statistics import Statistics
 from smac.scenario.scenario import Scenario
 
+from smac.stats.stats import Stats
 from smac.smbo.objective import average_cost
 from smac.utils.io.traj_logging import TrajLogger
 from smac.tae.execute_func import ExecuteTAFuncDict
@@ -69,9 +70,6 @@ class Driver:
 
         # Set cache directory
         if caching:
-            # Check if directory exists, otherwise create it
-            if cache_directory != None and not os.path.exists(cache_directory):
-                os.makedirs(cache_directory)
             pr = CachedPipelineRunner(self.data, self.pipeline_space, runhistory,
                                                    self.statistics,
                                                    cache_directory=cache_directory,
@@ -106,10 +104,21 @@ class Driver:
                 }
         scenario = Scenario(args)
 
+        # Build stats
+        stats = Stats(scenario)
+
+        # Build tae runner
+        tae_runner = ExecuteTAFuncDict(ta=pr.run,
+                                       stats=stats,
+                                       runhistory=runhistory,
+                                       run_obj=scenario.run_obj,
+                                       memory_limit=scenario.memory_limit)
+
         # Build SMBO object
         smbo_builder = SMBOBuilder()
         self.smbo = smbo_builder.build_pc_smbo(
-            execute_func=pr.run,
+            tae_runner=tae_runner,
+            stats=stats,
             scenario=scenario,
             runhistory=runhistory,
             aggregate_func=average_cost,
