@@ -183,5 +183,24 @@ class Statistics(object):
         return output_dir
 
 
+class WhiteboxStatistics(Statistics):
+
+    def __init__(self, stamp, output_dir, information: dict, total_runtime=None, time_precision=None):
+        super(WhiteboxStatistics, self).__init__(stamp, output_dir, information, total_runtime, time_precision)
+        self.current_time = None
+
+    def start_timer(self):
+        super(WhiteboxStatistics, self).start_timer()
+        self.current_time = time.time()
+
+    def hack_time(self, time):
+        self.current_time += time
+
+    def get_time_point(self):
+        if self.start_time == None or self.current_time == None:
+            raise ValueError("Timer is not yet started!")
+        return self.current_time - self.start_time
+
+
 
 
