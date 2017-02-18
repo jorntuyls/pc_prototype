@@ -65,7 +65,6 @@ class SelectConfiguration(object):
             List of 2020 suggested configurations to evaluate.
         """
         self.model.train(X, Y)
-        print("MODEL TRAINING: {}, {}".format(X, Y))
 
         if self.runhistory.empty():
             incumbent_value = 0.0
