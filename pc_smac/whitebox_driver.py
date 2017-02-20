@@ -2,6 +2,7 @@ import os
 import time
 
 from pc_smac.pc_smac.whitebox.paraboloid import Paraboloid, CachedParaboloid, CachedParaboloid2Minima, Paraboloid2Minima
+from pc_smac.pc_smac.whitebox.beale_function import Beale, CachedBeale
 from pc_smac.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 from pc_smac.pc_smac.utils.statistics import Statistics, WhiteboxStatistics
@@ -9,6 +10,7 @@ from pc_smac.pc_smac.utils.statistics_whitebox import WhiteboxStats
 from smac.scenario.scenario import Scenario
 
 from smac.stats.stats import Stats
+from smac.utils.io.traj_logging import TrajLogger
 from smac.smbo.objective import average_cost
 
 class WhiteBoxDriver:
@@ -19,13 +21,9 @@ class WhiteBoxDriver:
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-    def initialize(self, stamp, seed, acq_func, cache_directory, wallclock_limit, runcount_limit, min_x, min_y):
+    def initialize(self, stamp, seed, acq_func, wallclock_limit, runcount_limit, test_function, min_x, min_y):
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
-
-        # Check if cache_directory exists
-        if cache_directory and not os.path.exists(cache_directory):
-            os.makedirs(cache_directory)
 
         # Build runhistory
         # TODO Does this work correctly for non-caching?
@@ -36,7 +34,6 @@ class WhiteBoxDriver:
             'stamp': stamp,
             'caching': caching,
             'acquisition_function': acq_func,
-            'cache_directory': cache_directory,
             'wallclock_limit': wallclock_limit
         }
 
@@ -47,15 +44,27 @@ class WhiteBoxDriver:
 
         # Set up tae runner
         if caching:
-            tae = CachedParaboloid2Minima(runhistory=runhistory,
-                                   statistics=self.statistics,
-                                   min_x=min_x,
-                                   min_y=min_y)
+            if test_function == "beale":
+                tae = CachedBeale(runhistory=runhistory,
+                                  statistics=self.statistics,
+                                  min_x=min_x,
+                                  min_y=min_y)
+            else:
+                tae = CachedParaboloid2Minima(runhistory=runhistory,
+                                              statistics=self.statistics,
+                                              min_x=min_x,
+                                              min_y=min_y)
         else:
-            tae = Paraboloid2Minima(runhistory=runhistory,
-                             statistics=self.statistics,
-                             min_x=min_x,
-                             min_y=min_y)
+            if test_function == "beale":
+                tae = Beale(runhistory=runhistory,
+                            statistics=self.statistics,
+                            min_x=min_x,
+                            min_y=min_y)
+            else:
+                tae = Paraboloid2Minima(runhistory=runhistory,
+                                        statistics=self.statistics,
+                                        min_x=min_x,
+                                        min_y=min_y)
 
         # setup config space
         self.config_space = tae.get_config_space(seed=seed)
@@ -110,7 +119,7 @@ class WhiteBoxDriver:
             acq_func="ei",
             wallclock_limit=3600,
             runcount_limit=1000,
-            cache_directory=None,
+            test_function="paraboloid",
             min_x=0.75,
             min_y=0.5):
 
@@ -118,9 +127,9 @@ class WhiteBoxDriver:
         self.initialize(stamp=stamp,
                         seed=seed,
                         acq_func=acq_func,
-                        cache_directory=cache_directory,
                         wallclock_limit=wallclock_limit,
                         runcount_limit=runcount_limit,
+                        test_function=test_function,
                         min_x=min_x,
                         min_y=min_y)
 
@@ -134,9 +143,12 @@ class WhiteBoxDriver:
         # Run SMBO
         incumbent = self.smbo.run()
 
-        # Save statistics
-        # self.statistics.save()
-
+        # Read trajectory files with incumbents and retrieve test performances
+        trajectory = TrajLogger.read_traj_aclib_format(self.trajectory_path_json, self.config_space)
+        # First transform the configuration to a dictionary
+        for traj in trajectory:
+            traj['incumbent'] = traj['incumbent'].get_dictionary()
+        self.statistics.add_incumbents_trajectory(trajectory)
         return incumbent
 
     #### INTERNAL METHODS ####

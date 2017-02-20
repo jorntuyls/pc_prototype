@@ -44,7 +44,7 @@ class CachedParaboloid(CachedWhiteboxFunction):
 
 class Paraboloid2Minima(WhiteBoxFunction):
 
-    def __init__(self, runhistory, statistics, min_x=[0.75, 0.5], min_y=[0.25, 0.5]):
+    def __init__(self, runhistory, statistics, min_x=[0.75, 0.25], min_y=[0.5, 0.5]):
         self.min_x1 = min_x[0]
         self.min_x2 = min_x[1]
         self.min_y1 = min_y[0]
@@ -64,7 +64,7 @@ class Paraboloid2Minima(WhiteBoxFunction):
 
 class CachedParaboloid2Minima(CachedWhiteboxFunction):
 
-    def __init__(self, runhistory, statistics, min_x=[0.75, 0.5], min_y=[0.25, 0.5]):
+    def __init__(self, runhistory, statistics, min_x=[0.75, 0.25], min_y=[0.5, 0.5]):
         self.min_x1 = min_x[0]
         self.min_x2 = min_x[1]
         self.min_y1 = min_y[0]
