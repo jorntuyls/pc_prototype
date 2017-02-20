@@ -117,8 +117,17 @@ class PCLocalSearch(LocalSearch):
         return np.array(runtime_discounts)
 
     def _caching_reduction(self, config, cached_config):
-        #print(config)
-        #print(cached_config[0])
+        '''
+
+        Parameters
+        ----------
+        config
+        cached_config: List of
+
+        Returns
+        -------
+
+        '''
         r = [key for key in cached_config[0].keys() if config[key] != cached_config[0][key]]
         if r == []:
             return cached_config[1]

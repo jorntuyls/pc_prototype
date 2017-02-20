@@ -221,7 +221,7 @@ class SelectConfiguration(object):
         return [(acq_values[ind][0], configs[ind])
                 for ind in indices[::-1]]
 
-
+    # TODO the compute caching discounts methods are located in two places: in the select configuration procedure and also in the local search
     def _compute_caching_discounts(self, configs, cached_configs):
         runtime_discounts = []
         for config in configs:
@@ -233,8 +233,17 @@ class SelectConfiguration(object):
 
 
     def _caching_reduction(self, config, cached_config):
-        # print(config)
-        # print(cached_config[0])
+        '''
+
+        Parameters
+        ----------
+        config:         the new configuration
+        cached_config:  the cached configuration
+
+        Returns
+        -------
+            The runtime discount for this configuration, given the cached configuration if there is one, otherwise 0
+        '''
         r = [key for key in cached_config[0].keys() if config[key] != cached_config[0][key]]
         # print("_caching_reduction: {}".format(r))
         if r == []:

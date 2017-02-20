@@ -223,10 +223,6 @@ class CachedPipelineRunner(PipelineRunner):
 
     #### Private methods ####
 
-    '''
-    Return: List of tuples (dict, time) where dict is a cached algorithm (part of pipeline) configuration and
-                time is runtime that this algorithm configuration took
-    '''
     def _get_pipeline_steps_timing(self, timing, config):
         """
 
@@ -237,6 +233,8 @@ class CachedPipelineRunner(PipelineRunner):
 
         Returns
         -------
+        List of tuples (dict, time) where dict is a cached algorithm (part of pipeline) configuration and
+            time is runtime that this algorithm configuration took
 
         """
         t_rc = []

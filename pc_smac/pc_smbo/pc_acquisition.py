@@ -51,8 +51,8 @@ class PCEIPS(EIPS):
         s = np.sqrt(v_cost)
         # Take into account runtime discount for cached configuration parts
         if runtime_discount:
-            #print("M RUNTIME BEFORE: {}".format(m_runtime))
             for i in range(0, len(m_runtime)):
+                # runhistory2epm4eips returns 'np.log(1 + run.time)'as runtime cost
                 if np.exp(m_runtime[i]) - runtime_discount[i] < 1:
                     print(np.exp(m_runtime[i]), runtime_discount[i])
                 m_runtime[i] =\
