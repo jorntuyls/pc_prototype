@@ -19,9 +19,9 @@ class Beale(WhiteBoxFunction):
     def get_config_space(self, seed=None):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "x", 0, 9, default=0.))
+            "preprocessor:x", 0, 9, default=0.))
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "y", 0, 9, default=0.))
+            "classifier:y", 0, 9, default=0.))
         return cs
 
 class CachedBeale(CachedWhiteboxFunction):
@@ -39,7 +39,7 @@ class CachedBeale(CachedWhiteboxFunction):
     def get_config_space(self, seed=None):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "x", 0, 9, default=4.5))
+            "preprocessor:x", 0, 9, default=4.5))
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "y", 0, 9, default=4.5))
+            "classifier:y", 0, 9, default=4.5))
         return cs

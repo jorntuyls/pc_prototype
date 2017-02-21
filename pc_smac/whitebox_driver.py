@@ -7,8 +7,9 @@ from pc_smac.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 from pc_smac.pc_smac.utils.statistics import Statistics, WhiteboxStatistics
 from pc_smac.pc_smac.utils.statistics_whitebox import WhiteboxStats
-from smac.scenario.scenario import Scenario
+from pc_smac.pc_smac.random_search.whitebox_random_search import WhiteboxRandomSearch, Whitebox2stepRandomSearch
 
+from smac.scenario.scenario import Scenario
 from smac.stats.stats import Stats
 from smac.utils.io.traj_logging import TrajLogger
 from smac.smbo.objective import average_cost
@@ -156,3 +157,83 @@ class WhiteBoxDriver:
     def _clean_trajectory_files(self):
         open(self.trajectory_path_json, 'w')
         open(self.trajectory_path_csv, 'w')
+
+
+
+class WhiteboxDriverRandomSearch(object):
+
+    def __init__(self, output_dir=None):
+        self.output_dir = output_dir if output_dir else os.path.dirname(os.path.abspath(__file__)) + "/output/"
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+
+    def run(self,
+          stamp,
+          version,
+          number_of_leafs,
+          wallclock_limit,
+          seed=None,
+          test_function="paraboloid",
+          min_x=[0.90, 0.90],
+          min_y=[0.1, 0.9]):
+
+        # Build statistics
+        info = {
+            'version': version,
+            'wallclock_limit': wallclock_limit,
+            'seed': seed,
+        }
+        self.statistics = WhiteboxStatistics(stamp,
+                                        self.output_dir,
+                                        information=info,
+                                        total_runtime=wallclock_limit)
+
+        self.statistics.clean_files()
+
+        if version == '2step':
+            if test_function == "beale":
+                tae = CachedBeale(runhistory=None,
+                                  statistics=self.statistics,
+                                  min_x=min_x,
+                                  min_y=min_y)
+            else:
+                tae = CachedParaboloid2Minima(runhistory=None,
+                                              statistics=self.statistics,
+                                              min_x=min_x,
+                                              min_y=min_y)
+            # Build configuration space
+            config_space = tae.get_config_space(seed=seed)
+            random_search = Whitebox2stepRandomSearch(config_space=config_space,
+                                                      pipeline_runner=tae,
+                                                      wallclock_limit=wallclock_limit,
+                                                      statistics=self.statistics,
+                                                      constant_pipeline_steps=["preprocessor"],
+                                                      variable_pipeline_steps=["classifier"],
+                                                      number_leafs_split=number_of_leafs)
+        else:
+            if test_function == "beale":
+                tae = Beale(runhistory=None,
+                            statistics=self.statistics,
+                            min_x=min_x,
+                            min_y=min_y)
+            else:
+                tae = Paraboloid2Minima(runhistory=None,
+                                        statistics=self.statistics,
+                                        min_x=min_x,
+                                        min_y=min_y)
+            # Build configuration space
+            config_space = tae.get_config_space(seed=seed)
+            random_search = WhiteboxRandomSearch(config_space=config_space,
+                                                 pipeline_runner=tae,
+                                                 wallclock_limit=wallclock_limit,
+                                                 statistics=self.statistics)
+
+        # Run random search
+        print("start random search")
+        incumbent = random_search.run()
+        print("... end random search")
+
+        trajectory = self.statistics.get_incumbent_trajectory_dicts()
+        self.statistics.add_incumbents_trajectory(trajectory=trajectory)
+
+        return incumbent

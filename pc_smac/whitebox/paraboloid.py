@@ -18,9 +18,9 @@ class Paraboloid(WhiteBoxFunction):
     def get_config_space(self, seed=None):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "x", 0.0, 1.0, default=0.5))
+            "preprocessor:x", 0.0, 1.0, default=0.5))
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "y", 0.0, 1.0, default=0.5))
+            "classifier:y", 0.0, 1.0, default=0.5))
         return cs
 
 class CachedParaboloid(CachedWhiteboxFunction):
@@ -36,9 +36,9 @@ class CachedParaboloid(CachedWhiteboxFunction):
     def get_config_space(self, seed=None):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "x", 0.0, 1.0, default=0.5))
+            "preprocessor:x", 0.0, 1.0, default=0.5))
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "y", 0.0, 1.0, default=0.5))
+            "classifier:y", 0.0, 1.0, default=0.5))
         return cs
 
 
@@ -57,9 +57,9 @@ class Paraboloid2Minima(WhiteBoxFunction):
     def get_config_space(self, seed=None):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "x", 0.0, 1.0, default=0.5))
+            "preprocessor:x", 0.0, 1.0, default=0.5))
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "y", 0.0, 1.0, default=0.5))
+            "classifier:y", 0.0, 1.0, default=0.5))
         return cs
 
 class CachedParaboloid2Minima(CachedWhiteboxFunction):
@@ -77,9 +77,9 @@ class CachedParaboloid2Minima(CachedWhiteboxFunction):
     def get_config_space(self, seed=None):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "x", 0.0, 1.0, default=0.5))
+            "preprocessor:x", 0.0, 1.0, default=0.5))
         cs.add_hyperparameter(UniformFloatHyperparameter(
-            "y", 0.0, 1.0, default=0.5))
+            "classifier:y", 0.0, 1.0, default=0.5))
         return cs
 
 

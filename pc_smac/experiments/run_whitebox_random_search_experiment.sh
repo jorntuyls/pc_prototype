@@ -1,0 +1,2 @@
+cd /Users/jorntuyls/Documents/workspaces/thesis
+python -m pc_smac.pc_smac.experiments.run_whitebox_random_search_experiment -l=20 -w=200 -n=20 -t=paraboloid -x 0.25 0.75 -y 0.5 0.5 -o=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output/

@@ -22,8 +22,8 @@ class WhiteBoxFunction(ExecuteTARun):
               cutoff=None,
               seed=12345,
               instance_specific="0"):
-        x = config["x"]  # preprocessor
-        y = config["y"]  # classifier
+        x = config["preprocessor:x"]  # preprocessor
+        y = config["classifier:y"]  # classifier
 
         # Calculate cost and set status
         cost = self.z_func(x, y)
@@ -40,20 +40,21 @@ class WhiteBoxFunction(ExecuteTARun):
         run_information = {
             'cost': cost,
             'runtime': runtime,
-            'pipeline_steps_timing': {'x': x, 'y': y},
+            'pipeline_steps_timing': {'preprocessor:x': x, 'classifier:y': y},
         }
         self.statistics.add_run(config.get_dictionary(), run_information)
 
         # Additional info
         additional_info = {}
 
-        self.runhistory.add(config=config,
-                            cost=cost,
-                            time=runtime,
-                            status=status,
-                            instance_id=instance,
-                            seed=seed,
-                            additional_info=additional_info)
+        if self.runhistory:
+            self.runhistory.add(config=config,
+                                cost=cost,
+                                time=runtime,
+                                status=status,
+                                instance_id=instance,
+                                seed=seed,
+                                additional_info=additional_info)
 
         return status, cost, runtime, additional_info
 
@@ -82,8 +83,8 @@ class CachedWhiteboxFunction(WhiteBoxFunction):
         # Increase the number of total evaluations
         self.total_evaluations += 1
 
-        x = config["x"]  # preprocessor
-        y = config["y"]  # classifier
+        x = config["preprocessor:x"]  # preprocessor
+        y = config["classifier:y"]  # classifier
 
         # Calculate cost and set status
         cost = self.z_func(x, y)
@@ -107,7 +108,7 @@ class CachedWhiteboxFunction(WhiteBoxFunction):
         run_information = {
             'cost': cost,
             'runtime': runtime,
-            'pipeline_steps_timing': {'x': x, 'y': y},
+            'pipeline_steps_timing': {'preprocessor:x': x, 'classifier:y': y},
             'cache_hits': self.cache_hits,
             'total_evaluations': self.total_evaluations
         }
@@ -115,15 +116,16 @@ class CachedWhiteboxFunction(WhiteBoxFunction):
 
         # Setup additional info
         # t_rc is a list of tuples (dict, time)
-        t_rc = [({'x': x}, x)]
+        t_rc = [({'preprocessor:x': x}, x)]
         additional_info = {'t_rc': t_rc}
 
-        self.runhistory.add(config=config,
-                            cost=cost,
-                            time=runtime,
-                            status=status,
-                            instance_id=instance,
-                            seed=seed,
-                            additional_info=additional_info)
+        if self.runhistory:
+            self.runhistory.add(config=config,
+                                cost=cost,
+                                time=runtime,
+                                status=status,
+                                instance_id=instance,
+                                seed=seed,
+                                additional_info=additional_info)
 
         return status, cost, runtime, additional_info

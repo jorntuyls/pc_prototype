@@ -74,6 +74,12 @@ class Statistics(object):
         else:
             return self._read_incumbent_file(self.inc_file, config_space)
 
+    def get_incumbent_trajectory_dicts(self):
+        if self.incumbents != []:
+            return self.incumbents
+        else:
+            return self._read_json_file(self.inc_file)
+
     def save(self):
         # Create and clean files
         self._clean_files([self.run_file])
@@ -129,17 +135,16 @@ class Statistics(object):
                 incumbent_trajectory.append(entry)
         return incumbent_trajectory
 
+    def _read_json_file(self, filename):
+        trajectory = []
+        with open(filename) as fp:
+            for line in fp:
+                entry = json.loads(line)
+                trajectory.append(entry)
+        return trajectory
+
     def _convert_dict_to_config(self, config_dict, config_space):
-        # # Method come from SMAC3
-        # for key in config_dict:
-        #     value = config_dict[key]
-        #     print(key, value)
-        #     hp = config_space.get_hyperparameter(key)
-        #     if isinstance(hp, FloatHyperparameter):
-        #         value = float(value)
-        #     elif isinstance(hp, IntegerHyperparameter):
-        #         value = int(value)
-        #     config_dict[key] = value
+        # Method come from SMAC3
 
         config = Configuration(configuration_space=config_space, values=config_dict)
         config.origin = "External Trajectory"
@@ -200,6 +205,9 @@ class WhiteboxStatistics(Statistics):
         if self.start_time == None or self.current_time == None:
             raise ValueError("Timer is not yet started!")
         return self.current_time - self.start_time
+
+    def is_budget_exhausted(self):
+        return self.current_time - self.start_time > self.total_runtime
 
 
 
