@@ -19,9 +19,22 @@ from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.no_preprocessing
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.pca import PcaNode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
 
+from pc_smac.pc_smac.pipeline_space.classification_nodes.adaboost import AdaBoostNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.bernoulli_nb import BernoulliNBNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.decision_tree import DecisionTreeNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.extra_trees import ExtraTreesClassifierNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.gaussian_nb import GaussianNBNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.gradient_boosting import GradientBoostingNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.k_nearest_neighbors import KNearestNeighborsNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.lda import LDANode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.liblinear_svc import LibLinear_SVC_Node
+from pc_smac.pc_smac.pipeline_space.classification_nodes.libsvm_svc import LibSVM_SVC_Node
+from pc_smac.pc_smac.pipeline_space.classification_nodes.multinomial_nb import MultinomialNBNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.passive_aggresive import PassiveAggresiveNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.qda import QDANode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.random_forest import RandomForestNode
-from pc_smac.pc_smac.pipeline_space.classification_nodes.gradient_boosting import GradientBoostingNode
+
 
 
 class PipelineStep(object):
@@ -108,7 +121,19 @@ class ClassificationStep(PipelineStep):
     def __init__(self):
         name = "classifier"
         #nodes = [GradientBoostingNode()]
-        nodes = [SGDNode(),
+        nodes = [AdaBoostNode(),
+                 BernoulliNBNode(),
+                 DecisionTreeNode(),
+                 ExtraTreesClassifierNode(),
+                 GaussianNBNode(),
+                 GradientBoostingNode(),
+                 KNearestNeighborsNode(),
+                 LDANode(),
+                 LibLinear_SVC_Node(),
+                 LibSVM_SVC_Node(),
+                 MultinomialNBNode(),
+                 PassiveAggresiveNode(),
+                 QDANode(),
                  RandomForestNode(),
-                 GradientBoostingNode()]
+                 SGDNode()]
         super(ClassificationStep, self).__init__(name, nodes)
