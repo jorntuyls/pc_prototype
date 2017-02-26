@@ -48,6 +48,7 @@ class CachedPipeline(Pipeline):
             elif name in self.cached_step_names:
                 Xt = self._fit_single_transform_cached(transform, name, idx_tr, Xt,
                                                                y, **fit_params_steps[name])
+                self.pipeline_info.add_cached_preprocessor_timing(name, time.time() - start_time)
             else:
                 Xt = self._fit_single_transform(transform, name, None, Xt, y, **fit_params_steps[name])
             self.pipeline_info.add_preprocessor_timing(name, time.time() - start_time)
@@ -172,6 +173,7 @@ class PipelineInfo(object):
         self.caching = caching
         self.timing = {
             'preprocessors': {},
+            'cached_preprocessors': {},
             'estimators': {}
         }
         self.cache_hits = 0
@@ -179,8 +181,14 @@ class PipelineInfo(object):
     def add_preprocessor_timing(self, name, runtime):
         self.timing['preprocessors'][name] = runtime
 
+    def add_cached_preprocessor_timing(self, name, runtime):
+        self.timing['cached_preprocessors'][name] = runtime
+
     def get_preprocessor_timing(self):
         return self.timing['preprocessors']
+
+    def get_cached_preprocessor_timing(self):
+        return self.timing['cached_preprocessors']
 
     def add_estimator_timing(self, name, runtime):
         self.timing['estimators'][name] = runtime

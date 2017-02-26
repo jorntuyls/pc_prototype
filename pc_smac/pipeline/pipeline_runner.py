@@ -133,7 +133,7 @@ class CachedPipelineRunner(PipelineRunner):
         super(CachedPipelineRunner,self).__init__(data, pipeline_space, runhistory, statistics, downsampling=downsampling)
 
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory)
-        self.transformer_runtime_timing = {}
+        self.cached_transformer_runtime_timing = {}
         self.cache_hits = {
             'total': 0,
             'cache_hits': 0
@@ -169,7 +169,7 @@ class CachedPipelineRunner(PipelineRunner):
                 pipeline.fit(X_train, y_train)
 
                 # Keep track of timing information
-                self.add_runtime_timing(self.transformer_runtime_timing, pipeline.pipeline_info.get_preprocessor_timing())
+                self.add_runtime_timing(self.cached_transformer_runtime_timing, pipeline.pipeline_info.get_cached_preprocessor_timing())
                 self.add_runtime_timing(self.runtime_timing, pipeline.pipeline_info.get_timing_flat())
                 print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
 
@@ -196,7 +196,7 @@ class CachedPipelineRunner(PipelineRunner):
         # Get reduction in runtime for cached configuration if it was not already cached
         # TODO insert this
         # if pipeline.pipeline_info.get_cache_hits()[1] == 0:
-        t_rc = self._get_pipeline_steps_timing(self.transformer_runtime_timing, config)
+        t_rc = self._get_pipeline_steps_timing(self.cached_transformer_runtime_timing, config)
         additional_info['t_rc'] = t_rc
 
         # Calculate score and total runtime
