@@ -90,7 +90,7 @@ class KNearestNeighbors(ClassificationAlgorithm):
             name="n_neighbors", lower=1, upper=100, log=True, default=1))
         weights = cs.add_hyperparameter(CategoricalHyperparameter(
             name="weights", choices=["uniform", "distance"], default="uniform"))
-        p = cs.add_hyperparameter(CategoricalHyperparameter(
-            name="p", choices=[1, 2], default=2))
+        p = cs.add_hyperparameter(UniformIntegerHyperparameter(
+            name="p", lower=1, upper=2, default=2))
 
         return cs
