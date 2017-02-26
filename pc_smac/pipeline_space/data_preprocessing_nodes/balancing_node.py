@@ -12,7 +12,7 @@ from pc_smac.pc_smac.utils.constants import *
 class BalancingNode(Node):
 
     def __init__(self):
-        self.name = "balancing"
+        self.name = "balancer"
         self.type = "balancing"
         self.hyperparameters = {"strategy": "none"}
         self.algorithm = Balancing

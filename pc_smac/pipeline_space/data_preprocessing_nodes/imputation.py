@@ -8,7 +8,7 @@ from pc_smac.pc_smac.utils.constants import *
 class ImputationNode(Node):
 
     def __init__(self):
-        self.name = "imputation"
+        self.name = "imputer"
         self.type = "imputation"
         self.hyperparameters = {"strategy": "mean"}
         self.algorithm = Imputation

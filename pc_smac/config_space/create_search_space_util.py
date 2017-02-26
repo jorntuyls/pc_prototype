@@ -23,17 +23,8 @@ def get_match_array(pipeline, dataset_properties,
         is_choice = node.get_nb_nodes() > 1
         node_i_is_choice.append(is_choice)
 
-        node_include = include.get(
-            node_name) if include is not None else None
-        node_exclude = exclude.get(
-            node_name) if exclude is not None else None
-
-        if is_choice:
-            node_i_choices_names.append(node.get_node_names())
-            node_i_choices.append(node.get_nodes())
-
-        else:
-            node_i_choices.append(node.get_nodes())
+        node_i_choices_names.append(node.get_node_names())
+        node_i_choices.append(node.get_nodes())
 
     matches_dimensions = [len(choices) for choices in node_i_choices]
     # Start by allowing every combination of nodes. Go through all
@@ -132,25 +123,11 @@ def add_forbidden(conf_space, pipeline, matches, dataset_properties,
     all_nodes = []
     for node_name, node in pipeline:
         all_nodes.append(node)
-        is_choice = hasattr(node, "get_available_components")
+        is_choice = node.get_nb_nodes() > 1
         node_i_is_choice.append(is_choice)
+        node_i_choices_names.append(node.get_node_names())
+        node_i_choices.append(node.get_nodes())
 
-        node_include = include.get(
-            node_name) if include is not None else None
-        node_exclude = exclude.get(
-            node_name) if exclude is not None else None
-
-        if is_choice:
-            node_i_choices_names.append(node.get_available_components(
-                dataset_properties, include=node_include,
-                exclude=node_exclude).keys())
-            node_i_choices.append(node.get_available_components(
-                dataset_properties, include=node_include,
-                exclude=node_exclude).values())
-
-        else:
-            node_i_choices_names.append([node_name])
-            node_i_choices.append([node])
 
     # Find out all chains of choices. Only in such a chain its possible to
     # have several forbidden constraints
@@ -185,9 +162,7 @@ def add_forbidden(conf_space, pipeline, matches, dataset_properties,
 
                 for idx in indices:
                     node = all_nodes[idx]
-                    available_components = node.get_available_components(
-                        dataset_properties,
-                        include=node_i_choices_names[idx])
+                    available_components = node.get_node_names()
                     assert len(available_components) > 0, len(available_components)
                     skip_array_shape.append(len(available_components))
                     num_node_choices.append(range(len(available_components)))

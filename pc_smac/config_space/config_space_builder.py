@@ -35,14 +35,15 @@ class ConfigSpaceBuilder:
 
     def _get_hyperparameter_search_space_pipeline_step(self, ps, include=None):
         cs = ConfigurationSpace()
-        cs.add_hyperparameter(CategoricalHyperparameter('__choice__',
+        choice = cs.add_hyperparameter(CategoricalHyperparameter('__choice__',
                                                         ps.get_node_names()))
 
         for node in ps.get_nodes():
             if include is not None and node not in include:
                 continue
             sub_cs = node.get_hyperparameter_search_space()
-            cs.add_configuration_space(node.get_name(), sub_cs)
+            parent_hyperparameter = {'parent': choice, 'value': node.get_name()}
+            cs.add_configuration_space(node.get_name(), sub_cs, parent_hyperparameter=parent_hyperparameter)
         return cs
 
     def _get_hyperparameter_search_space(self, cs, dataset_properties, exclude,
@@ -173,7 +174,7 @@ class ConfigSpaceBuilder:
                         ForbiddenEqualsClause(cs.get_hyperparameter(
                             "classifier:__choice__"), c),
                         ForbiddenEqualsClause(cs.get_hyperparameter(
-                            "preprocessor:__choice__"), f)))
+                            "feature_preprocessor:__choice__"), f)))
                     break
                 except KeyError:
                     break
@@ -202,7 +203,7 @@ class ConfigSpaceBuilder:
                 try:
                     cs.add_forbidden_clause(ForbiddenAndConjunction(
                         ForbiddenEqualsClause(cs.get_hyperparameter(
-                            "preprocessor:__choice__"), f),
+                            "feature_preprocessor:__choice__"), f),
                         ForbiddenEqualsClause(cs.get_hyperparameter(
                             "classifier:__choice__"), c)))
                     break
