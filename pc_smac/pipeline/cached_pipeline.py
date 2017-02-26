@@ -16,7 +16,7 @@ FIT_TRANSFORM_ONE_EVALUATIONS = 0
 
 class CachedPipeline(Pipeline):
 
-    def __init__(self, steps, memory=Memory(cachedir=None, verbose=0)):
+    def __init__(self, steps, cached_step_names, memory=Memory(cachedir=None, verbose=0)):
         self.memory = memory
         if isinstance(memory, six.string_types):
             self.memory = Memory(cachedir=memory, verbose=0)
@@ -26,6 +26,8 @@ class CachedPipeline(Pipeline):
         FIT_SINGLE_TRANSFORM_EVALUATIONS = 0
         global FIT_TRANSFORM_ONE_EVALUATIONS
         FIT_TRANSFORM_ONE_EVALUATIONS = 0
+
+        self.cached_step_names = cached_step_names
 
         super(CachedPipeline, self).__init__(steps)
 
@@ -43,9 +45,11 @@ class CachedPipeline(Pipeline):
 
             if transform is None:
                 pass
-            else:
-                Xt = self._fit_single_transform(transform, name, idx_tr, Xt,
+            elif name in self.cached_step_names:
+                Xt = self._fit_single_transform_cached(transform, name, idx_tr, Xt,
                                                                y, **fit_params_steps[name])
+            else:
+                Xt = self._fit_single_transform(transform, name, None, Xt, y, **fit_params_steps[name])
             self.pipeline_info.add_preprocessor_timing(name, time.time() - start_time)
 
         if self._final_estimator is None:
@@ -109,8 +113,6 @@ class CachedPipeline(Pipeline):
         Xt = X
         for name, transform in self.steps[:-1]:
             if transform is not None:
-                #test = self.memory.cache(self._single_transform)._get_argument_hash([transform, Xt],{})
-                #print("HASH TRANSFORM: {}".format(test))
                 Xt = self._single_transform(transform, Xt)
         score_params = {}
         if sample_weight is not None:
@@ -121,7 +123,17 @@ class CachedPipeline(Pipeline):
         print("EVALUATE _SINGLE_TRANSFORM")
         return transform.transform(X)
 
-    def _fit_single_transform(self, transform, name, idx_tr,  X, y, **fit_params_trans):
+    def _fit_single_transform(self, transformer, name, weight, X, y, **fit_params):
+        if hasattr(transformer, 'fit_transform'):
+            res = transformer.fit_transform(X, y, **fit_params)
+        else:
+            res = transformer.fit(X, y, **fit_params).transform(X)
+        # if we have a weight for this transformer, multiply output
+        if weight is None:
+            return res
+        return res * weight
+
+    def _fit_single_transform_cached(self, transform, name, idx_tr,  X, y, **fit_params_trans):
 
         #print("EVALUATE _FIT_SINGLE_TRANSFORM")
         global FIT_SINGLE_TRANSFORM_EVALUATIONS

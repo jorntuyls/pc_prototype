@@ -27,6 +27,19 @@ class PipelineSpace(object):
         return [ps.get_name() for ps in self.get_pipeline_steps()]
 
     def initialize_algorithm(self, pipeline_step_name, node_name, hyperparameters):
+        """
+
+        Parameters
+        ----------
+        pipeline_step_name:     the name of the pipeline step in which we want to initialize the algorithm
+        node_name:              the name of the node where we want to initialize the algorithm
+        hyperparameters:        the hyperparameters for the node's algorithm
+
+        Returns
+        -------
+        a tuple (full algorithm name, initialized algorithm)
+
+        """
         ps = self.get_pipeline_step(pipeline_step_name)
         return ps.initialize_algorithm(node_name, hyperparameters)
 

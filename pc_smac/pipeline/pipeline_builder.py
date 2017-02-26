@@ -27,7 +27,7 @@ class PipelineBuilder:
         pipeline_steps = self.pipeline_space.get_pipeline_step_names()
         concrete_steps = []
         for ps in pipeline_steps:
-            # TODO Remove this hardcoded '__choice__'
+            # TODO Remove this hardcoded ':__choice__'
             algo_name = config[ps + ':__choice__']
             hyperparameters = {}
             for hp_name in config.keys():
@@ -40,7 +40,14 @@ class PipelineBuilder:
             concrete_steps.append(step)
 
         if self.caching:
-            return CachedPipeline(concrete_steps, memory=Memory(cachedir=self.cachedir, verbose=0))
+            # TODO: Make this less hardcoded
+            cached_step_names = []
+            for name, step_algorithm in concrete_steps:
+                if name.split(":")[0] == "feature_preprocessor":
+                    cached_step_names.append(name)
+            return CachedPipeline(concrete_steps,
+                                  cached_step_names=cached_step_names,
+                                  memory=Memory(cachedir=self.cachedir, verbose=0))
         return OwnPipeline(concrete_steps)
 
     def clean_cache(self):
