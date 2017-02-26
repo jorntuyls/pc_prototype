@@ -77,8 +77,8 @@ class PCRunHistory(RunHistory):
         return return_value
 
     def _is_equal(self, config1, config2):
-        r = [key for key in config1.keys() if config1[key] != config2[key]]
-        s = [key for key in config2.keys() if config2[key] != config1[key]]
+        r = [key for key in config1.keys() if (key not in config2.keys() or config1[key] != config2[key])]
+        s = [key for key in config2.keys() if (key not in config1.keys() or config2[key] != config1[key])]
         if s == [] and r == []:
             return True
         return False
