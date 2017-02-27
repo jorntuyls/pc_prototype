@@ -16,7 +16,6 @@ class RandomTreesEmbeddingNode(Node):
 
     def initialize_algorithm(self, hyperparameters):
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        print("TEST")
         random_trees_embedding = self.algorithm(n_estimators=hyperparameters["n_estimators"],
                                              max_depth=hyperparameters["max_depth"],
                                              min_samples_split=hyperparameters["min_samples_split"],
