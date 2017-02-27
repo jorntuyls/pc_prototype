@@ -25,11 +25,11 @@ class Statistics(object):
         if self.output_dir[-1] == "/":
             self.run_file = self.output_dir + "statistics_" + str(self.stamp) + "_runs.json"
             self.inc_file = self.output_dir + "statistics_" + str(self.stamp) + "_incumbents.json"
-            self.run_trans_file = self.output_dir + "statistics_" + str(self.stamp) + "_runs_transformed.json"
+            self.inc_log_file = self.output_dir + "statistics_logging_" + str(self.stamp) + "_incumbents.json"
         else:
             self.run_file = self.output_dir + "/statistics_" + str(self.stamp) + "_runs.json"
             self.inc_file = self.output_dir + "/statistics_" + str(self.stamp) + "_incumbents.json"
-            self.run_trans_file = self.output_dir + "/statistics_" + str(self.stamp) + "_runs_transformed.json"
+            self.inc_log_file = self.output_dir + "/statistics_logging_" + str(self.stamp) + "_incumbents.json"
 
         #self.info_file = self.output_dir + "statistics_info_" + str(self.stamp) + ".json"
 
@@ -55,12 +55,13 @@ class Statistics(object):
     def add_new_incumbent(self, incumbent: dict, information: dict):
         time_point = self.get_time_point()
         inc_run = self._add_incumbent(self.incumbents, incumbent, time_point, information)
-        # Append run directly to json file
-        self._save_json([inc_run], self.inc_file)
+        # Append run directly to json logging file
+        self._save_json([inc_run], self.inc_log_file)
         return time_point
 
     def add_incumbents_trajectory(self, trajectory):
         self.incumbents = trajectory
+        # Add to real incumbent file
         self._open_file(self.inc_file)
         self._save_json(self.incumbents, self.inc_file)
 
@@ -72,17 +73,17 @@ class Statistics(object):
                 line['incumbent'] = self._convert_dict_to_config(line['incumbent'], config_space=config_space)
             return self.incumbents
         else:
-            return self._read_incumbent_file(self.inc_file, config_space)
+            return self._read_incumbent_file(self.inc_log_file, config_space)
 
     def get_incumbent_trajectory_dicts(self):
         if self.incumbents != []:
             return self.incumbents
         else:
-            return self._read_json_file(self.inc_file)
+            return self._read_json_file(self.inc_log_file)
 
     def save(self):
         # Create and clean files
-        self._clean_files([self.run_file])
+        self._clean_files([self.run_file, self.inc_file])
         # Save info to files
         self._save_json(self.runs, self.run_file)
         self._save_json(self.incumbents, self.inc_file)

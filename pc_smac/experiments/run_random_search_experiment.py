@@ -16,7 +16,7 @@ from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
 
 
 
-def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, output_dir=None, cache_directory=None, downsampling=None):
+def run_random_search(stamp, data_path, version, wallclock_limit, memory_limit, cutoff, seed=None, output_dir=None, cache_directory=None, downsampling=None):
     # data set
     data_set = data_path.split("/")[-1]
 
@@ -38,8 +38,8 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
     i_s = ImputationStep()
     r_s = RescalingStep()
     b_s = BalancingStep()
-    p_s = PipelineStep(name='feature_preprocessor', nodes=[KernelPcaNode()])
-    c_s = PipelineStep(name='classifier', nodes=[SGDNode()])
+    p_s = PreprocessingStep() # PipelineStep(name='feature_preprocessor', nodes=[KernelPcaNode()])
+    c_s = ClassificationStep() # PipelineStep(name='classifier', nodes=[SGDNode()])
     pipeline_space.add_pipeline_steps([o_s, i_s, r_s, b_s, p_s, c_s])
 
     # Build configuration space
@@ -52,6 +52,8 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
         'stamp': stamp,
         'version': version,
         'wallclock_limit': wallclock_limit,
+        'memory_limit': memory_limit,
+        'cutoff': cutoff,
         'seed': seed,
         'downsampling': downsampling
     }
@@ -61,7 +63,7 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
                             total_runtime=wallclock_limit)
 
     # Build pipeline runner
-    if version == 'tree':
+    if version == '2step':
         pipeline_runner = CachedPipelineRunner(data=data,
                                                pipeline_space=pipeline_space,
                                                runhistory=None,
@@ -71,6 +73,7 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
         random_search = TreeRandomSearch(config_space=config_space,
                                          pipeline_runner=pipeline_runner,
                                          wallclock_limit=wallclock_limit,
+                                         memory_limit=memory_limit,
                                          statistics=statistics,
                                          constant_pipeline_steps=["one_hot_encoder", "imputation", "rescaling",
                                                                   "balancing", "feature_preprocessor"],
@@ -85,11 +88,12 @@ def run_random_search(stamp, data_path, version, wallclock_limit, seed=None, out
         random_search = RandomSearch(config_space=config_space,
                                      pipeline_runner=pipeline_runner,
                                      wallclock_limit=wallclock_limit,
+                                     memory_limit=memory_limit,
                                      statistics=statistics)
 
     # Run random search
     print("start random search")
-    incumbent = random_search.run()
+    incumbent = random_search.run(cutoff=cutoff)
     print("... end random search")
 
     # test performance of incumbents
@@ -119,6 +123,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--version", type=str, help="Random search version")
     parser.add_argument("-w", "--wallclock", type=int, help="Wallclock limit")
+    parser.add_argument("-m", "--memory", type=int, help="Memory limit")
+    parser.add_argument("-c", "--cutoff", type=int, help="Cutoff")
     parser.add_argument("-l", "--location", type=str, help="Data location")
     parser.add_argument("-st", "--stamp", type=str, default="stamp", help="Stamp for output files")
     parser.add_argument("-s", "--seed", type=int, default=None, help="Seed for random")
@@ -133,6 +139,8 @@ if __name__ == "__main__":
                       data_path=args.location,
                       version=args.version,
                       wallclock_limit=args.wallclock,
+                      memory_limit=args.memory,
+                      cutoff=args.cutoff,
                       seed=args.seed,
                       output_dir=args.outputdir,
                       cache_directory=args.cachedir,
