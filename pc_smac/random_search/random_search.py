@@ -117,11 +117,9 @@ class TreeRandomSearch(RandomSearch):
         self.statistics.add_new_incumbent(incumbent.get_dictionary(), {'cost': incumbent_cost})
 
         while not(self.statistics.is_budget_exhausted()):
-            rand_configs = self.config_space.sample_configuration(size=self.number_leafs_split)
-            # TODO hack for now to combine preprocessing part of one configuration with classification part of all the others
-            new_configs = self.combine_configurations(rand_configs)
+            configs = self.sample_batch_of_configurations()
 
-            for config in new_configs:
+            for config in configs:
                 _, cost, additional_info, _ = self.run_with_limits(config, instance=None, cutoff=cutoff, seed=None)
                 if cost < incumbent_cost:
                     incumbent = config
@@ -131,21 +129,49 @@ class TreeRandomSearch(RandomSearch):
 
         return incumbent
 
+    def sample_batch_of_configurations(self):
+        start_config = self.config_space.sample_configuration()
+        batch_of_configs = [start_config]
 
-    def combine_configurations(self, configs):
-        default = configs.pop()
-        constant_values = self._get_values(default.get_dictionary(), self.constant_pipeline_steps)
-        new_configs = [default]
+        i = 1
+        while i < self.number_leafs_split:
+            try:
+                next_config = self.config_space.sample_configuration()
+                # TODO hack for now to combine preprocessing part of one configuration with classification part of all the others
+                next_config_combined = self.combine_configurations(start_config, next_config)
+                print("Iteration: {}, config_combined: {}".format(i, next_config_combined))
+                batch_of_configs.append(next_config_combined)
+                i += 1
+            except ValueError as v:
+                pass
+        print("BATCH: {}".format(batch_of_configs))
+        return batch_of_configs
 
-        for config in configs:
-            new_config_values = {}
-            new_config_values.update(constant_values)
-            variable_values = self._get_values(config.get_dictionary(), self.variable_pipeline_steps)
-            new_config_values.update(variable_values)
-            new_configs.append(Configuration(configuration_space=self.config_space,
-                                             values=new_config_values))
+    def combine_configurations(self, start_config, new_config):
+        constant_values = self._get_values(start_config.get_dictionary(), self.constant_pipeline_steps)
+        new_config_values = {}
+        new_config_values.update(constant_values)
 
-        return new_configs
+        variable_values = self._get_values(new_config.get_dictionary(), self.variable_pipeline_steps)
+        new_config_values.update(variable_values)
+
+        return Configuration(configuration_space=self.config_space,
+                             values=new_config_values)
+
+    # def combine_configurations(self, configs):
+    #     default = configs.pop()
+    #     constant_values = self._get_values(default.get_dictionary(), self.constant_pipeline_steps)
+    #     new_configs = [default]
+    #
+    #     for config in configs:
+    #         new_config_values = {}
+    #         new_config_values.update(constant_values)
+    #         variable_values = self._get_values(config.get_dictionary(), self.variable_pipeline_steps)
+    #         new_config_values.update(variable_values)
+    #         new_configs.append(Configuration(configuration_space=self.config_space,
+    #                                          values=new_config_values))
+    #
+    #     return new_configs
 
 
     def _get_values(self, config_dict, pipeline_steps):
