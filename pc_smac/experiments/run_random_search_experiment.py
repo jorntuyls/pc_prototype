@@ -16,7 +16,7 @@ from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
 
 
 
-def run_random_search(stamp, data_path, version, wallclock_limit, memory_limit, cutoff, seed=None, output_dir=None, cache_directory=None, downsampling=None):
+def run_random_search(stamp, data_path, version, wallclock_limit, memory_limit, cutoff, number_of_leafs, seed=None, output_dir=None, cache_directory=None, downsampling=None):
     # data set
     data_set = data_path.split("/")[-1]
 
@@ -78,7 +78,7 @@ def run_random_search(stamp, data_path, version, wallclock_limit, memory_limit, 
                                          constant_pipeline_steps=["one_hot_encoder", "imputation", "rescaling",
                                                                   "balancing", "feature_preprocessor"],
                                          variable_pipeline_steps=["classifier"],
-                                         number_leafs_split=4)
+                                         number_leafs_split=number_of_leafs)
     else:
         pipeline_runner = PipelineRunner(data=data,
                                          pipeline_space=pipeline_space,
@@ -127,6 +127,7 @@ def parse_arguments():
     parser.add_argument("-c", "--cutoff", type=int, help="Cutoff")
     parser.add_argument("-l", "--location", type=str, help="Data location")
     parser.add_argument("-st", "--stamp", type=str, default="stamp", help="Stamp for output files")
+    parser.add_argument("-nl", "--number_of_leafs", type=int, default=4, help="Number of leafs")
     parser.add_argument("-s", "--seed", type=int, default=None, help="Seed for random")
     parser.add_argument("-o", "--outputdir", type=str, default=None, help="Output directory")
     parser.add_argument("-cd", "--cachedir", type=str, default=None, help="Cache directory")
@@ -141,6 +142,7 @@ if __name__ == "__main__":
                       wallclock_limit=args.wallclock,
                       memory_limit=args.memory,
                       cutoff=args.cutoff,
+                      number_of_leafs=args.number_of_leafs,
                       seed=args.seed,
                       output_dir=args.outputdir,
                       cache_directory=args.cachedir,

@@ -1,2 +1,2 @@
 cd /Users/jorntuyls/Documents/workspaces/thesis
-python -m pc_smac.pc_smac.experiments.run_random_search_experiment -st=random_search -v=2step -w=5 -m=6000 -c=20 -ds=2000 -l=/Users/jorntuyls/Documents/workspaces/thesis/data/1049_bac -o=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output -cd=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/cache
+python -m pc_smac.pc_smac.experiments.run_random_search_experiment -st=random_search -v=2step -w=5 -m=6000 -c=20 -ds=2000 -nl=10 -l=/Users/jorntuyls/Documents/workspaces/thesis/data/1049_bac -o=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output -cd=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/cache
