@@ -26,9 +26,21 @@ from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.no_preprocessing
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.pca import PcaNode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
 
+from pc_smac.pc_smac.pipeline_space.classification_nodes.adaboost import AdaBoostNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.bernoulli_nb import BernoulliNBNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.decision_tree import DecisionTreeNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.extra_trees import ExtraTreesClassifierNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.gaussian_nb import GaussianNBNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.gradient_boosting import GradientBoostingNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.k_nearest_neighbors import KNearestNeighborsNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.lda import LDANode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.liblinear_svc import LibLinear_SVC_Node
+from pc_smac.pc_smac.pipeline_space.classification_nodes.libsvm_svc import LibSVM_SVC_Node
+from pc_smac.pc_smac.pipeline_space.classification_nodes.multinomial_nb import MultinomialNBNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.passive_aggresive import PassiveAggresiveNode
+from pc_smac.pc_smac.pipeline_space.classification_nodes.qda import QDANode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.random_forest import RandomForestNode
-from pc_smac.pc_smac.pipeline_space.classification_nodes.gradient_boosting import GradientBoostingNode
 
 from smac.smbo.objective import average_cost
 
@@ -37,7 +49,9 @@ def run_experiment(data_id, location, output_dir, prepr_name=None, class_name=No
     preprocessor_names = ['extra_rand_trees', 'fast_ica', 'feature_agglomeration', 'kernel_pca', 'kitchen_sinks', 'linear_svm',
                           'no_preprocessing', 'nystroem_sampler', 'pca', 'polynomial_features', 'rand_trees_embedding',
                           'select_percentile', 'select_rates']
-    class_names = ['sgd', 'random_forest', 'gradient_boosting']
+    class_names = ['adaboost', 'bernoulli_nb', 'decision_tree', 'extra_trees', 'gaussian_nb', 'gradient_boosting',
+                   'k_nearest_neighbors', 'lda', 'liblinear_svc', 'libsvm_svc', 'multinomial_nb', 'passive_aggresive',
+                   'qda', 'random_forest', 'sgd']
 
     preprocessor_nodes =  {
         'extra_rand_trees': ExtraTreesNode(),
@@ -56,9 +70,21 @@ def run_experiment(data_id, location, output_dir, prepr_name=None, class_name=No
     }
 
     classifier_nodes = {
-        'sgd': SGDNode(),
+        'adaboost': AdaBoostNode(),
+        'bernoulli_nb': BernoulliNBNode(),
+        'decision_tree': DecisionTreeNode(),
+        'extra_trees': ExtraTreesClassifierNode(),
+        'gaussian_nb': GaussianNBNode(),
+        'gradient_boosting': GradientBoostingNode(),
+        'k_nearest_neighbors': KNearestNeighborsNode(),
+        'lda': LDANode(),
+        'liblinear_svc': LibLinear_SVC_Node(),
+        'libsvm_svc': LibSVM_SVC_Node(),
+        'multinomial_nb': MultinomialNBNode(),
+        'passive_aggresive': PassiveAggresiveNode(),
+        'qda': QDANode(),
         'random_forest': RandomForestNode(),
-        'gradient_boosting': GradientBoostingNode()
+        'sgd': SGDNode()
     }
 
     if prepr_name != None:
@@ -208,9 +234,9 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--nbconfigs", type=int, help="Number of configurations")
-    parser.add_argument("-s", "--seed", type=int, help="Seed for sampling configurations")
     parser.add_argument("-d", "--dataid", type=str, help="Dataset id")
     parser.add_argument("-l", "--location", type=str, help="Dataset directory")
+    parser.add_argument("-s", "--seed", type=int, default=None, help="Seed for sampling configurations")
     parser.add_argument("-p", "--pname", type=str, default=None, help="Preprocessor name")
     parser.add_argument("-c", "--cname", type=str, default=None, help="Classifier name")
     parser.add_argument("-o", "--outputdir", type=str, default=None, help="Output directory")
