@@ -42,9 +42,9 @@ class Statistics(object):
             raise ValueError("Timer is not yet started!")
         return time.time() - self.start_time
 
-    def add_run(self, config: dict, information: dict):
+    def add_run(self, config: dict, information: dict, config_origin="Unknown"):
         time_point = self.get_time_point()
-        run = self._add_run(self.runs, config, time_point, information)
+        run = self._add_run(self.runs, config, time_point, information, config_origin)
         # Append run directly to json file
         self._save_json([run], self.run_file)
         return time_point
@@ -52,9 +52,9 @@ class Statistics(object):
     def get_run_trajectory(self):
         return self.runs
 
-    def add_new_incumbent(self, incumbent: dict, information: dict):
+    def add_new_incumbent(self, incumbent: dict, information: dict, config_origin="Unknown"):
         time_point = self.get_time_point()
-        inc_run = self._add_incumbent(self.incumbents, incumbent, time_point, information)
+        inc_run = self._add_incumbent(self.incumbents, incumbent, time_point, information, config_origin)
         # Append run directly to json logging file
         self._save_json([inc_run], self.inc_log_file)
         return time_point
@@ -100,7 +100,7 @@ class Statistics(object):
 
     #### INTERNAL METHODS ####
 
-    def _add_incumbent(self, lst, config, time_point, information):
+    def _add_incumbent(self, lst, config, time_point, information, config_origin):
         if 'time' in information.keys() or 'config' in information.keys() \
                 or 'eval' in information.keys():
             raise ValueError("information should not contain the 'time' or 'config' key!")
@@ -109,11 +109,12 @@ class Statistics(object):
             'wallclock_time': time_point,
             'eval': len(lst) + 1,
             'incumbent': config,
+            'config_origing': config_origin
         })
         lst.append(run)
         return run
 
-    def _add_run(self, lst, config, time_point, information):
+    def _add_run(self, lst, config, time_point, information, config_origin):
         if 'time' in information.keys() or 'config' in information.keys()\
                 or 'eval' in information.keys():
             raise ValueError("information should not contain the 'time' or 'config' key!")
@@ -122,6 +123,7 @@ class Statistics(object):
             'wallclock_time': time_point,
             'eval': len(lst) + 1,
             'config': config,
+            'config_origin': config_origin
         })
         lst.append(run)
         return run

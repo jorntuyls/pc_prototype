@@ -107,7 +107,7 @@ class PipelineRunner(object):
             'runtime': runtime,
             'pipeline_steps_timing': self.runtime_timing
         }
-        self.statistics.add_run(config.get_dictionary(), run_information)
+        self.statistics.add_run(config.get_dictionary(), run_information, config_origin=config.origin)
 
         print("stop tae_runner")
         return cost, additional_info
@@ -213,7 +213,7 @@ class CachedPipelineRunner(PipelineRunner):
             'cache_hits': self.cache_hits['cache_hits'],
             'total_evaluations': self.cache_hits['total']
         }
-        self.statistics.add_run(config.get_dictionary(), run_information)
+        self.statistics.add_run(config.get_dictionary(), run_information, config_origin=config.origin)
 
         print("stop cached tae_runner")
         return cost, additional_info
