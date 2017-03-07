@@ -15,6 +15,7 @@ from smac.utils.util_funcs import get_types
 from pc_smac.pc_smac.pc_smbo.pc_smbo import PCSMBO
 from pc_smac.pc_smac.pc_smbo.pc_acquisition import PCEIPS
 from pc_smac.pc_smac.pc_smbo.pc_local_search import PCLocalSearch
+from pc_smac.pc_smac.pc_smbo.pc_intensification import PCIntensifier
 from pc_smac.pc_smac.pc_smbo.select_configuration import CachedSelectConfiguration, SelectConfiguration
 
 
@@ -31,16 +32,16 @@ class SMBOBuilder:
         # Build intensifier
         rng = np.random.RandomState()
         traj_logger = TrajLogger(logging_directory, stats)
-        intensifier = Intensifier(tae_runner=tae_runner,
-                                  stats=stats,
-                                  traj_logger=traj_logger,
-                                  rng=rng,
-                                  cutoff= scenario.cutoff,
-                                  deterministic=scenario.deterministic,
-                                  run_obj_time=scenario.run_obj == "runtime",
-                                  run_limit=scenario.ta_run_limit,
-                                  instances=[1],
-                                  maxR=1)
+        intensifier = PCIntensifier(tae_runner=tae_runner,
+                                    stats=stats,
+                                    traj_logger=traj_logger,
+                                    rng=rng,
+                                    cutoff=scenario.cutoff,
+                                    deterministic=scenario.deterministic,
+                                    run_obj_time=scenario.run_obj == "runtime",
+                                    run_limit=scenario.ta_run_limit,
+                                    instances=[1],
+                                    maxR=1)
 
         # Build model
         if len(model_target_names) > 1:
