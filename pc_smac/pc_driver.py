@@ -26,13 +26,14 @@ class Driver:
         self.data_path = data_path
         self.data_loader = DataLoader(data_path)
 
+        # test
+        #from autosklearn.pipeline.classification import SimpleClassificationPipeline
+        #s = SimpleClassificationPipeline()
+        #print(s.get_hyperparameter_search_space())
+
         self.pipeline_space = self._build_pipeline_space()
         self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
         self.config_space = self.cs_builder.build_config_space()
-
-        # self.pipeline = SimpleClassificationPipeline()
-        # self.config_space = self.pipeline.get_hyperparameter_search_space()
-        # print(self.config_space)
 
         self.output_dir = output_dir if output_dir else os.path.dirname(os.path.abspath(__file__)) + "/output/"
         if not os.path.exists(self.output_dir):
@@ -87,7 +88,7 @@ class Driver:
             # Not a valid acquisition function
             raise ValueError("The provided acquisition function is not valid")
 
-        trajectory_path = self.output_dir + "/logging/" + stamp + "/" # + self.data_path.split("/")[-1] + "/" + str(stamp)
+        trajectory_path = self.output_dir + "/logging/" + stamp # + self.data_path.split("/")[-1] + "/" + str(stamp)
         if not os.path.exists(trajectory_path):
             os.makedirs(trajectory_path)
         self.trajectory_path_json = trajectory_path + "/traj_aclib2.json"
