@@ -125,7 +125,11 @@ class Driver:
             aggregate_func=average_cost,
             acq_func_name=acq_func,
             model_target_names=model_target_names,
-            logging_directory=trajectory_path)
+            logging_directory=trajectory_path,
+            random_leaf_size=1,
+            constant_pipeline_steps=["one_hot_encoder", "imputation", "rescaling",
+                                     "balancing", "feature_preprocessor"],
+            variable_pipeline_steps=["classifier"])
 
 
     def run(self,

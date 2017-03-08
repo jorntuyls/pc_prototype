@@ -26,7 +26,7 @@ class SMBOBuilder:
         pass
 
     def build_pc_smbo(self, tae_runner, stats, scenario, runhistory, aggregate_func, acq_func_name, model_target_names,
-                        logging_directory):
+                        logging_directory, random_leaf_size=1, constant_pipeline_steps=None, variable_pipeline_steps=None):
 
 
         # Build intensifier
@@ -73,13 +73,18 @@ class SMBOBuilder:
             runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
             local_search = PCLocalSearch(acquisition_function=acquisition_func,
                                          config_space=scenario.cs)
+            if constant_pipeline_steps == None or variable_pipeline_steps == None:
+                raise ValueError("Constant_pipeline_steps and variable pipeline steps should not be none\
+                                    when using PCEIPS")
             select_configuration = CachedSelectConfiguration(scenario=scenario,
-                                                       stats=stats,
-                                                       runhistory=runhistory,
-                                                       model=model,
-                                                       acq_optimizer=local_search,
-                                                       acquisition_func=acquisition_func,
-                                                       rng=rng)
+                                                             stats=stats,
+                                                             runhistory=runhistory,
+                                                             model=model,
+                                                             acq_optimizer=local_search,
+                                                             acquisition_func=acquisition_func,
+                                                             rng=rng,
+                                                             constant_pipeline_steps=constant_pipeline_steps,
+                                                             variable_pipeline_steps=variable_pipeline_steps)
         else:
             acquisition_func = EI(model)
             runhistory2epm = RunHistory2EPM4Cost(scenario, num_params,
@@ -118,6 +123,7 @@ class SMBOBuilder:
                       acq_optimizer=local_search,
                       acquisition_func=acquisition_func,
                       rng=rng,
-                      select_configuration=select_configuration)
+                      select_configuration=select_configuration,
+                      random_leaf_size=random_leaf_size)
 
         return smbo

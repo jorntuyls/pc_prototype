@@ -42,7 +42,8 @@ class SelectConfiguration(object):
     def run(self, X, Y,
                     incumbent,
                     num_configurations_by_random_search_sorted: int = 1000,
-                    num_configurations_by_local_search: int = None):
+                    num_configurations_by_local_search: int = None,
+                    random_leaf_size = 1):
 
         """Choose next candidate solution with Bayesian optimization.
 
@@ -97,27 +98,6 @@ class SelectConfiguration(object):
                 list(map(lambda x: x[1],
                          configs_previous_runs_sorted[:num_configs_local_search])))
 
-        # configs_previous_runs = self.runhistory.get_configs_from_previous_runs()
-        # previous_configs_sorted = self._sort_configs_by_acq_value(configs_previous_runs)
-        # num_configs_previous_runs_local_search = min(len(configs_previous_runs), num_configurations_by_local_search - 1)
-        # num_configs_random_search_local_search = max(0, (
-        # num_configurations_by_local_search - 1) - num_configs_previous_runs_local_search)
-        #
-        # next_configs_by_local_search = \
-        #     self._get_next_by_local_search(
-        #         [incumbent]
-        #         + list(map(lambda x: x[1],
-        #                    previous_configs_sorted[:num_configs_previous_runs_local_search]))
-        #         + list(map(lambda x: x[1],
-        #                    next_configs_by_random_search_sorted[:num_configs_random_search_local_search])))
-        #print("CONFIGS: {}".format(next_configs_by_local_search))
-
-        # next_configs_by_local_search = \
-        #     self._get_next_by_local_search(
-        #         [incumbent] +
-        #         list(map(lambda x: x[1],
-        #                  next_configs_by_random_search_sorted[:num_configurations_by_local_search - 1])))
-
         next_configs_by_acq_value = next_configs_by_random_search_sorted + \
                                     next_configs_by_local_search
         next_configs_by_acq_value.sort(reverse=True, key=lambda x: x[0])
@@ -129,12 +109,12 @@ class SelectConfiguration(object):
         # Remove dummy acquisition function value
         next_configs_by_random_search = [x[1] for x in
                                          self._get_next_by_random_search(
-                                             num_points=num_configurations_by_local_search + num_configurations_by_random_search_sorted)]
+                                             num_points=len(next_configs_by_acq_value))]
+                                             #num_points=num_configurations_by_local_search + num_configurations_by_random_search_sorted)]
 
         challengers = list(itertools.chain(*zip(next_configs_by_acq_value,
                                                 next_configs_by_random_search)))
         return challengers
-
 
     def _get_next_by_random_search(self, num_points=1000, _sorted=False):
         """Get candidate solutions via local search.
@@ -261,7 +241,9 @@ class CachedSelectConfiguration(SelectConfiguration):
                  model: RandomForestWithInstances,
                  acquisition_func: AbstractAcquisitionFunction,
                  acq_optimizer: LocalSearch,
-                 rng: np.random.RandomState):
+                 rng: np.random.RandomState,
+                 constant_pipeline_steps,
+                 variable_pipeline_steps):
         super(CachedSelectConfiguration, self).__init__(scenario=scenario,
                                                         stats=stats,
                                                         runhistory=runhistory,
@@ -269,6 +251,149 @@ class CachedSelectConfiguration(SelectConfiguration):
                                                         acquisition_func=acquisition_func,
                                                         acq_optimizer=acq_optimizer,
                                                         rng=rng)
+
+        self.constant_pipeline_steps = constant_pipeline_steps
+        self.variable_pipeline_steps = variable_pipeline_steps
+
+    def run(self, X, Y,
+            incumbent,
+            num_configurations_by_random_search_sorted: int = 1000,
+            num_configurations_by_local_search: int = None,
+            random_leaf_size = 1):
+        """Choose next candidate solution with Bayesian optimization.
+
+        Parameters
+        ----------
+        X : (N, D) numpy array
+            Each row contains a configuration and one set of
+            instance features.
+        Y : (N, O) numpy array
+            The function values for each configuration instance pair.
+        num_configurations_by_random_search_sorted: int
+             number of configurations optimized by random search
+        num_configurations_by_local_search: int
+            number of configurations optimized with local search
+            if None, we use min(10, 1 + 0.5 x the number of configurations on exp average in intensify calls)
+
+        Returns
+        -------
+        list
+            List of 2020 suggested configurations to evaluate.
+        """
+        self.model.train(X, Y)
+
+        if self.runhistory.empty():
+            incumbent_value = 0.0
+        elif incumbent is None:
+            # TODO try to calculate an incumbent from the runhistory!
+            incumbent_value = 0.0
+        else:
+            incumbent_value = self.runhistory.get_cost(incumbent)
+
+        self.acquisition_func.update(model=self.model, eta=incumbent_value)
+
+        # Get configurations sorted by EI
+        next_configs_by_random_search_sorted = \
+            self._get_next_by_random_search(
+                num_configurations_by_random_search_sorted, _sorted=True)
+
+        if num_configurations_by_local_search is None:
+            if self.stats._ema_n_configs_per_intensifiy > 0:
+                num_configurations_by_local_search = min(
+                    10, math.ceil(0.5 * self.stats._ema_n_configs_per_intensifiy) + 1)
+            else:
+                num_configurations_by_local_search = 10
+
+        # initiate local search with best configurations from previous runs
+        configs_previous_runs = self.runhistory.get_all_configs()
+        configs_previous_runs_sorted = self._sort_configs_by_acq_value(configs_previous_runs)
+        num_configs_local_search = min(len(configs_previous_runs_sorted), num_configurations_by_local_search)
+        next_configs_by_local_search = \
+            self._get_next_by_local_search(
+                list(map(lambda x: x[1],
+                         configs_previous_runs_sorted[:num_configs_local_search])))
+
+        next_configs_by_acq_value = next_configs_by_random_search_sorted + \
+                                    next_configs_by_local_search
+        next_configs_by_acq_value.sort(reverse=True, key=lambda x: x[0])
+        self.logger.debug(
+            "First 10 acq func (origin) values of selected configurations: %s" %
+            (str([[_[0], _[1].origin] for _ in next_configs_by_acq_value[:10]])))
+        next_configs_by_acq_value = [_[1] for _ in next_configs_by_acq_value]
+
+        # Remove dummy acquisition function value
+        next_configs_by_random_search = [x[1] for x in
+                                         self._get_next_by_random_search_batch(
+                                             num_points=len(next_configs_by_acq_value),
+                                            leaf_size=random_leaf_size)]
+
+        iter_next_configs_by_acq_value = iter(next_configs_by_acq_value)
+        iter_next_configs_by_random_search = iter(next_configs_by_random_search)
+        challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size+1) == 0 else next(iter_next_configs_by_random_search)
+                       for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
+        return challengers
+
+    def _get_next_by_random_search_batch(self, num_points=1000, leaf_size=4, _sorted=False):
+        """Get candidate solutions via local search.
+
+        Parameters
+        ----------
+        num_points : int, optional (default=10)
+            Number of local searches and returned values.
+
+        _sorted : bool, optional (default=True)
+            Whether to sort the candidate solutions by acquisition function
+            value.
+
+        Returns
+        -------
+        list : (acquisition value, Candidate solutions)
+        """
+        rand_configs = []
+        for i in range(0, num_points):
+            start_config = self.config_space.sample_configuration()
+            batch_of_configs = [start_config]
+            i = 1
+            while i < leaf_size:
+                try:
+                    next_config = self.config_space.sample_configuration()
+                    # TODO hack for now to combine preprocessing part of one configuration with classification part of all the others
+                    next_config_combined = self._combine_configurations(start_config, next_config)
+                    batch_of_configs.append(next_config_combined)
+                    i += 1
+                except ValueError as v:
+                    if i > 10:
+                        break
+
+            rand_configs.extend(batch_of_configs)
+        if _sorted:
+            for i in range(len(rand_configs)):
+                rand_configs[i].origin = 'Random Search (Sorted)'
+            return self._sort_configs_by_acq_value(rand_configs)
+        else:
+            for i in range(len(rand_configs)):
+                rand_configs[i].origin = 'Random Search (Batch)'
+            return [(0, rand_configs[i]) for i in range(len(rand_configs))]
+
+    def _combine_configurations(self, start_config, new_config):
+        constant_values = self._get_values(start_config.get_dictionary(), self.constant_pipeline_steps)
+        new_config_values = {}
+        new_config_values.update(constant_values)
+
+        variable_values = self._get_values(new_config.get_dictionary(), self.variable_pipeline_steps)
+        new_config_values.update(variable_values)
+
+        return Configuration(configuration_space=self.config_space,
+                             values=new_config_values)
+
+    def _get_values(self, config_dict, pipeline_steps):
+        value_dict = {}
+        for step_name in pipeline_steps:
+            for hp_name in config_dict:
+                splt_hp_name = hp_name.split(":")
+                if splt_hp_name[0] == step_name:
+                    value_dict[hp_name] = config_dict[hp_name]
+        return value_dict
 
     def _optimize_acq(self, start_point):
         return self.acq_optimizer.maximize(start_point, self.runhistory.get_cached_configurations())

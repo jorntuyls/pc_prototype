@@ -101,6 +101,11 @@ class WhiteBoxDriver:
         self.trajectory_path_json = trajectory_path + "/traj_aclib2.json"
         self.trajectory_path_csv = trajectory_path + "/traj_old.csv"
 
+        if acq_func == "pceips":
+            random_leaf_size = 4
+        else:
+            random_leaf_size = 1
+
         # Build SMBO object
         smbo_builder = SMBOBuilder()
         self.smbo = smbo_builder.build_pc_smbo(
@@ -111,7 +116,10 @@ class WhiteBoxDriver:
             aggregate_func=average_cost,
             acq_func_name=acq_func,
             model_target_names=model_target_names,
-            logging_directory=trajectory_path)
+            logging_directory=trajectory_path,
+            random_leaf_size=random_leaf_size,
+            constant_pipeline_steps=["preprocessor"],
+            variable_pipeline_steps=["classifier"])
 
 
     def run(self,
