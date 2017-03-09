@@ -39,7 +39,7 @@ class Driver:
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-    def initialize(self, stamp, acq_func, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling):
+    def initialize(self, stamp, acq_func, random_leaf_size, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling):
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
@@ -126,7 +126,7 @@ class Driver:
             acq_func_name=acq_func,
             model_target_names=model_target_names,
             logging_directory=trajectory_path,
-            random_leaf_size=1,
+            random_leaf_size=random_leaf_size,
             constant_pipeline_steps=["one_hot_encoder", "imputation", "rescaling",
                                      "balancing", "feature_preprocessor"],
             variable_pipeline_steps=["classifier"])
@@ -135,6 +135,7 @@ class Driver:
     def run(self,
             stamp=time.time(),
             acq_func="ei",
+            random_leaf_size=1,
             wallclock_limit=3600,
             runcount_limit=10000,
             memory_limit=6000,
@@ -145,6 +146,7 @@ class Driver:
         # Initialize SMBO
         self.initialize(stamp=stamp,
                         acq_func=acq_func,
+                        random_leaf_size=random_leaf_size,
                         cache_directory=cache_directory,
                         wallclock_limit=wallclock_limit,
                         runcount_limit=runcount_limit,

@@ -22,7 +22,7 @@ class WhiteBoxDriver:
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-    def initialize(self, stamp, seed, acq_func, wallclock_limit, runcount_limit, test_function, min_x, min_y):
+    def initialize(self, stamp, seed, acq_func, wallclock_limit, runcount_limit, test_function, random_leaf_size, min_x, min_y):
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
@@ -101,11 +101,6 @@ class WhiteBoxDriver:
         self.trajectory_path_json = trajectory_path + "/traj_aclib2.json"
         self.trajectory_path_csv = trajectory_path + "/traj_old.csv"
 
-        if acq_func == "pceips":
-            random_leaf_size = 4
-        else:
-            random_leaf_size = 1
-
         # Build SMBO object
         smbo_builder = SMBOBuilder()
         self.smbo = smbo_builder.build_pc_smbo(
@@ -129,6 +124,7 @@ class WhiteBoxDriver:
             wallclock_limit=3600,
             runcount_limit=1000,
             test_function="paraboloid",
+            random_leaf_size=4,
             min_x=0.75,
             min_y=0.5):
 
@@ -139,6 +135,7 @@ class WhiteBoxDriver:
                         wallclock_limit=wallclock_limit,
                         runcount_limit=runcount_limit,
                         test_function=test_function,
+                        random_leaf_size=random_leaf_size,
                         min_x=min_x,
                         min_y=min_y)
 

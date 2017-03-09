@@ -19,6 +19,7 @@ def run_smac(acq_func, wallclock_limit, runcount_limit, memory_limit, cutoff, da
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--acquisition", type=str, help="Acquisition value, in ['ei', 'eips', 'pceips']")
+    parser.add_argument("-rls", "--leaf_size", type=int, default=1, help="Leaf size for random sampling")
     parser.add_argument("-w", "--wallclock", type=int, help="Wallclock limit")
     parser.add_argument("-r", "--runlimit", type=int, default=10000, help="Limitation of the number of runs")
     parser.add_argument("-m", "--memory", type=int, default=6000, help="Memory limit")
