@@ -4,20 +4,23 @@ from pc_smac.pc_smac.whitebox_driver import WhiteBoxDriver
 
 def run_whitebox_experiment_pceips(wallclock_limit, seed=None, nb_experiments=20, test_function = "paraboloid", min_x = [0.90, 0.90], min_y = [0.1, 0.9]):
     # Setup preferences
-    acq_funcs = ['ei', 'eips', 'pceips']
+    acq_funcs = ['pceips']
+    random_leaf_sizes = [1,2,3,4,5,6,7,8,9,10,20,50]
     for acq_func in acq_funcs:
         # Initialize whitebox driver
-        output_dir = '/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output/{}'.format(acq_func)
-        for i in range(0, nb_experiments):
-            wd = WhiteBoxDriver(output_dir=output_dir)
-            incumbent = wd.run(stamp=acq_func + "_run_" + str(i),
-                               seed=seed,
-                               acq_func=acq_func,
-                               wallclock_limit=wallclock_limit,
-                               runcount_limit=1,
-                               test_function=test_function,
-                               min_x=min_x,
-                               min_y=min_y)
+        for rls in random_leaf_sizes:
+            output_dir = '/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output/{}'.format(acq_func + "_" + str(rls))
+            for i in range(0, nb_experiments):
+                wd = WhiteBoxDriver(output_dir=output_dir)
+                incumbent = wd.run(stamp=acq_func + "_" + str(rls) + "_run_" + str(i),
+                                   seed=seed,
+                                   acq_func=acq_func,
+                                   wallclock_limit=wallclock_limit,
+                                   runcount_limit=1,
+                                   test_function=test_function,
+                                   random_leaf_size=rls,
+                                   min_x=min_x,
+                                   min_y=min_y)
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
