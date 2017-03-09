@@ -143,10 +143,13 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
     # Make own output directory for each data set
 
     print(output_dir)
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    if not os.path.exists(cache_directory):
-        os.makedirs(cache_directory)
+    try:
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        if not os.path.exists(cache_directory):
+            os.makedirs(cache_directory)
+    except FileExistsError:
+        pass
 
     # load data
     data_loader = DataLoader(data_path)
