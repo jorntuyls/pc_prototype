@@ -42,7 +42,6 @@ class WhiteBoxFunction(ExecuteTARun):
             'runtime': runtime,
             'pipeline_steps_timing': {'preprocessor:x': x, 'classifier:y': y},
         }
-        print(config.origin)
         self.statistics.add_run(config.get_dictionary(), run_information, config_origin=config.origin)
 
         # Additional info
@@ -113,7 +112,6 @@ class CachedWhiteboxFunction(WhiteBoxFunction):
             'cache_hits': self.cache_hits,
             'total_evaluations': self.total_evaluations
         }
-        print(config.origin)
         self.statistics.add_run(config.get_dictionary(), run_information, config_origin=config.origin)
 
         # Setup additional info

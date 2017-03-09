@@ -120,13 +120,11 @@ class PCSMBO(BaseSolver):
 
             self.logger.debug("Search for next configuration")
             # get all found configurations sorted according to acq
-            print("before select configuration")
             challengers = self.select_configuration.run(X, Y,
                                                         incumbent=self.incumbent,
                                                         num_configurations_by_random_search_sorted=100,
                                                         num_configurations_by_local_search=10,
                                                         random_leaf_size=self.random_leaf_size)
-            print("after select configuration")
 
             time_spend = time.time() - start_time
             logging.debug(
@@ -134,12 +132,7 @@ class PCSMBO(BaseSolver):
 
             self.logger.debug("Intensify")
 
-            #print("RUNHISTORY BEFORE")
-            #print(self.runhistory.get_cached_configurations())
-            print("before intensify")
-            for i in range(0,10):
-                print("challenger origin: {}".format(challengers[i].origin))
-                #print("challenger: {}".format(challengers[i]))
+
             self.incumbent, inc_perf = self.intensifier.intensify(
                 challengers=challengers,
                 incumbent=self.incumbent,
@@ -147,10 +140,6 @@ class PCSMBO(BaseSolver):
                 aggregate_func=self.aggregate_func,
                 time_bound=max(0.01, time_spend),
                 min_number_of_runs=(1 + self.random_leaf_size))
-            print("after intensify")
-
-            #print("RUNHISTORY AFTER")
-            #print(self.runhistory.get_cached_configurations())
 
             print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
 

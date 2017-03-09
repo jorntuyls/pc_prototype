@@ -69,11 +69,7 @@ class PCIntensifier(Intensifier):
 
         # Line 1 + 2
         for challenger in challengers:
-            print("For challenger: {}".format(challenger))
             if challenger == incumbent:
-                print("CHALLENGER == INCUMBENT")
-                print("Challenger: {}".format(challenger))
-                print("Incumbent: {}".format(incumbent))
                 self.logger.warning(
                     "Challenger was the same as the current incumbent; Skipping challenger")
                 continue
@@ -92,7 +88,6 @@ class PCIntensifier(Intensifier):
                                               run_history=run_history,
                                               aggregate_func=aggregate_func)
 
-            print(self._chall_indx)
             if self._chall_indx > (min_number_of_runs - 1) and self._num_run > self.run_limit:
                 self.logger.debug(
                     "Maximum #runs for intensification reached")
