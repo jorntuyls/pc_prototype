@@ -36,16 +36,22 @@ class Driver:
         self.config_space = self.cs_builder.build_config_space()
 
         self.output_dir = output_dir if output_dir else os.path.dirname(os.path.abspath(__file__)) + "/output/"
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
+        try:
+            if not os.path.exists(self.output_dir):
+                os.makedirs(self.output_dir)
+        except FileExistsError:
+            pass
 
     def initialize(self, stamp, acq_func, random_leaf_size, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling):
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
         # Check if cache_directory exists
-        if cache_directory and not os.path.exists(cache_directory):
-            os.makedirs(cache_directory)
+        try:
+            if cache_directory and not os.path.exists(cache_directory):
+                os.makedirs(cache_directory)
+        except FileExistsError:
+            pass
 
         # Load data
         self.data = self.data_loader.get_data()
