@@ -108,8 +108,9 @@ class SelectConfiguration(object):
 
         # Remove dummy acquisition function value
         next_configs_by_random_search = [x[1] for x in
-                                         self._get_next_by_random_search(
-                                             num_points=len(next_configs_by_acq_value))]
+                                         self._get_next_by_random_search_batch(
+                                             num_points=len(next_configs_by_acq_value),
+                                             leaf_size=random_leaf_size)]
                                              #num_points=num_configurations_by_local_search + num_configurations_by_random_search_sorted)]
 
         challengers = list(itertools.chain(*zip(next_configs_by_acq_value,
@@ -141,6 +142,48 @@ class SelectConfiguration(object):
         else:
             for i in range(len(rand_configs)):
                 rand_configs[i].origin = 'Random Search'
+            return [(0, rand_configs[i]) for i in range(len(rand_configs))]
+
+    def _get_next_by_random_search_batch(self, num_points=1000, leaf_size=4, _sorted=False):
+        """Get candidate solutions via local search.
+
+        Parameters
+        ----------
+        num_points : int, optional (default=10)
+            Number of local searches and returned values.
+
+        _sorted : bool, optional (default=True)
+            Whether to sort the candidate solutions by acquisition function
+            value.
+
+        Returns
+        -------
+        list : (acquisition value, Candidate solutions)
+        """
+        rand_configs = []
+        for i in range(0, num_points):
+            start_config = self.config_space.sample_configuration()
+            batch_of_configs = [start_config]
+            i = 1
+            while i < leaf_size:
+                try:
+                    next_config = self.config_space.sample_configuration()
+                    # TODO hack for now to combine preprocessing part of one configuration with classification part of all the others
+                    next_config_combined = self._combine_configurations(start_config, next_config)
+                    batch_of_configs.append(next_config_combined)
+                    i += 1
+                except ValueError as v:
+                    if i > 10:
+                        break
+
+            rand_configs.extend(batch_of_configs)
+        if _sorted:
+            for i in range(len(rand_configs)):
+                rand_configs[i].origin = 'Random Search (Sorted)'
+            return self._sort_configs_by_acq_value(rand_configs)
+        else:
+            for i in range(len(rand_configs)):
+                rand_configs[i].origin = 'Random Search (Batch)'
             return [(0, rand_configs[i]) for i in range(len(rand_configs))]
 
 
@@ -200,35 +243,6 @@ class SelectConfiguration(object):
         # rand_configs list, because the second is a pure python list
         return [(acq_values[ind][0], configs[ind])
                 for ind in indices[::-1]]
-
-    # TODO the compute caching discounts methods are located in two places: in the select configuration procedure and also in the local search
-    def _compute_caching_discounts(self, configs, cached_configs):
-        runtime_discounts = []
-        for config in configs:
-            discount = 0
-            for cached_config in cached_configs:
-                discount += self._caching_reduction(config, cached_config)
-            runtime_discounts.append(discount)
-        return runtime_discounts
-
-
-    def _caching_reduction(self, config, cached_config):
-        '''
-
-        Parameters
-        ----------
-        config:         the new configuration
-        cached_config:  the cached configuration
-
-        Returns
-        -------
-            The runtime discount for this configuration, given the cached configuration if there is one, otherwise 0
-        '''
-        r = [key for key in cached_config[0].keys() if config[key] != cached_config[0][key]]
-        # print("_caching_reduction: {}".format(r))
-        if r == []:
-            return cached_config[1]
-        return 0
 
 
 
@@ -292,6 +306,8 @@ class CachedSelectConfiguration(SelectConfiguration):
 
         self.acquisition_func.update(model=self.model, eta=incumbent_value)
 
+        # Compute preprocessor using marginalization
+
         # Get configurations sorted by EI
         next_configs_by_random_search_sorted = \
             self._get_next_by_random_search(
@@ -333,48 +349,6 @@ class CachedSelectConfiguration(SelectConfiguration):
                        for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
         return challengers
 
-    def _get_next_by_random_search_batch(self, num_points=1000, leaf_size=4, _sorted=False):
-        """Get candidate solutions via local search.
-
-        Parameters
-        ----------
-        num_points : int, optional (default=10)
-            Number of local searches and returned values.
-
-        _sorted : bool, optional (default=True)
-            Whether to sort the candidate solutions by acquisition function
-            value.
-
-        Returns
-        -------
-        list : (acquisition value, Candidate solutions)
-        """
-        rand_configs = []
-        for i in range(0, num_points):
-            start_config = self.config_space.sample_configuration()
-            batch_of_configs = [start_config]
-            i = 1
-            while i < leaf_size:
-                try:
-                    next_config = self.config_space.sample_configuration()
-                    # TODO hack for now to combine preprocessing part of one configuration with classification part of all the others
-                    next_config_combined = self._combine_configurations(start_config, next_config)
-                    batch_of_configs.append(next_config_combined)
-                    i += 1
-                except ValueError as v:
-                    if i > 10:
-                        break
-
-            rand_configs.extend(batch_of_configs)
-        if _sorted:
-            for i in range(len(rand_configs)):
-                rand_configs[i].origin = 'Random Search (Sorted)'
-            return self._sort_configs_by_acq_value(rand_configs)
-        else:
-            for i in range(len(rand_configs)):
-                rand_configs[i].origin = 'Random Search (Batch)'
-            return [(0, rand_configs[i]) for i in range(len(rand_configs))]
-
     def _combine_configurations(self, start_config, new_config):
         constant_values = self._get_values(start_config.get_dictionary(), self.constant_pipeline_steps)
         new_config_values = {}
@@ -395,8 +369,8 @@ class CachedSelectConfiguration(SelectConfiguration):
                     value_dict[hp_name] = config_dict[hp_name]
         return value_dict
 
-    def _optimize_acq(self, start_point):
-        return self.acq_optimizer.maximize(start_point, self.runhistory.get_cached_configurations())
+    # def _optimize_acq(self, start_point):
+    #     return self.acq_optimizer.maximize(start_point, self.runhistory.get_cached_configurations())
 
     def _sort_configs_by_acq_value(self, configs):
         caching_discounts = self._compute_caching_discounts(configs, self.runhistory.get_cached_configurations())
@@ -419,3 +393,31 @@ class CachedSelectConfiguration(SelectConfiguration):
         # rand_configs list, because the second is a pure python list
         return [(acq_values[ind][0], configs[ind])
                 for ind in indices[::-1]]
+
+    # TODO the compute caching discounts methods are located in two places: in the select configuration procedure and also in the local search
+    def _compute_caching_discounts(self, configs, cached_configs):
+        runtime_discounts = []
+        for config in configs:
+            discount = 0
+            for cached_config in cached_configs:
+                discount += self._caching_reduction(config, cached_config)
+            runtime_discounts.append(discount)
+        return runtime_discounts
+
+    def _caching_reduction(self, config, cached_config):
+        '''
+
+        Parameters
+        ----------
+        config:         the new configuration
+        cached_config:  the cached configuration
+
+        Returns
+        -------
+            The runtime discount for this configuration, given the cached configuration if there is one, otherwise 0
+        '''
+        r = [key for key in cached_config[0].keys() if config[key] != cached_config[0][key]]
+        # print("_caching_reduction: {}".format(r))
+        if r == []:
+            return cached_config[1]
+        return 0
