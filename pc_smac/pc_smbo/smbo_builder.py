@@ -66,7 +66,9 @@ class SMBOBuilder:
                                                        model=model,
                                                        acq_optimizer=local_search,
                                                        acquisition_func=acquisition_func,
-                                                       rng=rng)
+                                                       rng=rng,
+                                                       constant_pipeline_steps=constant_pipeline_steps,
+                                                       variable_pipeline_steps=variable_pipeline_steps)
 
         elif acq_func_name == 'pceips':
             acquisition_func = PCEIPS(model)

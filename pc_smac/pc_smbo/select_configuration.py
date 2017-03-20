@@ -28,7 +28,9 @@ class SelectConfiguration(object):
                  model: RandomForestWithInstances,
                  acquisition_func: AbstractAcquisitionFunction,
                  acq_optimizer: LocalSearch,
-                 rng: np.random.RandomState):
+                 rng: np.random.RandomState,
+                 constant_pipeline_steps,
+                 variable_pipeline_steps):
         self.logger = logging.getLogger("Select Configuration")
 
         self.config_space = scenario.cs
@@ -38,6 +40,9 @@ class SelectConfiguration(object):
         self.acquisition_func = acquisition_func
         self.acq_optimizer = acq_optimizer
         self.rng = rng
+
+        self.constant_pipeline_steps = constant_pipeline_steps
+        self.variable_pipeline_steps = variable_pipeline_steps
 
     def run(self, X, Y,
                     incumbent,
@@ -186,6 +191,26 @@ class SelectConfiguration(object):
                 rand_configs[i].origin = 'Random Search (Batch)'
             return [(0, rand_configs[i]) for i in range(len(rand_configs))]
 
+    def _combine_configurations(self, start_config, new_config):
+        constant_values = self._get_values(start_config.get_dictionary(), self.constant_pipeline_steps)
+        new_config_values = {}
+        new_config_values.update(constant_values)
+
+        variable_values = self._get_values(new_config.get_dictionary(), self.variable_pipeline_steps)
+        new_config_values.update(variable_values)
+
+        return Configuration(configuration_space=self.config_space,
+                             values=new_config_values)
+
+    def _get_values(self, config_dict, pipeline_steps):
+        value_dict = {}
+        for step_name in pipeline_steps:
+            for hp_name in config_dict:
+                splt_hp_name = hp_name.split(":")
+                if splt_hp_name[0] == step_name:
+                    value_dict[hp_name] = config_dict[hp_name]
+        return value_dict
+
 
     def _get_next_by_local_search(self, init_points=typing.List[Configuration]):
         """Get candidate solutions via local search.
@@ -264,10 +289,9 @@ class CachedSelectConfiguration(SelectConfiguration):
                                                         model=model,
                                                         acquisition_func=acquisition_func,
                                                         acq_optimizer=acq_optimizer,
-                                                        rng=rng)
-
-        self.constant_pipeline_steps = constant_pipeline_steps
-        self.variable_pipeline_steps = variable_pipeline_steps
+                                                        rng=rng,
+                                                        constant_pipeline_steps=constant_pipeline_steps,
+                                                        variable_pipeline_steps=variable_pipeline_steps)
 
     def run(self, X, Y,
             incumbent,
@@ -348,26 +372,6 @@ class CachedSelectConfiguration(SelectConfiguration):
         challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size+1) == 0 else next(iter_next_configs_by_random_search)
                        for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
         return challengers
-
-    def _combine_configurations(self, start_config, new_config):
-        constant_values = self._get_values(start_config.get_dictionary(), self.constant_pipeline_steps)
-        new_config_values = {}
-        new_config_values.update(constant_values)
-
-        variable_values = self._get_values(new_config.get_dictionary(), self.variable_pipeline_steps)
-        new_config_values.update(variable_values)
-
-        return Configuration(configuration_space=self.config_space,
-                             values=new_config_values)
-
-    def _get_values(self, config_dict, pipeline_steps):
-        value_dict = {}
-        for step_name in pipeline_steps:
-            for hp_name in config_dict:
-                splt_hp_name = hp_name.split(":")
-                if splt_hp_name[0] == step_name:
-                    value_dict[hp_name] = config_dict[hp_name]
-        return value_dict
 
     # def _optimize_acq(self, start_point):
     #     return self.acq_optimizer.maximize(start_point, self.runhistory.get_cached_configurations())
