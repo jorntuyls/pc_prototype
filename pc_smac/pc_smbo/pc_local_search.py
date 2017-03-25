@@ -47,13 +47,14 @@ class PCLocalSearch(LocalSearch):
         # Compute the acquisition value of the incumbent
         # First compute runtime discount of incumbent through caching of parts of the pipeline
         #   Do this before imputing inactive values!!
-        incumbent_caching_discount = self._compute_caching_discounts([incumbent], cached_configs)
-        #print("INCUMBENT CACHING DISCOUNT: {}".format(incumbent_caching_discount))
-        incumbent_ = impute_inactive_values(incumbent)
-
-        acq_val_incumbent = self.acquisition_function(
-            incumbent_.get_array(), incumbent_caching_discount,
-            *args)
+        # incumbent_caching_discount = self._compute_caching_discounts([incumbent], cached_configs)
+        # #print("INCUMBENT CACHING DISCOUNT: {}".format(incumbent_caching_discount))
+        # incumbent_ = impute_inactive_values(incumbent)
+        #
+        # acq_val_incumbent = self.acquisition_function(
+        #     incumbent_.get_array(), incumbent_caching_discount,
+        #     *args)
+        acq_val_incumbent = self.acquisition_function([incumbent])
 
         local_search_steps = 0
         neighbors_looked_at = 0
@@ -76,15 +77,16 @@ class PCLocalSearch(LocalSearch):
             for neighbor in all_neighbors:
                 s_time = time.time()
 
-                # Compute runtime discount of neighbor through caching of parts of the pipeline
-                neighbor_caching_discount = self._compute_caching_discounts([neighbor], cached_configs)
-                #print("NEIGHBOR CACHING DISCOUNT: {}".format(neighbor_caching_discount))
-
-                neighbor_ = impute_inactive_values(neighbor)
-
-                n_array = neighbor_.get_array()
-
-                acq_val = self.acquisition_function(n_array, neighbor_caching_discount, *args)
+                # # Compute runtime discount of neighbor through caching of parts of the pipeline
+                # neighbor_caching_discount = self._compute_caching_discounts([neighbor], cached_configs)
+                # #print("NEIGHBOR CACHING DISCOUNT: {}".format(neighbor_caching_discount))
+                #
+                # neighbor_ = impute_inactive_values(neighbor)
+                #
+                # n_array = neighbor_.get_array()
+                #
+                # acq_val = self.acquisition_function(n_array, neighbor_caching_discount, *args)
+                acq_val = self.acquisition_function([neighbor])
 
                 neighbors_looked_at += 1
 

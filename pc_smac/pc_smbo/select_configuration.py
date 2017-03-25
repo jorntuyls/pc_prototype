@@ -4,6 +4,7 @@ import itertools
 import logging
 import typing
 import random
+import time
 
 import numpy as np
 
@@ -70,6 +71,8 @@ class SelectConfiguration(object):
         list
             List of 2020 suggested configurations to evaluate.
         """
+        # TODO
+        num_configurations_by_random_search_sorted = 10000
         self.model.train(X, Y)
 
         if self.runhistory.empty():
@@ -118,9 +121,16 @@ class SelectConfiguration(object):
                                              leaf_size=random_leaf_size)]
                                              #num_points=num_configurations_by_local_search + num_configurations_by_random_search_sorted)]
 
-        challengers = list(itertools.chain(*zip(next_configs_by_acq_value,
-                                                next_configs_by_random_search)))
+        iter_next_configs_by_acq_value = iter(next_configs_by_acq_value)
+        iter_next_configs_by_random_search = iter(next_configs_by_random_search)
+        challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size + 1) == 0 else next(
+            iter_next_configs_by_random_search)
+                       for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
+        #challengers = list(itertools.chain(*zip(next_configs_by_acq_value,
+        #                                        next_configs_by_random_search)))
         return challengers
+
+    #### RANDOM SEARCH ####
 
     def _get_next_by_random_search(self, num_points=1000, _sorted=False):
         """Get candidate solutions via local search.
@@ -149,6 +159,7 @@ class SelectConfiguration(object):
                 rand_configs[i].origin = 'Random Search'
             return [(0, rand_configs[i]) for i in range(len(rand_configs))]
 
+    #### BATCH RANDOM SEARCH ####
     def _get_next_by_random_search_batch(self, num_points=1000, leaf_size=4, _sorted=False):
         """Get candidate solutions via local search.
 
@@ -172,15 +183,11 @@ class SelectConfiguration(object):
             i = 1
             while i < leaf_size:
                 try:
-                    next_config = self.config_space.sample_configuration()
-                    # TODO hack for now to combine preprocessing part of one configuration with classification part of all the others
-                    next_config_combined = self._combine_configurations(start_config, next_config)
+                    next_config_combined = self._get_variant_config(start_config=start_config)
                     batch_of_configs.append(next_config_combined)
                     i += 1
                 except ValueError as v:
-                    if i > 10:
-                        break
-
+                    pass
             rand_configs.extend(batch_of_configs)
         if _sorted:
             for i in range(len(rand_configs)):
@@ -190,6 +197,19 @@ class SelectConfiguration(object):
             for i in range(len(rand_configs)):
                 rand_configs[i].origin = 'Random Search (Batch)'
             return [(0, rand_configs[i]) for i in range(len(rand_configs))]
+
+    def _get_variant_config(self, start_config, origin=None):
+        next_config = start_config
+        i = 0
+        while i < 1000:
+            try:
+                next_config = self._combine_configurations(start_config, self.config_space.sample_configuration())
+                next_config.origin=origin
+                break
+            except ValueError as v:
+                i += 1
+        # TODO hack for now to combine preprocessing part of one configuration with classification part of all the others
+        return next_config
 
     def _combine_configurations(self, start_config, new_config):
         constant_values = self._get_values(start_config.get_dictionary(), self.constant_pipeline_steps)
@@ -211,6 +231,7 @@ class SelectConfiguration(object):
                     value_dict[hp_name] = config_dict[hp_name]
         return value_dict
 
+    #### LOCAL SEARCH ####
 
     def _get_next_by_local_search(self, init_points=typing.List[Configuration]):
         """Get candidate solutions via local search.
@@ -268,6 +289,7 @@ class SelectConfiguration(object):
         # rand_configs list, because the second is a pure python list
         return [(acq_values[ind][0], configs[ind])
                 for ind in indices[::-1]]
+
 
 
 
@@ -331,11 +353,34 @@ class CachedSelectConfiguration(SelectConfiguration):
         self.acquisition_func.update(model=self.model, eta=incumbent_value)
 
         # Compute preprocessor using marginalization
-
-        # Get configurations sorted by EI
-        next_configs_by_random_search_sorted = \
+        print("Start select configuration")
+        start_time = time.time()
+        # TODO
+        num_configurations_by_random_search_sorted = 10
+        configs_by_random_search_sorted_marginalized = \
             self._get_next_by_random_search(
-                num_configurations_by_random_search_sorted, _sorted=True)
+                num_configurations_by_random_search_sorted, _sorted=True, marginalization=True)
+        print("Random search for marginalization: {}".format(time.time() - start_time))
+
+        start_time = time.time()
+        # TODO Might be to costly to sort all configs from previous runs
+        configs_previous_runs = self.runhistory.get_all_configs()
+        configs_previous_runs_sorted_marginalized = self._sort_configs_by_acq_value(configs_previous_runs, marginalization=True)
+
+        configs_by_acq_value_marginalized = configs_by_random_search_sorted_marginalized + \
+                                    configs_previous_runs_sorted_marginalized
+        print("Marginalized previous runs preprocessor: {}".format(time.time() - start_time))
+
+        configs_by_acq_value_marginalized.sort(reverse=True, key=lambda x: x[0])
+        best_preprocessor_configuration = configs_by_acq_value_marginalized[0][1]
+        print("best_preprocessor_configuration: {}".format(best_preprocessor_configuration))
+
+        start_time = time.time()
+        next_marginalized_configs_by_random_search_sorted = self._sort_configs_by_acq_value(
+                                                [self._get_variant_config(start_config=best_preprocessor_configuration,
+                                                                          origin='Random Search marginalization (Sorted)') \
+                                                for i in range(0, num_configurations_by_random_search_sorted)])
+        print("Marginalized random search sorted: {}".format(time.time() - start_time))
 
         if num_configurations_by_local_search is None:
             if self.stats._ema_n_configs_per_intensifiy > 0:
@@ -343,6 +388,36 @@ class CachedSelectConfiguration(SelectConfiguration):
                     10, math.ceil(0.5 * self.stats._ema_n_configs_per_intensifiy) + 1)
             else:
                 num_configurations_by_local_search = 10
+
+        start_time = time.time()
+        # initiate local search for marginalized preprocessor with best configurations from previous runs
+        configs_previous_runs = self.runhistory.get_all_configs()
+        #print("configs_previous_runs: {}".format(configs_previous_runs))
+        combined_configs_previous_runs = []
+        for config in configs_previous_runs:
+            try:
+                combined_config = self._combine_configurations(start_config=best_preprocessor_configuration,
+                                                               new_config=config)
+                combined_configs_previous_runs.append(combined_config)
+            except ValueError as v:
+                pass
+        combined_configs_previous_runs_sorted = self._sort_configs_by_acq_value(combined_configs_previous_runs)
+        #print("combined configs_previous_runs_sorted: {}".format(combined_configs_previous_runs_sorted))
+
+        num_configs_local_search = min(len(combined_configs_previous_runs_sorted), num_configurations_by_local_search)
+        next_marginalized_configs_by_local_search = \
+            self._get_next_by_local_search(
+                list(map(lambda x: x[1],
+                         combined_configs_previous_runs_sorted[:num_configs_local_search])))
+        for _, config in next_marginalized_configs_by_local_search:
+            config.origin = "Local Search marginalized"
+        print("Marginalized local search sorted: {}".format(time.time() - start_time))
+        #print("next by local search: {}".format(next_marginalized_configs_by_local_search))
+
+        # Get configurations sorted by EI
+        next_configs_by_random_search_sorted = \
+            self._get_next_by_random_search(
+                num_configurations_by_random_search_sorted, _sorted=True)
 
         # initiate local search with best configurations from previous runs
         configs_previous_runs = self.runhistory.get_all_configs()
@@ -353,9 +428,16 @@ class CachedSelectConfiguration(SelectConfiguration):
                 list(map(lambda x: x[1],
                          configs_previous_runs_sorted[:num_configs_local_search])))
 
-        next_configs_by_acq_value = next_configs_by_random_search_sorted + \
+        # Combine configurations found by marginalization, random search and local search
+
+        next_configs_by_acq_value = next_marginalized_configs_by_random_search_sorted + \
+                                    next_marginalized_configs_by_local_search + \
+                                    next_configs_by_random_search_sorted + \
                                     next_configs_by_local_search
         next_configs_by_acq_value.sort(reverse=True, key=lambda x: x[0])
+        print("next_configs_by_acq_value: {}".format(next_configs_by_acq_value))
+        origins = [config.origin for _, config in next_configs_by_acq_value]
+        print("origins: {}".format(origins))
         self.logger.debug(
             "First 10 acq func (origin) values of selected configurations: %s" %
             (str([[_[0], _[1].origin] for _ in next_configs_by_acq_value[:10]])))
@@ -364,28 +446,50 @@ class CachedSelectConfiguration(SelectConfiguration):
         # Remove dummy acquisition function value
         next_configs_by_random_search = [x[1] for x in
                                          self._get_next_by_random_search_batch(
-                                             num_points=len(next_configs_by_acq_value),
+                                             num_points=int(len(next_configs_by_acq_value)/random_leaf_size),
                                             leaf_size=random_leaf_size)]
 
         iter_next_configs_by_acq_value = iter(next_configs_by_acq_value)
         iter_next_configs_by_random_search = iter(next_configs_by_random_search)
-        challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size+1) == 0 else next(iter_next_configs_by_random_search)
+        challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size*2) < random_leaf_size else next(iter_next_configs_by_random_search)
                        for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
         return challengers
 
-    # def _optimize_acq(self, start_point):
-    #     return self.acq_optimizer.maximize(start_point, self.runhistory.get_cached_configurations())
+    def _get_next_by_random_search(self, num_points=1000, _sorted=False, marginalization=False):
+        """Get candidate solutions via local search.
 
-    def _sort_configs_by_acq_value(self, configs):
-        caching_discounts = self._compute_caching_discounts(configs, self.runhistory.get_cached_configurations())
+        Parameters
+        ----------
+        num_points : int, optional (default=10)
+            Number of local searches and returned values.
 
-        imputed_configs = map(ConfigSpace.util.impute_inactive_values,
-                              configs)
-        imputed_configs = [x.get_array()
-                           for x in imputed_configs]
-        imputed_configs = np.array(imputed_configs,
-                                   dtype=np.float64)
-        acq_values = self.acquisition_func(imputed_configs, caching_discounts)
+        _sorted : bool, optional (default=True)
+            Whether to sort the candidate solutions by acquisition function
+            value.
+
+        Returns
+        -------
+        list : (acquisition value, Candidate solutions)
+        """
+
+        rand_configs = self.config_space.sample_configuration(size=num_points)
+        if _sorted:
+            for i in range(len(rand_configs)):
+                rand_configs[i].origin = 'Random Search (Sorted)'
+            return self._sort_configs_by_acq_value(rand_configs, marginalization=marginalization)
+        else:
+            for i in range(len(rand_configs)):
+                rand_configs[i].origin = 'Random Search'
+            return [(0, rand_configs[i]) for i in range(len(rand_configs))]
+
+    def _sort_configs_by_acq_value(self, configs, marginalization=False):
+        start_time = time.time()
+        if marginalization:
+            evaluation_configs = self.config_space.sample_configuration(size=100)
+            acq_values = self.acquisition_func.marginalized_prediction(configs=configs, evaluation_configs=evaluation_configs)
+        else:
+            acq_values = self.acquisition_func(configs=configs)
+        print("Compute marginalization: {}".format(time.time() - start_time))
 
         # From here
         # http://stackoverflow.com/questions/20197990/how-to-make-argsort-result-to-be-random-between-equal-values
@@ -395,33 +499,9 @@ class CachedSelectConfiguration(SelectConfiguration):
 
         # Cannot use zip here because the indices array cannot index the
         # rand_configs list, because the second is a pure python list
-        return [(acq_values[ind][0], configs[ind])
+        # lst_acq = [(acq_values[ind][0], configs[ind])
+        #        for ind in indices_acq[::-1]]
+
+        return [(acq_values[ind], configs[ind])
                 for ind in indices[::-1]]
 
-    # TODO the compute caching discounts methods are located in two places: in the select configuration procedure and also in the local search
-    def _compute_caching_discounts(self, configs, cached_configs):
-        runtime_discounts = []
-        for config in configs:
-            discount = 0
-            for cached_config in cached_configs:
-                discount += self._caching_reduction(config, cached_config)
-            runtime_discounts.append(discount)
-        return runtime_discounts
-
-    def _caching_reduction(self, config, cached_config):
-        '''
-
-        Parameters
-        ----------
-        config:         the new configuration
-        cached_config:  the cached configuration
-
-        Returns
-        -------
-            The runtime discount for this configuration, given the cached configuration if there is one, otherwise 0
-        '''
-        r = [key for key in cached_config[0].keys() if config[key] != cached_config[0][key]]
-        # print("_caching_reduction: {}".format(r))
-        if r == []:
-            return cached_config[1]
-        return 0
