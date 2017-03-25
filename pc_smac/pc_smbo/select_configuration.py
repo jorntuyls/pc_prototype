@@ -178,8 +178,7 @@ class SelectConfiguration(object):
                     batch_of_configs.append(next_config_combined)
                     i += 1
                 except ValueError as v:
-                    if i > 10:
-                        break
+                    pass
 
             rand_configs.extend(batch_of_configs)
         if _sorted:
