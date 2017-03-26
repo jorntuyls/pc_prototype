@@ -352,20 +352,32 @@ class CachedSelectConfiguration(SelectConfiguration):
 
         self.acquisition_func.update(model=self.model, eta=incumbent_value)
 
-        # Compute preprocessor using marginalization
+        if num_configurations_by_local_search is None:
+            if self.stats._ema_n_configs_per_intensifiy > 0:
+                num_configurations_by_local_search = min(
+                    10, math.ceil(0.5 * self.stats._ema_n_configs_per_intensifiy) + 1)
+            else:
+                num_configurations_by_local_search = 10
+
+        #### Compute preprocessor with highest marginalized EI ####
         print("Start select configuration")
         start_time = time.time()
         # TODO
-        num_configurations_by_random_search_sorted = 10
+        num_marginalized_configurations_by_random_search = 10
         configs_by_random_search_sorted_marginalized = \
             self._get_next_by_random_search(
-                num_configurations_by_random_search_sorted, _sorted=True, marginalization=True)
+                num_marginalized_configurations_by_random_search, _sorted=True, marginalization=True)
         print("Random search for marginalization: {}".format(time.time() - start_time))
 
         start_time = time.time()
         # TODO Might be to costly to sort all configs from previous runs
         configs_previous_runs = self.runhistory.get_all_configs()
-        configs_previous_runs_sorted_marginalized = self._sort_configs_by_acq_value(configs_previous_runs, marginalization=True)
+        configs_previous_runs_sorted = self._sort_configs_by_acq_value(configs_previous_runs)
+        num_configs_previous_runs_marginalized = min(len(configs_previous_runs_sorted), num_configurations_by_local_search)
+        configs_previous_runs_sorted_marginalized = \
+            self._sort_configs_by_acq_value(list(map(lambda x: x[1],
+                                                     configs_previous_runs_sorted[:num_configs_previous_runs_marginalized])),
+                                            marginalization=True)
 
         configs_by_acq_value_marginalized = configs_by_random_search_sorted_marginalized + \
                                     configs_previous_runs_sorted_marginalized
@@ -375,19 +387,13 @@ class CachedSelectConfiguration(SelectConfiguration):
         best_preprocessor_configuration = configs_by_acq_value_marginalized[0][1]
         print("best_preprocessor_configuration: {}".format(best_preprocessor_configuration))
 
+        # Combine preprocessor with highest EI with random classifiers
         start_time = time.time()
         next_marginalized_configs_by_random_search_sorted = self._sort_configs_by_acq_value(
                                                 [self._get_variant_config(start_config=best_preprocessor_configuration,
                                                                           origin='Random Search marginalization (Sorted)') \
                                                 for i in range(0, num_configurations_by_random_search_sorted)])
         print("Marginalized random search sorted: {}".format(time.time() - start_time))
-
-        if num_configurations_by_local_search is None:
-            if self.stats._ema_n_configs_per_intensifiy > 0:
-                num_configurations_by_local_search = min(
-                    10, math.ceil(0.5 * self.stats._ema_n_configs_per_intensifiy) + 1)
-            else:
-                num_configurations_by_local_search = 10
 
         start_time = time.time()
         # initiate local search for marginalized preprocessor with best configurations from previous runs
@@ -414,6 +420,8 @@ class CachedSelectConfiguration(SelectConfiguration):
         print("Marginalized local search sorted: {}".format(time.time() - start_time))
         #print("next by local search: {}".format(next_marginalized_configs_by_local_search))
 
+
+        #### Standard SMAC select_configurations method ####
         # Get configurations sorted by EI
         next_configs_by_random_search_sorted = \
             self._get_next_by_random_search(
@@ -435,7 +443,7 @@ class CachedSelectConfiguration(SelectConfiguration):
                                     next_configs_by_random_search_sorted + \
                                     next_configs_by_local_search
         next_configs_by_acq_value.sort(reverse=True, key=lambda x: x[0])
-        print("next_configs_by_acq_value: {}".format(next_configs_by_acq_value))
+        #print("next_configs_by_acq_value: {}".format(next_configs_by_acq_value))
         origins = [config.origin for _, config in next_configs_by_acq_value]
         print("origins: {}".format(origins))
         self.logger.debug(
