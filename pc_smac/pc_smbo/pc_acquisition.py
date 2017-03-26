@@ -26,6 +26,7 @@ class PCAquisitionFunction(object):
                            for x in imputed_configs]
         imputed_configs = np.array(imputed_configs,
                                    dtype=np.float64)
+        print("PCAcquisition: __call__: {}".format(imputed_configs))
         return self.acquisition_func(imputed_configs)
 
     def update(self, **kwargs):
@@ -205,6 +206,7 @@ class PCEIPS(EIPS):
         if len(X.shape) == 1:
             X = X[:, np.newaxis]
 
+        print("PC acquisition: {}".format(X))
         m, v = self.model.predict_marginalized_over_instances(X)
         assert m.shape[1] == 2
         assert v.shape[1] == 2
