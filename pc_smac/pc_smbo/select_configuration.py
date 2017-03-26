@@ -407,17 +407,20 @@ class CachedSelectConfiguration(SelectConfiguration):
                 combined_configs_previous_runs.append(combined_config)
             except ValueError as v:
                 pass
-        combined_configs_previous_runs_sorted = self._sort_configs_by_acq_value(combined_configs_previous_runs)
-        #print("combined configs_previous_runs_sorted: {}".format(combined_configs_previous_runs_sorted))
+        if combined_configs_previous_runs != []:
+            combined_configs_previous_runs_sorted = self._sort_configs_by_acq_value(combined_configs_previous_runs)
+            #print("combined configs_previous_runs_sorted: {}".format(combined_configs_previous_runs_sorted))
 
-        num_configs_local_search = min(len(combined_configs_previous_runs_sorted), num_configurations_by_local_search)
-        next_marginalized_configs_by_local_search = \
-            self._get_next_by_local_search(
-                list(map(lambda x: x[1],
-                         combined_configs_previous_runs_sorted[:num_configs_local_search])))
-        for _, config in next_marginalized_configs_by_local_search:
-            config.origin = "Local Search marginalized"
-        print("Marginalized local search sorted: {}".format(time.time() - start_time))
+            num_configs_local_search = min(len(combined_configs_previous_runs_sorted), num_configurations_by_local_search)
+            next_marginalized_configs_by_local_search = \
+                self._get_next_by_local_search(
+                    list(map(lambda x: x[1],
+                             combined_configs_previous_runs_sorted[:num_configs_local_search])))
+            for _, config in next_marginalized_configs_by_local_search:
+                config.origin = "Local Search marginalized"
+            print("Marginalized local search sorted: {}".format(time.time() - start_time))
+        else:
+            next_marginalized_configs_by_local_search = []
         #print("next by local search: {}".format(next_marginalized_configs_by_local_search))
 
 
