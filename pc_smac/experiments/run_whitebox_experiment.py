@@ -4,7 +4,7 @@ from pc_smac.pc_smac.whitebox_driver import WhiteBoxDriver
 
 def run_whitebox_experiment_pceips(wallclock_limit, seed=None, nb_experiments=20, test_function = "paraboloid", min_x = [0.90, 0.90], min_y = [0.1, 0.9]):
     # Setup preferences
-    acq_funcs = ['pceips']
+    acq_funcs = ['eips']
     random_leaf_sizes = [1] #,2,3,4,5,6,7,8,9,10,20,50]
     for acq_func in acq_funcs:
         # Initialize whitebox driver
