@@ -235,7 +235,7 @@ class PCEIPS(EIPS):
         z = (self.eta - m_cost - self.par) / s
         f = (self.eta - m_cost - self.par) * norm.cdf(z) + s * norm.pdf(z)
         # TODO !! EI
-        f = f #/ m_runtime
+        f = f / m_runtime
         f[s == 0.0] = 0.0
 
         if (f < 0).any():
