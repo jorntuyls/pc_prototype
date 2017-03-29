@@ -11,7 +11,7 @@ from pc_smac.pc_smac.pipeline.pipeline_builder import PipelineBuilder
 
 class PipelineRunner(object):
 
-    def __init__(self, data, pipeline_space, runhistory, statistics, downsampling=None):
+    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, downsampling=None):
         # TODO Remove runhistory from arguments
         if downsampling:
             self.X_train = data["X_train"][:downsampling]
@@ -20,6 +20,7 @@ class PipelineRunner(object):
             self.X_train = data["X_train"]
             self.y_train = data["y_train"]
 
+        self.data_info = data_info
         self.runtime_timing = {}
         self.runhistory = runhistory
         self.statistics = statistics
@@ -128,9 +129,9 @@ class PipelineRunner(object):
 
 class CachedPipelineRunner(PipelineRunner):
 
-    def __init__(self, data, pipeline_space, runhistory, statistics, cache_directory=None, downsampling=None):
+    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, cache_directory=None, downsampling=None):
 
-        super(CachedPipelineRunner,self).__init__(data, pipeline_space, runhistory, statistics, downsampling=downsampling)
+        super(CachedPipelineRunner,self).__init__(data, data_info, pipeline_space, runhistory, statistics, downsampling=downsampling)
 
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory)
         self.cached_transformer_runtime_timing = {}
