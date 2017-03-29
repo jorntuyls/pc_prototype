@@ -6,12 +6,13 @@ import numpy as np
 import time
 
 from sklearn.metrics import precision_score
+from pc_smac.pc_smac.utils.metrics import calculate_bac_score
 
 from pc_smac.pc_smac.pipeline.pipeline_builder import PipelineBuilder
 
 class PipelineRunner(object):
 
-    def __init__(self, data, pipeline_space, runhistory, statistics, downsampling=None):
+    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, downsampling=None):
         # TODO Remove runhistory from arguments
         if downsampling:
             self.X_train = data["X_train"][:downsampling]
@@ -20,6 +21,7 @@ class PipelineRunner(object):
             self.X_train = data["X_train"]
             self.y_train = data["y_train"]
 
+        self.data_info = data_info
         self.runtime_timing = {}
         self.runhistory = runhistory
         self.statistics = statistics
@@ -128,9 +130,9 @@ class PipelineRunner(object):
 
 class CachedPipelineRunner(PipelineRunner):
 
-    def __init__(self, data, pipeline_space, runhistory, statistics, cache_directory=None, downsampling=None):
+    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, cache_directory=None, downsampling=None):
 
-        super(CachedPipelineRunner,self).__init__(data, pipeline_space, runhistory, statistics, downsampling=downsampling)
+        super(CachedPipelineRunner,self).__init__(data, data_info, pipeline_space, runhistory, statistics, downsampling=downsampling)
 
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory)
         self.cached_transformer_runtime_timing = {}
@@ -177,10 +179,17 @@ class CachedPipelineRunner(PipelineRunner):
                 score_start = time.time()
                 # TODO Does it make sense to cache the validation too? Or doesn't this take much time?
                 y_pred = pipeline.predict(X_valid)
+                #print("prediction shape: {}, length: {}".format(y_pred.shape, len(y_pred.shape)))
+                #print("validation shape: {}, length: {}".format(y_valid.shape, len(y_valid.shape)))
+                #print(y_pred)
+                #print(y_valid)
                 prec_score = precision_score(y_valid, y_pred, average='macro')
+                print(self.data_info)
+                bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'], task=self.data_info['task'])
+                print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
                 score_time = time.time() - score_start
-                print("TIME: {}, SCORE: {}".format(score_time, prec_score))
-                scores.append(prec_score)
+                print("TIME: {}, SCORE: {}".format(score_time, bac_score))
+                scores.append(bac_score)
             cost = 1 - np.mean(scores)
         except ValueError as v:
             exc_info = sys.exc_info()

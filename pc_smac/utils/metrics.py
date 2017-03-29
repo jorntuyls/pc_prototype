@@ -3,8 +3,14 @@ import numpy as np
 import scipy as sp
 from pc_smac.pc_smac.utils.constants import MULTILABEL_CLASSIFICATION, \
     MULTICLASS_CLASSIFICATION, BINARY_CLASSIFICATION
-from pc_smac.pc_smac.utils.metrics_util import create_multiclass_solution, binarize_predictions
+from pc_smac.pc_smac.utils.metrics_util import create_multiclass_solution, create_multiclass_prediction, binarize_predictions
 
+
+def calculate_bac_score(solution, prediction, num_labels, task=BINARY_CLASSIFICATION):
+    if task == MULTICLASS_CLASSIFICATION:
+        prediction = create_multiclass_prediction(prediction, num_labels)
+
+    return bac_metric(solution, prediction, task)
 
 def bac_metric(solution, prediction, task=BINARY_CLASSIFICATION):
     """
@@ -28,7 +34,10 @@ def bac_metric(solution, prediction, task=BINARY_CLASSIFICATION):
         else:
             raise ValueError('Solution.shape %s' % solution.shape)
 
-        if len(prediction.shape) == 2:
+        if len(prediction.shape) == 1:
+            # Solution won't be touched - no copy
+            prediction = prediction.reshape((-1, 1))
+        elif len(prediction.shape) == 2:
             if prediction.shape[1] > 2:
                 raise ValueError('A prediction array with probability values '
                                  'for %d classes is not a binary '
@@ -85,5 +94,5 @@ def bac_metric(solution, prediction, task=BINARY_CLASSIFICATION):
     bac = np.mean(bac)  # average over all classes
     # Normalize: 0 for random, 1 for perfect
     # TODO Remove line before creating table
-    score = (bac - base_bac) / sp.maximum(eps, (1 - base_bac))
-    return score
+    #score = (bac - base_bac) / sp.maximum(eps, (1 - base_bac))
+    return bac

@@ -37,3 +37,14 @@ def create_multiclass_solution(solution, prediction):
                              'indices are "%s %s"' %
                              (solution_binary.shape, str(i), solution[i]))
     return solution_binary
+
+def create_multiclass_prediction(prediction, num_labels):
+    prediction_binary = np.zeros((prediction.shape[0], num_labels), dtype=np.int32)
+    for i in range(prediction_binary.shape[0]):
+        try:
+            prediction_binary[i, int(prediction[i])] = 1
+        except IndexError as e:
+            raise IndexError('too many indices to array. array has shape %s, '
+                             'indices are "%s %s"' %
+                             (prediction_binary.shape, str(i), prediction[i]))
+    return prediction_binary

@@ -77,12 +77,12 @@ class Driver:
 
         # Set cache directory
         if caching:
-            pr = CachedPipelineRunner(self.data, self.pipeline_space, runhistory,
+            pr = CachedPipelineRunner(self.data, self.data_loader.info, self.pipeline_space, runhistory,
                                                    self.statistics,
                                                    cache_directory=cache_directory,
                                                    downsampling=downsampling)
         else:
-            pr = PipelineRunner(self.data, self.pipeline_space, runhistory, self.statistics,
+            pr = PipelineRunner(self.data, self.data_loader.info, self.pipeline_space, runhistory, self.statistics,
                                              downsampling=downsampling)
 
         # Choose acquisition function
