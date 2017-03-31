@@ -126,11 +126,6 @@ class SelectConfiguration(object):
         challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size + 1) == 0 else next(
             iter_next_configs_by_random_search)
                        for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
-<<<<<<< HEAD
-=======
-        #challengers = list(itertools.chain(*zip(next_configs_by_acq_value,
-        #                                        next_configs_by_random_search)))
->>>>>>> dev-marginalization
         return challengers
 
     #### RANDOM SEARCH ####
@@ -191,10 +186,6 @@ class SelectConfiguration(object):
                     i += 1
                 except ValueError as v:
                     pass
-<<<<<<< HEAD
-
-=======
->>>>>>> dev-marginalization
             rand_configs.extend(batch_of_configs)
         if _sorted:
             for i in range(len(rand_configs)):
