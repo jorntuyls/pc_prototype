@@ -71,8 +71,7 @@ class SelectConfiguration(object):
         list
             List of 2020 suggested configurations to evaluate.
         """
-        # TODO
-        num_configurations_by_random_search_sorted = 10000
+        print("Run select configuration: rss: {}, ls: {}".format(num_configurations_by_random_search_sorted, num_configurations_by_local_search))
         self.model.train(X, Y)
 
         if self.runhistory.empty():
@@ -109,6 +108,9 @@ class SelectConfiguration(object):
         next_configs_by_acq_value = next_configs_by_random_search_sorted + \
                                     next_configs_by_local_search
         next_configs_by_acq_value.sort(reverse=True, key=lambda x: x[0])
+        # print("next_configs_by_acq_value: {}".format(next_configs_by_acq_value))
+        origins = [config.origin for _, config in next_configs_by_acq_value]
+        print("origins: {}".format(origins))
         self.logger.debug(
             "First 10 acq func (origin) values of selected configurations: %s" %
             (str([[_[0], _[1].origin] for _ in next_configs_by_acq_value[:10]])))
@@ -126,11 +128,14 @@ class SelectConfiguration(object):
         challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size + 1) == 0 else next(
             iter_next_configs_by_random_search)
                        for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
+        # challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size * 2) < random_leaf_size else next(
+        #     iter_next_configs_by_random_search)
+        #                for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
         return challengers
 
     #### RANDOM SEARCH ####
 
-    def _get_next_by_random_search(self, num_points=1000, _sorted=False):
+    def _get_next_by_random_search(self, num_points=1000, _sorted=False, num_configs_for_marginalization=100):
         """Get candidate solutions via local search.
 
         Parameters
@@ -268,14 +273,17 @@ class SelectConfiguration(object):
         return self.acq_optimizer.maximize(start_point)
 
     def _sort_configs_by_acq_value(self, configs):
+        start_time = time.time()
+        acq_values = self.acquisition_func(configs=configs)
+        print("Compute acquisition function (_sort_configs): {}".format(time.time() - start_time))
 
-        imputed_configs = map(ConfigSpace.util.impute_inactive_values,
-                              configs)
-        imputed_configs = [x.get_array()
-                           for x in imputed_configs]
-        imputed_configs = np.array(imputed_configs,
-                                   dtype=np.float64)
-        acq_values = self.acquisition_func(imputed_configs)
+        # imputed_configs = map(ConfigSpace.util.impute_inactive_values,
+        #                       configs)
+        # imputed_configs = [x.get_array()
+        #                    for x in imputed_configs]
+        # imputed_configs = np.array(imputed_configs,
+        #                            dtype=np.float64)
+        # acq_values = self.acquisition_func(imputed_configs)
 
         # From here
         # http://stackoverflow.com/questions/20197990/how-to-make-argsort-result-to-be-random-between-equal-values
@@ -290,8 +298,7 @@ class SelectConfiguration(object):
 
 
 
-
-class CachedSelectConfiguration(SelectConfiguration):
+class SelectConfigurationWithMarginalization(SelectConfiguration):
 
     def __init__(self,
                  scenario: Scenario,
@@ -303,21 +310,22 @@ class CachedSelectConfiguration(SelectConfiguration):
                  rng: np.random.RandomState,
                  constant_pipeline_steps,
                  variable_pipeline_steps):
-        super(CachedSelectConfiguration, self).__init__(scenario=scenario,
-                                                        stats=stats,
-                                                        runhistory=runhistory,
-                                                        model=model,
-                                                        acquisition_func=acquisition_func,
-                                                        acq_optimizer=acq_optimizer,
-                                                        rng=rng,
-                                                        constant_pipeline_steps=constant_pipeline_steps,
-                                                        variable_pipeline_steps=variable_pipeline_steps)
+        super(SelectConfigurationWithMarginalization, self).__init__(scenario=scenario,
+                                                                     stats=stats,
+                                                                     runhistory=runhistory,
+                                                                     model=model,
+                                                                     acquisition_func=acquisition_func,
+                                                                     acq_optimizer=acq_optimizer,
+                                                                     rng=rng,
+                                                                     constant_pipeline_steps=constant_pipeline_steps,
+                                                                     variable_pipeline_steps=variable_pipeline_steps)
 
     def run(self, X, Y,
             incumbent,
             num_configurations_by_random_search_sorted: int = 1000,
             num_configurations_by_local_search: int = None,
-            random_leaf_size = 1):
+            random_leaf_size=1):
+
         """Choose next candidate solution with Bayesian optimization.
 
         Parameters
@@ -338,6 +346,8 @@ class CachedSelectConfiguration(SelectConfiguration):
         list
             List of 2020 suggested configurations to evaluate.
         """
+        # TODO
+        # num_configurations_by_random_search_sorted = 10000
         self.model.train(X, Y)
 
         if self.runhistory.empty():
@@ -357,72 +367,14 @@ class CachedSelectConfiguration(SelectConfiguration):
             else:
                 num_configurations_by_local_search = 10
 
-        #### Compute preprocessor with highest marginalized EI ####
-        print("Start select configuration")
-        start_time = time.time()
-        # TODO
-        num_marginalized_configurations_by_random_search = 10
-        configs_by_random_search_sorted_marginalized = \
-            self._get_next_by_random_search(
-                num_marginalized_configurations_by_random_search, _sorted=True, marginalization=True)
-        print("Random search for marginalization: {}".format(time.time() - start_time))
+        configs_by_marginalization = self._compute_configs_by_marginalization(
+            num_marginalized_configurations_by_random_search=10,
+            num_configs_for_marginalization=100,
+            num_configurations_by_random_search_sorted=num_configurations_by_random_search_sorted,
+            num_configurations_by_local_search=num_configurations_by_local_search)
 
-        start_time = time.time()
-        # TODO Might be to costly to sort all configs from previous runs
-        configs_previous_runs = self.runhistory.get_all_configs()
-        configs_previous_runs_sorted = self._sort_configs_by_acq_value(configs_previous_runs)
-        num_configs_previous_runs_marginalized = min(len(configs_previous_runs_sorted), num_configurations_by_local_search)
-        configs_previous_runs_sorted_marginalized = \
-            self._sort_configs_by_acq_value(list(map(lambda x: x[1],
-                                                     configs_previous_runs_sorted[:num_configs_previous_runs_marginalized])),
-                                            marginalization=True)
+        #### MARGINALIZATION STOP ####
 
-        configs_by_acq_value_marginalized = configs_by_random_search_sorted_marginalized + \
-                                    configs_previous_runs_sorted_marginalized
-        print("Marginalized previous runs preprocessor: {}".format(time.time() - start_time))
-
-        configs_by_acq_value_marginalized.sort(reverse=True, key=lambda x: x[0])
-        best_preprocessor_configuration = configs_by_acq_value_marginalized[0][1]
-        print("best_preprocessor_configuration: {}".format(best_preprocessor_configuration))
-
-        # Combine preprocessor with highest EI with random classifiers
-        start_time = time.time()
-        next_marginalized_configs_by_random_search_sorted = self._sort_configs_by_acq_value(
-                                                [self._get_variant_config(start_config=best_preprocessor_configuration,
-                                                                          origin='Random Search marginalization (Sorted)') \
-                                                for i in range(0, num_configurations_by_random_search_sorted)])
-        print("Marginalized random search sorted: {}".format(time.time() - start_time))
-
-        start_time = time.time()
-        # initiate local search for marginalized preprocessor with best configurations from previous runs
-        configs_previous_runs = self.runhistory.get_all_configs()
-        #print("configs_previous_runs: {}".format(configs_previous_runs))
-        combined_configs_previous_runs = []
-        for config in configs_previous_runs:
-            try:
-                combined_config = self._combine_configurations(start_config=best_preprocessor_configuration,
-                                                               new_config=config)
-                combined_configs_previous_runs.append(combined_config)
-            except ValueError as v:
-                pass
-        if combined_configs_previous_runs != []:
-            combined_configs_previous_runs_sorted = self._sort_configs_by_acq_value(combined_configs_previous_runs)
-            #print("combined configs_previous_runs_sorted: {}".format(combined_configs_previous_runs_sorted))
-
-            num_configs_local_search = min(len(combined_configs_previous_runs_sorted), num_configurations_by_local_search)
-            next_marginalized_configs_by_local_search = \
-                self._get_next_by_local_search(
-                    list(map(lambda x: x[1],
-                             combined_configs_previous_runs_sorted[:num_configs_local_search])))
-            for _, config in next_marginalized_configs_by_local_search:
-                config.origin = "Local Search marginalized"
-            print("Marginalized local search sorted: {}".format(time.time() - start_time))
-        else:
-            next_marginalized_configs_by_local_search = []
-        #print("next by local search: {}".format(next_marginalized_configs_by_local_search))
-
-
-        #### Standard SMAC select_configurations method ####
         # Get configurations sorted by EI
         next_configs_by_random_search_sorted = \
             self._get_next_by_random_search(
@@ -437,14 +389,11 @@ class CachedSelectConfiguration(SelectConfiguration):
                 list(map(lambda x: x[1],
                          configs_previous_runs_sorted[:num_configs_local_search])))
 
-        # Combine configurations found by marginalization, random search and local search
-
-        next_configs_by_acq_value = next_marginalized_configs_by_random_search_sorted + \
-                                    next_marginalized_configs_by_local_search + \
+        next_configs_by_acq_value = configs_by_marginalization + \
                                     next_configs_by_random_search_sorted + \
                                     next_configs_by_local_search
         next_configs_by_acq_value.sort(reverse=True, key=lambda x: x[0])
-        #print("next_configs_by_acq_value: {}".format(next_configs_by_acq_value))
+        # print("next_configs_by_acq_value: {}".format(next_configs_by_acq_value))
         origins = [config.origin for _, config in next_configs_by_acq_value]
         print("origins: {}".format(origins))
         self.logger.debug(
@@ -455,16 +404,100 @@ class CachedSelectConfiguration(SelectConfiguration):
         # Remove dummy acquisition function value
         next_configs_by_random_search = [x[1] for x in
                                          self._get_next_by_random_search_batch(
-                                             num_points=int(len(next_configs_by_acq_value)/random_leaf_size),
-                                            leaf_size=random_leaf_size)]
+                                             num_points=len(next_configs_by_acq_value),
+                                             leaf_size=random_leaf_size)]
+        # num_points=num_configurations_by_local_search + num_configurations_by_random_search_sorted)]
 
         iter_next_configs_by_acq_value = iter(next_configs_by_acq_value)
         iter_next_configs_by_random_search = iter(next_configs_by_random_search)
-        challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size*2) < random_leaf_size else next(iter_next_configs_by_random_search)
+        # challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size + 1) == 0 else next(
+        #     iter_next_configs_by_random_search)
+        #                for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
+        challengers = [next(iter_next_configs_by_acq_value) if i % (random_leaf_size * 2) < random_leaf_size else next(
+            iter_next_configs_by_random_search)
                        for i in range(0, len(next_configs_by_acq_value) + len(next_configs_by_random_search))]
         return challengers
 
-    def _get_next_by_random_search(self, num_points=1000, _sorted=False, marginalization=False):
+    def _compute_configs_by_marginalization(self,
+                                            num_marginalized_configurations_by_random_search=10,
+                                            num_configs_for_marginalization=100,
+                                            num_configurations_by_local_search=10,
+                                            num_configurations_by_random_search_sorted=100):
+
+
+        #### Compute preprocessor with highest marginalized EI ####
+        print("Start select configuration")
+        print(num_marginalized_configurations_by_random_search,
+              num_configs_for_marginalization,
+              num_configurations_by_local_search,
+              num_configurations_by_random_search_sorted)
+        start_time = time.time()
+        # TODO
+        configs_by_random_search_sorted_marginalized = \
+            self._get_next_by_random_search(
+                num_marginalized_configurations_by_random_search, _sorted=True,
+                marginalization=True, num_configs_for_marginalization=num_configs_for_marginalization)
+        print("Random search for marginalization: {}".format(time.time() - start_time))
+
+        start_time = time.time()
+        # TODO Might be to costly to sort all configs from previous runs
+        configs_previous_runs = self.runhistory.get_all_configs()
+        configs_previous_runs_sorted = self._sort_configs_by_acq_value(configs_previous_runs)
+        num_configs_previous_runs_marginalized = min(len(configs_previous_runs_sorted),
+                                                     num_configurations_by_local_search)
+        configs_previous_runs_sorted_marginalized = \
+            self._sort_configs_by_acq_value_marginalization(list(map(lambda x: x[1],
+                                                                configs_previous_runs_sorted[
+                                                                    :num_configs_previous_runs_marginalized])),
+                                                            num_configs_for_marginalization=num_configs_for_marginalization)
+
+        configs_by_acq_value_marginalized = configs_by_random_search_sorted_marginalized + \
+                                            configs_previous_runs_sorted_marginalized
+        print("Marginalized previous runs preprocessor: {}".format(time.time() - start_time))
+
+        configs_by_acq_value_marginalized.sort(reverse=True, key=lambda x: x[0])
+        best_preprocessor_configuration = configs_by_acq_value_marginalized[0][1]
+        print("best_preprocessor_configuration: {}".format(best_preprocessor_configuration))
+
+        # Combine preprocessor with highest EI with random classifiers
+        start_time = time.time()
+        next_marginalized_configs_by_random_search_sorted = self._sort_configs_by_acq_value(
+            [self._get_variant_config(start_config=best_preprocessor_configuration,
+                                      origin='Random Search marginalization (Sorted)') \
+             for i in range(0, num_configurations_by_random_search_sorted)])
+        print("Marginalized random search sorted: {}".format(time.time() - start_time))
+
+        start_time = time.time()
+        # initiate local search for marginalized preprocessor with best configurations from previous runs
+        configs_previous_runs = self.runhistory.get_all_configs()
+        # print("configs_previous_runs: {}".format(configs_previous_runs))
+        combined_configs_previous_runs = []
+        for config in configs_previous_runs:
+            try:
+                combined_config = self._combine_configurations(start_config=best_preprocessor_configuration,
+                                                               new_config=config)
+                combined_configs_previous_runs.append(combined_config)
+            except ValueError as v:
+                pass
+        if combined_configs_previous_runs != []:
+            combined_configs_previous_runs_sorted = self._sort_configs_by_acq_value(combined_configs_previous_runs)
+            # print("combined configs_previous_runs_sorted: {}".format(combined_configs_previous_runs_sorted))
+
+            num_configs_local_search = min(len(combined_configs_previous_runs_sorted),
+                                           num_configurations_by_local_search)
+            next_marginalized_configs_by_local_search = \
+                self._get_next_by_local_search(
+                    list(map(lambda x: x[1],
+                             combined_configs_previous_runs_sorted[:num_configs_local_search])))
+            for _, config in next_marginalized_configs_by_local_search:
+                config.origin = "Local Search marginalized"
+            print("Marginalized local search sorted: {}".format(time.time() - start_time))
+        else:
+            next_marginalized_configs_by_local_search = []
+            # print("next by local search: {}".format(next_marginalized_configs_by_local_search))
+        return next_marginalized_configs_by_random_search_sorted + next_marginalized_configs_by_local_search
+
+    def _get_next_by_random_search(self, num_points=1000, _sorted=False, marginalization=False, num_configs_for_marginalization=100):
         """Get candidate solutions via local search.
 
         Parameters
@@ -485,19 +518,18 @@ class CachedSelectConfiguration(SelectConfiguration):
         if _sorted:
             for i in range(len(rand_configs)):
                 rand_configs[i].origin = 'Random Search (Sorted)'
-            return self._sort_configs_by_acq_value(rand_configs, marginalization=marginalization)
+            if marginalization:
+                return self._sort_configs_by_acq_value_marginalization(rand_configs, num_configs_for_marginalization)
+            return self._sort_configs_by_acq_value(rand_configs)
         else:
             for i in range(len(rand_configs)):
                 rand_configs[i].origin = 'Random Search'
             return [(0, rand_configs[i]) for i in range(len(rand_configs))]
 
-    def _sort_configs_by_acq_value(self, configs, marginalization=False):
+    def _sort_configs_by_acq_value_marginalization(self, configs, num_configs_for_marginalization = 100):
         start_time = time.time()
-        if marginalization:
-            evaluation_configs = self.config_space.sample_configuration(size=100)
-            acq_values = self.acquisition_func.marginalized_prediction(configs=configs, evaluation_configs=evaluation_configs)
-        else:
-            acq_values = self.acquisition_func(configs=configs)
+        evaluation_configs = self.config_space.sample_configuration(size=100)
+        acq_values = self.acquisition_func.marginalized_prediction(configs=configs, evaluation_configs=evaluation_configs)
         print("Compute marginalization: {}".format(time.time() - start_time))
 
         # From here

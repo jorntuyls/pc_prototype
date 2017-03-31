@@ -155,6 +155,24 @@ class PCAquisitionFunction(object):
 
 class PCAquisitionFunctionWithCachingReduction(PCAquisitionFunction):
 
+    def __init__(self, acquisition_func, config_space, runhistory, constant_pipeline_steps, variable_pipeline_steps):
+        self.acquisition_func = acquisition_func
+        self.config_space = config_space
+        self.runhistory = runhistory
+        self.constant_pipeline_steps = constant_pipeline_steps
+        self.variable_pipeline_steps = variable_pipeline_steps
+
+    def __call__(self, configs):
+        # TODO !! EI
+        caching_discounts = self._compute_caching_discounts(configs, self.runhistory.get_cached_configurations())
+        imputed_configs = map(ConfigSpace.util.impute_inactive_values,
+                              configs)
+        imputed_configs = [x.get_array()
+                           for x in imputed_configs]
+        imputed_configs = np.array(imputed_configs,
+                                   dtype=np.float64)
+        return self.acquisition_func(imputed_configs, caching_discounts)
+
     def get_marginalized_acquisition_value(self, config, evaluation_configs_values=None, num_points=100):
         start_time = time.time()
         sample_configs = self._combine_configurations_batch(config,
@@ -178,7 +196,7 @@ class PCAquisitionFunctionWithCachingReduction(PCAquisitionFunction):
 
         # acq_values = self.acquisition_func(imputed_configs, caching_discounts)
         start_time = time.time()
-        acq_values = self.acquisition_func(imputed_configs, runtime_discount=caching_discounts)
+        acq_values = self.acquisition_func(imputed_configs, caching_discounts)
         print("Acquisition function evaluation: {}".format(time.time() - start_time))
         return np.mean(acq_values)
 

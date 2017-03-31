@@ -84,11 +84,10 @@ class WhiteBoxDriver:
         # Give the stats to the tae runner to simulate timing
         tae.set_smac_stats(stats)
 
-
         # Choose acquisition function
-        if acq_func == "pceips" or acq_func == "eips":
+        if acq_func in ["eips", "m-eips", "pceips", "m-pceips"]:
             model_target_names = ['cost', 'time']
-        elif acq_func == "ei":
+        elif acq_func in ["ei", "m-ei"]:
             model_target_names = ['cost']
         else:
             # Not a valid acquisition function

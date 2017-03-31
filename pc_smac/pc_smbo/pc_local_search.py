@@ -12,12 +12,14 @@ class PCLocalSearch(LocalSearch):
                  config_space,
                  epsilon=0.00001,
                  max_iterations=None,
-                 rng=None):
+                 rng=None,
+                 caching=False):
         super(PCLocalSearch,self).__init__(acquisition_function,
                                            config_space,
                                            epsilon=epsilon,
                                            max_iterations=max_iterations,
                                            rng=rng)
+        self.caching = caching
 
     def maximize(self, start_point, cached_configs=[], *args):
         """
@@ -44,16 +46,18 @@ class PCLocalSearch(LocalSearch):
 
         """
         incumbent = start_point
-        # Compute the acquisition value of the incumbent
-        # First compute runtime discount of incumbent through caching of parts of the pipeline
-        #   Do this before imputing inactive values!!
-        # incumbent_caching_discount = self._compute_caching_discounts([incumbent], cached_configs)
-        # #print("INCUMBENT CACHING DISCOUNT: {}".format(incumbent_caching_discount))
-        # incumbent_ = impute_inactive_values(incumbent)
+        # if self.caching:
+        #     #Compute the acquisition value of the incumbent
+        #     #First compute runtime discount of incumbent through caching of parts of the pipeline
+        #     #  Do this before imputing inactive values!!
+        #     incumbent_caching_discount = self._compute_caching_discounts([incumbent], cached_configs)
+        #     #print("INCUMBENT CACHING DISCOUNT: {}".format(incumbent_caching_discount))
+        #     incumbent_ = impute_inactive_values(incumbent)
         #
-        # acq_val_incumbent = self.acquisition_function(
-        #     incumbent_.get_array(), incumbent_caching_discount,
-        #     *args)
+        #     acq_val_incumbent = self.acquisition_function(
+        #         [incumbent], incumbent_caching_discount,
+        #         *args)
+        # else:
         acq_val_incumbent = self.acquisition_function([incumbent])
 
         local_search_steps = 0
