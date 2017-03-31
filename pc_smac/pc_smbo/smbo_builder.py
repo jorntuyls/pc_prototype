@@ -13,7 +13,7 @@ from smac.utils.io.traj_logging import TrajLogger
 from smac.utils.util_funcs import get_types
 
 from pc_smac.pc_smac.pc_smbo.pc_smbo import PCSMBO
-from pc_smac.pc_smac.pc_smbo.pc_acquisition import PCEIPS
+from pc_smac.pc_smac.pc_smbo.pc_acquisition import PCAquisitionFunction, PCEIPS
 from pc_smac.pc_smac.pc_smbo.pc_local_search import PCLocalSearch
 from pc_smac.pc_smac.pc_smbo.pc_intensification import PCIntensifier
 from pc_smac.pc_smac.pc_smbo.select_configuration import CachedSelectConfiguration, SelectConfiguration
@@ -72,8 +72,13 @@ class SMBOBuilder:
 
         elif acq_func_name == 'pceips':
             acquisition_func = PCEIPS(model)
+            marg_acq_func = PCAquisitionFunction(acquisition_func=acquisition_func,
+                                                           config_space=scenario.cs,
+                                                           runhistory=runhistory,
+                                                           constant_pipeline_steps=constant_pipeline_steps,
+                                                           variable_pipeline_steps=variable_pipeline_steps)
             runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
-            local_search = PCLocalSearch(acquisition_function=acquisition_func,
+            local_search = PCLocalSearch(acquisition_function=marg_acq_func,
                                          config_space=scenario.cs)
             if constant_pipeline_steps == None or variable_pipeline_steps == None:
                 raise ValueError("Constant_pipeline_steps and variable pipeline steps should not be none\
@@ -83,7 +88,7 @@ class SMBOBuilder:
                                                              runhistory=runhistory,
                                                              model=model,
                                                              acq_optimizer=local_search,
-                                                             acquisition_func=acquisition_func,
+                                                             acquisition_func=marg_acq_func,
                                                              rng=rng,
                                                              constant_pipeline_steps=constant_pipeline_steps,
                                                              variable_pipeline_steps=variable_pipeline_steps)
