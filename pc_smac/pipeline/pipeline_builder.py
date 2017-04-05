@@ -43,7 +43,7 @@ class PipelineBuilder:
             # TODO: Make this less hardcoded
             cached_step_names = []
             for name, step_algorithm in concrete_steps:
-                if name.split(":")[0] == "feature_preprocessor":
+                if name.split(":")[0] in self.pipeline_space.get_cached_pipeline_step_names():
                     cached_step_names.append(name)
             return CachedPipeline(concrete_steps,
                                   cached_step_names=cached_step_names,

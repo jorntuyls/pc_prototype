@@ -46,3 +46,12 @@ class PipelineSpace(object):
     def get_pipeline_step(self, name):
         temp = [ps for ps in self.get_pipeline_steps() if ps.get_name() == name]
         return temp[0]
+
+    def get_cached_pipeline_steps(self):
+        return [ps for ps in self.get_pipeline_steps() if ps.is_caching_enabled() == True]
+
+    def get_cached_pipeline_step_names(self):
+        return [ps.get_name() for ps in self.get_pipeline_steps() if ps.is_caching_enabled() == True]
+
+    def is_step_infront_of_step(self, step_1_name, step_2_name):
+        return self.get_pipeline_step_names().index(step_1_name) < self.get_pipeline_step_names().index(step_2_name)

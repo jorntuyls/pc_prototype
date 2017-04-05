@@ -113,7 +113,7 @@ def run_experiment(data_id, location, output_dir, prepr_name=None, class_name=No
     i_s = ImputationStep()
     r_s = RescalingStep()
     b_s = BalancingStep()
-    p_s = PipelineStep(name='feature_preprocessor', nodes=prepr_nodes)
+    p_s = PipelineStep(name='feature_preprocessor', nodes=prepr_nodes, caching=True)
     c_s = PipelineStep(name='classifier', nodes=class_nodes)
     pipeline_space.add_pipeline_steps([o_s, i_s, r_s, b_s, p_s, c_s])
 

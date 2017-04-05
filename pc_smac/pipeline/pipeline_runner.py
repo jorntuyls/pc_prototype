@@ -25,6 +25,7 @@ class PipelineRunner(object):
         self.runtime_timing = {}
         self.runhistory = runhistory
         self.statistics = statistics
+        self.pipeline_space = pipeline_space
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=False, cache_directory=None)
 
     def run(self, config, instance, seed):
@@ -254,11 +255,12 @@ class CachedPipelineRunner(PipelineRunner):
             algo_name = splt_name[1]
             for hp in config.keys():
                 splt_hp = hp.split(":")
+                if self.pipeline_space.is_step_infront_of_step(splt_hp[0], type):
+                    dict[hp] = config[hp]
                 if (splt_hp[0] == type and splt_hp[1] == '__choice__') \
                         or (splt_hp[0] == type and splt_hp[1] == algo_name):
                     dict[hp] = config[hp]
             t_rc.append((dict, timing[name]))
-
         return t_rc
 
 
