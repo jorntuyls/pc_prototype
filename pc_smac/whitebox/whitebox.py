@@ -21,7 +21,8 @@ class WhiteBoxFunction(ExecuteTARun):
               instance,
               cutoff=None,
               seed=12345,
-              instance_specific="0"):
+              instance_specific="0",
+              capped=False):
         x = config["preprocessor:x"]  # preprocessor
         y = config["classifier:y"]  # classifier
 
@@ -79,7 +80,8 @@ class CachedWhiteboxFunction(WhiteBoxFunction):
               instance,
               cutoff=None,
               seed=12345,
-              instance_specific="0"):
+              instance_specific="0",
+              capped=False):
         # Increase the number of total evaluations
         self.total_evaluations += 1
 
