@@ -3,20 +3,18 @@ import numpy as np
 
 from smac.tae.execute_ta_run import StatusType
 from smac.runhistory.runhistory2epm import RunHistory2EPM4EIPS, RunHistory2EPM4Cost
-from smac.smbo.acquisition import EI, EIPS
+from smac.smbo.acquisition import EI, EIPS, PCEIPS
 from smac.smbo.local_search import LocalSearch
 from smac.epm.rf_with_instances import RandomForestWithInstances
 from smac.epm.uncorrelated_mo_rf_with_instances import UncorrelatedMultiObjectiveRandomForestWithInstances
 from smac.intensification.intensification import Intensifier
+from smac.smbo.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization
+from smac.smbo.acquisition_func_wrapper import PCAquisitionFunctionWrapper, PCAquisitionFunctionWrapperWithCachingReduction
 from smac.initial_design.random_configuration_design import RandomConfiguration
 from smac.utils.io.traj_logging import TrajLogger
 from smac.utils.util_funcs import get_types
 
 from pc_smac.pc_smac.pc_smbo.pc_smbo import PCSMBO
-from pc_smac.pc_smac.pc_smbo.pc_acquisition import PCAquisitionFunction, PCEIPS
-from pc_smac.pc_smac.pc_smbo.pc_local_search import PCLocalSearch
-from pc_smac.pc_smac.pc_smbo.pc_intensification import PCIntensifier
-from pc_smac.pc_smac.pc_smbo.select_configuration import SelectConfigurationWithMarginalization, SelectConfiguration
 
 
 
@@ -32,16 +30,16 @@ class SMBOBuilder:
         # Build intensifier
         rng = np.random.RandomState()
         traj_logger = TrajLogger(logging_directory, stats)
-        intensifier = PCIntensifier(tae_runner=tae_runner,
-                                    stats=stats,
-                                    traj_logger=traj_logger,
-                                    rng=rng,
-                                    cutoff=scenario.cutoff,
-                                    deterministic=scenario.deterministic,
-                                    run_obj_time=scenario.run_obj == "runtime",
-                                    run_limit=scenario.ta_run_limit,
-                                    instances=[1],
-                                    maxR=1)
+        intensifier = Intensifier(tae_runner=tae_runner,
+                                  stats=stats,
+                                  traj_logger=traj_logger,
+                                  rng=rng,
+                                  cutoff=scenario.cutoff,
+                                  deterministic=scenario.deterministic,
+                                  run_obj_time=scenario.run_obj == "runtime",
+                                  run_limit=scenario.ta_run_limit,
+                                  instances=[1],
+                                  maxR=1)
 
         # Build model
         if len(model_target_names) > 1:
@@ -55,36 +53,36 @@ class SMBOBuilder:
         num_params = len(scenario.cs.get_hyperparameters())
         if acq_func_name == "ei":
             acquisition_func = EI(model)
-            acq_func_wrapper = PCAquisitionFunction(acquisition_func=acquisition_func,
-                                                    config_space=scenario.cs,
-                                                    runhistory=runhistory,
-                                                    constant_pipeline_steps=constant_pipeline_steps,
-                                                    variable_pipeline_steps=variable_pipeline_steps)
+            acq_func_wrapper = PCAquisitionFunctionWrapper(acquisition_func=acquisition_func,
+                                                           config_space=scenario.cs,
+                                                           runhistory=runhistory,
+                                                           constant_pipeline_steps=constant_pipeline_steps,
+                                                           variable_pipeline_steps=variable_pipeline_steps)
             runhistory2epm = RunHistory2EPM4Cost(scenario, num_params,
                                                  success_states=[StatusType.SUCCESS])
-            local_search = LocalSearch(acquisition_function=acquisition_func,
+            local_search = LocalSearch(acquisition_function=acq_func_wrapper,
                                        config_space=scenario.cs)
-            select_configuration = SelectConfiguration(scenario=scenario,
-                                                       stats=stats,
-                                                       runhistory=runhistory,
-                                                       model=model,
-                                                       acq_optimizer=local_search,
-                                                       acquisition_func=acq_func_wrapper,
-                                                       rng=rng,
-                                                       constant_pipeline_steps=constant_pipeline_steps,
-                                                       variable_pipeline_steps=variable_pipeline_steps)
-        elif acq_func_name == "m-ei":
+            select_configuration = SelectConfigurations(scenario=scenario,
+                                                        stats=stats,
+                                                        runhistory=runhistory,
+                                                        model=model,
+                                                        acq_optimizer=local_search,
+                                                        acquisition_func=acq_func_wrapper,
+                                                        rng=rng,
+                                                        constant_pipeline_steps=constant_pipeline_steps,
+                                                        variable_pipeline_steps=variable_pipeline_steps)
+        elif acq_func_name in ["m-ei", "pc-m-ei"]:
             acquisition_func = EI(model)
-            acq_func_wrapper = PCAquisitionFunction(acquisition_func=acquisition_func,
+            acq_func_wrapper = PCAquisitionFunctionWrapper(acquisition_func=acquisition_func,
                                                     config_space=scenario.cs,
                                                     runhistory=runhistory,
                                                     constant_pipeline_steps=constant_pipeline_steps,
                                                     variable_pipeline_steps=variable_pipeline_steps)
             runhistory2epm = RunHistory2EPM4Cost(scenario, num_params,
                                                  success_states=[StatusType.SUCCESS])
-            local_search = PCLocalSearch(acquisition_function=acq_func_wrapper,
+            local_search = LocalSearch(acquisition_function=acq_func_wrapper,
                                          config_space=scenario.cs)
-            select_configuration = SelectConfigurationWithMarginalization(scenario=scenario,
+            select_configuration = SelectConfigurationsWithMarginalization(scenario=scenario,
                                                                           stats=stats,
                                                                           runhistory=runhistory,
                                                                           model=model,
@@ -95,7 +93,7 @@ class SMBOBuilder:
                                                                           variable_pipeline_steps=variable_pipeline_steps)
         elif acq_func_name == 'eips':
             acquisition_func = EIPS(model)
-            acq_func_wrapper = PCAquisitionFunction(acquisition_func=acquisition_func,
+            acq_func_wrapper = PCAquisitionFunctionWrapper(acquisition_func=acquisition_func,
                                                     config_space=scenario.cs,
                                                     runhistory=runhistory,
                                                     constant_pipeline_steps=constant_pipeline_steps,
@@ -103,9 +101,9 @@ class SMBOBuilder:
             runhistory2epm = RunHistory2EPM4EIPS(scenario,
                                                  num_params,
                                                  success_states=[StatusType.SUCCESS])
-            local_search = LocalSearch(acquisition_function=acquisition_func,
+            local_search = LocalSearch(acquisition_function=acq_func_wrapper,
                                        config_space=scenario.cs)
-            select_configuration = SelectConfiguration(scenario=scenario,
+            select_configuration = SelectConfigurations(scenario=scenario,
                                                        stats=stats,
                                                        runhistory=runhistory,
                                                        model=model,
@@ -114,42 +112,63 @@ class SMBOBuilder:
                                                        rng=rng,
                                                        constant_pipeline_steps=constant_pipeline_steps,
                                                        variable_pipeline_steps=variable_pipeline_steps)
-        elif acq_func_name == 'pceips':
-            acquisition_func = PCEIPS(model)
-            acq_func_wrapper = PCAquisitionFunction(acquisition_func=acquisition_func,
-                                                           config_space=scenario.cs,
-                                                           runhistory=runhistory,
-                                                           constant_pipeline_steps=constant_pipeline_steps,
-                                                           variable_pipeline_steps=variable_pipeline_steps)
-            runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
-            local_search = PCLocalSearch(acquisition_function=acq_func_wrapper,
-                                         config_space=scenario.cs)
-            if constant_pipeline_steps == None or variable_pipeline_steps == None:
-                raise ValueError("Constant_pipeline_steps and variable pipeline steps should not be none\
-                                    when using PCEIPS")
-            select_configuration = SelectConfiguration(scenario=scenario,
-                                                       stats=stats,
-                                                       runhistory=runhistory,
-                                                       model=model,
-                                                       acq_optimizer=local_search,
-                                                       acquisition_func=acq_func_wrapper,
-                                                       rng=rng,
-                                                       constant_pipeline_steps=constant_pipeline_steps,
-                                                       variable_pipeline_steps=variable_pipeline_steps)
-        elif acq_func_name == 'm-pceips':
-            acquisition_func = PCEIPS(model)
-            acq_func_wrapper = PCAquisitionFunction(acquisition_func=acquisition_func,
+        elif acq_func_name in ["m-eips", "pc-m-eips"]:
+            acquisition_func = EIPS(model)
+            acq_func_wrapper = PCAquisitionFunctionWrapper(acquisition_func=acquisition_func,
                                                     config_space=scenario.cs,
                                                     runhistory=runhistory,
                                                     constant_pipeline_steps=constant_pipeline_steps,
                                                     variable_pipeline_steps=variable_pipeline_steps)
+            runhistory2epm = RunHistory2EPM4EIPS(scenario,
+                                                 num_params,
+                                                 success_states=[StatusType.SUCCESS])
+            local_search = LocalSearch(acquisition_function=acq_func_wrapper,
+                                       config_space=scenario.cs)
+            select_configuration = SelectConfigurationsWithMarginalization(scenario=scenario,
+                                                                          stats=stats,
+                                                                          runhistory=runhistory,
+                                                                          model=model,
+                                                                          acq_optimizer=local_search,
+                                                                          acquisition_func=acq_func_wrapper,
+                                                                          rng=rng,
+                                                                          constant_pipeline_steps=constant_pipeline_steps,
+                                                                          variable_pipeline_steps=variable_pipeline_steps)
+        elif acq_func_name == 'pceips':
+            acquisition_func = PCEIPS(model)
+            acq_func_wrapper = PCAquisitionFunctionWrapperWithCachingReduction(acquisition_func=acquisition_func,
+                                                                        config_space=scenario.cs,
+                                                                        runhistory=runhistory,
+                                                                        constant_pipeline_steps=constant_pipeline_steps,
+                                                                        variable_pipeline_steps=variable_pipeline_steps)
             runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
-            local_search = PCLocalSearch(acquisition_function=acq_func_wrapper,
+            local_search = LocalSearch(acquisition_function=acq_func_wrapper,
                                          config_space=scenario.cs)
             if constant_pipeline_steps == None or variable_pipeline_steps == None:
                 raise ValueError("Constant_pipeline_steps and variable pipeline steps should not be none\
                                     when using PCEIPS")
-            select_configuration = SelectConfigurationWithMarginalization(scenario=scenario,
+            select_configuration = SelectConfigurations(scenario=scenario,
+                                                       stats=stats,
+                                                       runhistory=runhistory,
+                                                       model=model,
+                                                       acq_optimizer=local_search,
+                                                       acquisition_func=acq_func_wrapper,
+                                                       rng=rng,
+                                                       constant_pipeline_steps=constant_pipeline_steps,
+                                                       variable_pipeline_steps=variable_pipeline_steps)
+        elif acq_func_name == 'pc-m-pceips':
+            acquisition_func = PCEIPS(model)
+            acq_func_wrapper = PCAquisitionFunctionWrapperWithCachingReduction(acquisition_func=acquisition_func,
+                                                                        config_space=scenario.cs,
+                                                                        runhistory=runhistory,
+                                                                        constant_pipeline_steps=constant_pipeline_steps,
+                                                                        variable_pipeline_steps=variable_pipeline_steps)
+            runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
+            local_search = LocalSearch(acquisition_function=acq_func_wrapper,
+                                         config_space=scenario.cs)
+            if constant_pipeline_steps == None or variable_pipeline_steps == None:
+                raise ValueError("Constant_pipeline_steps and variable pipeline steps should not be none\
+                                    when using PCEIPS")
+            select_configuration = SelectConfigurationsWithMarginalization(scenario=scenario,
                                                                           stats=stats,
                                                                           runhistory=runhistory,
                                                                           model=model,
