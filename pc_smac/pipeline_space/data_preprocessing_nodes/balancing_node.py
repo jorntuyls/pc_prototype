@@ -19,7 +19,7 @@ class BalancingNode(Node):
 
     def initialize_algorithm(self, hyperparameters):
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        balancing = self.algorithm(strategy=self.hyperparameters["strategy"])
+        balancing = self.algorithm(strategy=hyperparameters["strategy"])
         return (self.get_full_name(), balancing)
 
     def get_hyperparameter_search_space(self, dataset_properties=None):

@@ -1,11 +1,9 @@
-
 import numpy as np
-
+from ConfigSpace.conditions import EqualsCondition
 from ConfigSpace.configuration_space import ConfigurationSpace
 from ConfigSpace.hyperparameters import UniformFloatHyperparameter, CategoricalHyperparameter
-from ConfigSpace.conditions import EqualsCondition
 
-from pc_smac.pc_smac.algorithms.data_preprocessing.one_hot_encoding import OneHotEncoderImplementation
+from pc_smac.pc_smac.pipeline_space.algorithms.one_hot_encoding import OneHotEncoderImplementation
 from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
 
@@ -19,8 +17,8 @@ class OneHotEncodeingNode(Node):
 
     def initialize_algorithm(self, hyperparameters):
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        one_hot_encoder = self.algorithm(use_minimum_fraction=self.hyperparameters["use_minimum_fraction"],
-                                        minimum_fraction=self.hyperparameters["minimum_fraction"])
+        one_hot_encoder = self.algorithm(use_minimum_fraction=hyperparameters["use_minimum_fraction"],
+                                        minimum_fraction=hyperparameters["minimum_fraction"])
         return (self.get_full_name(), one_hot_encoder)
 
     def get_hyperparameter_search_space(self, dataset_properties=None):

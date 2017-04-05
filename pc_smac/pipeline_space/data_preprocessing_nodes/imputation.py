@@ -15,7 +15,7 @@ class ImputationNode(Node):
 
     def initialize_algorithm(self, hyperparameters):
         hyperparameters = self.initialize_hyperparameters(hyperparameters)
-        imputation = self.algorithm(strategy=self.hyperparameters["strategy"])
+        imputation = self.algorithm(strategy=hyperparameters["strategy"])
         return (self.get_full_name(), imputation)
 
     def get_hyperparameter_search_space(self, dataset_properties=None):

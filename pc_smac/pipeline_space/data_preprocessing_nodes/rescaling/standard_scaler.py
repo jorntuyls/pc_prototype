@@ -1,10 +1,10 @@
-
 from ConfigSpace.configuration_space import ConfigurationSpace
-
 from scipy import sparse
 
+from pc_smac.pc_smac.pipeline_space.data_preprocessing_nodes.rescaling.abstract_rescaling import Rescaling
 from pc_smac.pc_smac.pipeline_space.node import Node, PreprocessingAlgorithm
 from pc_smac.pc_smac.utils.constants import *
+
 
 class StandardScalerNode(Node):
 
@@ -25,27 +25,7 @@ class StandardScalerNode(Node):
         return self.algorithm.get_properties(dataset_properties=dataset_properties)
 
 
-class Rescaling(PreprocessingAlgorithm):
-
-    def get_params(self, deep=True):
-        return {}
-
-    def fit(self, X, y=None):
-        self.preprocessor.fit(X)
-        return self
-
-    def transform(self, X):
-        if self.preprocessor is None:
-            raise NotImplementedError()
-        return self.preprocessor.transform(X)
-
-    @staticmethod
-    def get_hyperparameter_search_space(dataset_properties=None):
-        cs = ConfigurationSpace()
-        return cs
-
-
-class StandardScaler(PreprocessingAlgorithm):
+class StandardScaler(Rescaling, PreprocessingAlgorithm):
     def __init__(self, random_state=None):
         self.random_state = random_state
 
