@@ -12,10 +12,6 @@ class PCRunHistory(RunHistory):
             seed=None,
             additional_info=None):
 
-        #print("BEGIN PCRUNHISTORY")
-
-        #print(self.cached_configurations)
-
         if additional_info and 't_rc' in additional_info.keys():
             # additional_info['t_rc'] is a list of tuples (dict, time) where dict is a cached algorithm (part of pipeline)
             #   configuration and time is runtime that this algorithm configuration took
@@ -26,10 +22,6 @@ class PCRunHistory(RunHistory):
                 #else:
                     #print("deleted config: {}, {}".format(cached_config, runtime))
 
-        #print("BETWEEN")
-        #print("config cost: {}, {}".format(config, time))
-        #print(self.cached_configurations)
-
         # If a configuration is added that exists in the cached configurations, then we want to add the dicounted cost again for the model
         #   this ensures that the model is consistent
         for cached_config, runtime_discount in self.get_cached_configurations():
@@ -37,8 +29,6 @@ class PCRunHistory(RunHistory):
                 time += runtime_discount
 
         super(PCRunHistory, self).add(config, cost, time, status, instance_id, seed, additional_info)
-        #print("config cost: {}, {}".format(config, time))
-        #print("END PCRUNHISTORY")
 
     def get_cached_configurations(self):
         return self.cached_configurations
