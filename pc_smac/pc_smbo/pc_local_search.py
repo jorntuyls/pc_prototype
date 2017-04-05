@@ -76,7 +76,6 @@ class PCLocalSearch(LocalSearch):
 
             all_neighbors = get_one_exchange_neighbourhood(incumbent,
                                                            seed=self.rng.seed())
-            self.rng.shuffle(all_neighbors)
 
             for neighbor in all_neighbors:
                 s_time = time.time()

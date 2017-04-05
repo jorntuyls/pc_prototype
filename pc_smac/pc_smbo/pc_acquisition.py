@@ -147,6 +147,7 @@ class PCAquisitionFunction(object):
         -------
             The runtime discount for this configuration, given the cached configuration if there is one, otherwise 0
         '''
+        config._populate_values()
         r = [key for key in cached_config[0].keys() if config[key] != cached_config[0][key]]
         # print("_caching_reduction: {}".format(r))
         if r == []:
