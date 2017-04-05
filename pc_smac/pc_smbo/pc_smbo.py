@@ -22,8 +22,7 @@ from smac.runhistory.runhistory2epm import AbstractRunHistory2EPM
 from smac.stats.stats import Stats
 from smac.initial_design.initial_design import InitialDesign
 from smac.tae.execute_ta_run import FirstRunCrashedException
-
-from pc_smac.pc_smac.pc_smbo.select_configuration import SelectConfiguration
+from smac.smbo.select_configurations import SelectConfigurations
 
 
 class PCSMBO(BaseSolver):
@@ -41,7 +40,7 @@ class PCSMBO(BaseSolver):
                  acq_optimizer: LocalSearch,
                  acquisition_func: AbstractAcquisitionFunction,
                  rng: np.random.RandomState,
-                 select_configuration: SelectConfiguration,
+                 select_configuration: SelectConfigurations,
                  random_leaf_size: int):
         '''
         Interface that contains the main Bayesian optimization loop
