@@ -267,7 +267,7 @@ class CachedPipelineRunner(PipelineRunner):
 
 class PipelineTester(object):
 
-    def __init__(self, data, pipeline_space, downsampling=None):
+    def __init__(self, data, data_info, pipeline_space, downsampling=None):
         if downsampling:
             self.X_train = data["X_train"][:downsampling]
             self.y_train = data["y_train"][:downsampling]
@@ -279,6 +279,7 @@ class PipelineTester(object):
             self.X_test = data["X_test"]
             self.y_test = data["y_test"]
 
+        self.data_info = data_info
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=False, cache_directory=None)
 
     def run(self, config):
@@ -287,12 +288,13 @@ class PipelineTester(object):
         try:
             pipeline.fit(self.X_train, self.y_train)
             y_pred = pipeline.predict(self.X_test)
-            score = precision_score(self.y_test, y_pred, average='macro')
+            #score = precision_score(self.y_test, y_pred, average='macro')
+            score = calculate_bac_score(self.y_test, y_pred, num_labels=self.data_info['label_num'], task=self.data_info['task'])
         except ValueError as v:
             score = 0
 
         return score
 
-    def get_performance(self, config):
+    def get_error(self, config):
         score = self.run(config)
         return 1 - score

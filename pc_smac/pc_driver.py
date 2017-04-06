@@ -187,10 +187,10 @@ class Driver:
 
 
     def run_tests(self, trajectory, downsampling=None):
-        pt = PipelineTester(self.data, self.pipeline_space, downsampling=downsampling)
+        pt = PipelineTester(self.data, self.data_loader.info, self.pipeline_space, downsampling=downsampling)
 
         for traj in trajectory:
-            traj['test_performance'] = pt.get_performance(traj['incumbent'])
+            traj['test_performance'] = pt.get_error(traj['incumbent'])
 
         return trajectory
 
