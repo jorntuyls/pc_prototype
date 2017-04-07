@@ -90,8 +90,11 @@ class PipelineRunner(object):
                 # Validate pipeline
                 y_pred = pipeline.predict(X_valid)
                 prec_score = precision_score(y_valid, y_pred, average='macro')
-                print("SCORE: {}".format(prec_score))
-                scores.append(prec_score)
+                bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'],
+                                                task=self.data_info['task'])
+                print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
+                print("SCORE: {}".format(bac_score))
+                scores.append(bac_score)
             cost = 1 - np.mean(scores)
         except ValueError as v:
             exc_info = sys.exc_info()
