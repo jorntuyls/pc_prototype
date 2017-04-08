@@ -107,7 +107,8 @@ class Driver:
                 'wallclock_limit': wallclock_limit,
                 'memory_limit': memory_limit,
                 'cutoff_time': cutoff,
-                'deterministic': "true"
+                'deterministic': "true",
+                'abort_on_first_run_crash': "false"
                 }
         scenario = Scenario(args)
 
