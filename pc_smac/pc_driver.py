@@ -9,6 +9,7 @@ from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
 from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
 from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, ImputationStep, RescalingStep, \
     BalancingStep, PreprocessingStep, ClassificationStep
+from pc_smac.pc_smac.pipeline_space.pipeline_space_builder import PipelineSpaceBuilder
 from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
 from pc_smac.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
@@ -22,7 +23,7 @@ from smac.tae.execute_func import ExecuteTAFuncDict
 
 class Driver:
 
-    def __init__(self, data_path, output_dir=None):
+    def __init__(self, data_path, output_dir=None, pipeline_space_string=None):
         self.data_path = data_path
         self.data_loader = DataLoader(data_path)
 
@@ -30,8 +31,7 @@ class Driver:
         #from autosklearn.pipeline.classification import SimpleClassificationPipeline
         #s = SimpleClassificationPipeline()
         #print(s.get_hyperparameter_search_space())
-
-        self.pipeline_space = self._build_pipeline_space()
+        self.pipeline_space = self._build_pipeline_space() if (pipeline_space_string == None) else self._parse_pipeline_space(pipeline_space_string)
         self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
         self.config_space = self.cs_builder.build_config_space()
 
@@ -212,14 +212,25 @@ class Driver:
         ps.add_pipeline_steps([o_s, i_s, r_s, b_s, p_s, c_s]) #[p_s, c_s])
         return ps
 
-if __name__ == "__main__":
-    from pc_smac.pc_smac.local_data_paths import data_path, output_dir, cache_directory
-    d = Driver(data_path=data_path, output_dir=output_dir)
-    d.run(stamp="test",
-         acq_func="pceips",
-         wallclock_limit=10,
-         runcount_limit=2,
-         memory_limit=4000000,
-         cutoff=3600,
-         cache_directory=cache_directory,
-         downsampling=1000)
+    def _parse_pipeline_space(self, pipeline_space_string):
+        preprocessor_names = pipeline_space_string.split("-")[0].split(",")
+        classifier_names = pipeline_space_string.split("-")[1].split(",")
+
+        pipeline_space_builder = PipelineSpaceBuilder()
+
+        return pipeline_space_builder.build_pipeline_space(preprocessor_names=preprocessor_names,
+                                                           classifier_names=classifier_names)
+
+
+
+# if __name__ == "__main__":
+#     from pc_smac.pc_smac.local_data_paths import data_path, output_dir, cache_directory
+#     d = Driver(data_path=data_path, output_dir=output_dir)
+#     d.run(stamp="test",
+#          acq_func="pceips",
+#          wallclock_limit=10,
+#          runcount_limit=2,
+#          memory_limit=4000000,
+#          cutoff=3600,
+#          cache_directory=cache_directory,
+#          downsampling=1000)

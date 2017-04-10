@@ -3,9 +3,14 @@ import argparse
 
 from pc_smac.pc_smac.pc_driver import Driver
 
+from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
+from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, ImputationStep, RescalingStep, \
+    BalancingStep, PreprocessingStep, ClassificationStep
 
-def run_smac(acq_func, wallclock_limit, runcount_limit, memory_limit, cutoff, data_path, stamp, output_dir, cache_directory, downsampling):
-    d = Driver(data_path=data_path, output_dir=output_dir)
+
+def run_smac(acq_func, wallclock_limit, runcount_limit, memory_limit, cutoff, data_path, stamp, output_dir, cache_directory,
+             downsampling, pipeline_space_string):
+    d = Driver(data_path=data_path, output_dir=output_dir, pipeline_space_string=pipeline_space_string)
     return d.run(stamp=stamp,
                  acq_func=acq_func,
                  wallclock_limit=wallclock_limit,
@@ -29,6 +34,7 @@ def parse_arguments():
     parser.add_argument("-o", "--outputdir", type=str, default=None, help="Output directory")
     parser.add_argument("-cd", "--cachedir", type=str, default=None, help="Cache directory")
     parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Downsampling of data")
+    parser.add_argument("-ps", "--pipeline_space", type=str, default=None, help="Scenario to execute")
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -42,5 +48,6 @@ if __name__ == "__main__":
              args.stamp,
              args.outputdir,
              args.cachedir,
-             args.downsampling)
+             args.downsampling,
+             args.pipeline_space)
 
