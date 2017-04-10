@@ -165,7 +165,7 @@ class Statistics(object):
 
         with open(destination_file, "a") as fp:
             for row in lst:
-                json.dump(row, fp)
+                json.dump(row, fp, indent=4, sort_keys=True)
                 fp.write("\n")
 
     def _save_info_file(self, strng, destination_file):

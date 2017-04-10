@@ -80,7 +80,9 @@ class WhiteBoxDriver:
         scenario = Scenario(args)
 
         # Build stats
-        stats = WhiteboxStats(scenario)
+        stats = WhiteboxStats(scenario,
+                                output_dir=self.output_dir + "/smac/",
+                                stamp=stamp)
         # Give the stats to the tae runner to simulate timing
         tae.set_smac_stats(stats)
 

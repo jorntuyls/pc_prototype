@@ -113,7 +113,9 @@ class Driver:
         scenario = Scenario(args)
 
         # Build stats
-        stats = Stats(scenario)
+        stats = Stats(scenario,
+                      output_dir=self.output_dir + "/smac/",
+                      stamp=stamp)
 
         # Build tae runner
         tae_runner = ExecuteTAFuncDict(ta=pr.run,

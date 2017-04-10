@@ -8,8 +8,8 @@ Class to hack the SMAC Stats class so we can change the logged time
 """
 class WhiteboxStats(Stats):
 
-    def __init__(self, scenario):
-        super(WhiteboxStats, self).__init__(scenario)
+    def __init__(self, scenario, output_dir=None, stamp='"'):
+        super(WhiteboxStats, self).__init__(scenario, output_dir=output_dir, stamp=stamp)
         self.current_time = None
         self.scenario_copy = scenario
 
