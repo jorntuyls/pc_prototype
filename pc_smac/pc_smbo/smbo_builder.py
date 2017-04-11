@@ -24,8 +24,8 @@ class SMBOBuilder:
         pass
 
     def build_pc_smbo(self, tae_runner, stats, scenario, runhistory, aggregate_func, acq_func_name, model_target_names,
-                        logging_directory, random_leaf_size=1, constant_pipeline_steps=None, variable_pipeline_steps=None):
-
+                        logging_directory, random_leaf_size=1, constant_pipeline_steps=None, variable_pipeline_steps=None,
+                      intensification_instances=None):
 
         # Build intensifier
         rng = np.random.RandomState()
@@ -38,8 +38,8 @@ class SMBOBuilder:
                                   deterministic=scenario.deterministic,
                                   run_obj_time=scenario.run_obj == "runtime",
                                   run_limit=scenario.ta_run_limit,
-                                  instances=[1],
-                                  maxR=1)
+                                  instances=intensification_instances,
+                                  maxR=len(intensification_instances))
 
         # Build model
         if len(model_target_names) > 1:

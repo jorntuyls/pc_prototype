@@ -9,7 +9,7 @@ from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, Imp
 
 
 def run_smac(acq_func, wallclock_limit, runcount_limit, memory_limit, cutoff, data_path, stamp, output_dir, cache_directory,
-             downsampling, pipeline_space_string):
+             downsampling, intensification_fold_size, pipeline_space_string):
     d = Driver(data_path=data_path, output_dir=output_dir, pipeline_space_string=pipeline_space_string)
     return d.run(stamp=stamp,
                  acq_func=acq_func,
@@ -18,7 +18,8 @@ def run_smac(acq_func, wallclock_limit, runcount_limit, memory_limit, cutoff, da
                  memory_limit=memory_limit,
                  cutoff=cutoff,
                  cache_directory=cache_directory,
-                 downsampling=downsampling)
+                 downsampling=downsampling,
+                 intensification_fold_size=intensification_fold_size)
 
 
 def parse_arguments():
@@ -34,6 +35,7 @@ def parse_arguments():
     parser.add_argument("-o", "--outputdir", type=str, default=None, help="Output directory")
     parser.add_argument("-cd", "--cachedir", type=str, default=None, help="Cache directory")
     parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Downsampling of data")
+    parser.add_argument("-ifs", "--intensification_fold_size", type=int, default=None, help="Intensification fold size")
     parser.add_argument("-ps", "--pipeline_space", type=str, default=None, help="Scenario to execute")
     return parser.parse_args()
 
@@ -49,5 +51,6 @@ if __name__ == "__main__":
              args.outputdir,
              args.cachedir,
              args.downsampling,
+             args.intensification_fold_size,
              args.pipeline_space)
 

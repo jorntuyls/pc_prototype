@@ -42,7 +42,7 @@ class Driver:
         except FileExistsError:
             pass
 
-    def initialize(self, stamp, acq_func, random_leaf_size, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling):
+    def initialize(self, stamp, acq_func, random_leaf_size, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling, intensification_fold_size):
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
@@ -80,10 +80,12 @@ class Driver:
             pr = CachedPipelineRunner(self.data, self.data_loader.info, self.pipeline_space, runhistory,
                                                    self.statistics,
                                                    cache_directory=cache_directory,
-                                                   downsampling=downsampling)
+                                                   downsampling=downsampling,
+                                                    num_cross_validation_folds=intensification_fold_size)
         else:
             pr = PipelineRunner(self.data, self.data_loader.info, self.pipeline_space, runhistory, self.statistics,
-                                             downsampling=downsampling)
+                                             downsampling=downsampling,
+                                            num_cross_validation_folds=intensification_fold_size)
 
         # Choose acquisition function
         if acq_func in ["eips", "m-eips", "pc-m-eips", "pceips", "pc-m-pceips"]:
@@ -101,6 +103,7 @@ class Driver:
         self.trajectory_path_csv = trajectory_path + "/traj_old.csv"
 
         # Build scenario
+        intensification_instances = [[1]] if intensification_fold_size == None else [[i] for i in range(0, intensification_fold_size)]
         args = {'cs': self.config_space,
                 'run_obj': "quality",
                 'runcount_limit': runcount_limit,
@@ -108,7 +111,8 @@ class Driver:
                 'memory_limit': memory_limit,
                 'cutoff_time': cutoff,
                 'deterministic': "true",
-                'abort_on_first_run_crash': "false"
+                'abort_on_first_run_crash': "false",
+                'instances': intensification_instances
                 }
         scenario = Scenario(args)
 
@@ -125,6 +129,7 @@ class Driver:
                                        memory_limit=scenario.memory_limit)
 
         # Build SMBO object
+        intensification_instances = [1] if intensification_fold_size == None else [i for i in range(0, intensification_fold_size)]
         smbo_builder = SMBOBuilder()
         self.smbo = smbo_builder.build_pc_smbo(
             tae_runner=tae_runner,
@@ -138,7 +143,8 @@ class Driver:
             random_leaf_size=random_leaf_size,
             constant_pipeline_steps=["one_hot_encoder", "imputation", "rescaling",
                                      "balancing", "feature_preprocessor"],
-            variable_pipeline_steps=["classifier"])
+            variable_pipeline_steps=["classifier"],
+            intensification_instances=intensification_instances)
 
 
     def run(self,
@@ -150,7 +156,8 @@ class Driver:
             memory_limit=6000,
             cutoff=3600,
             cache_directory=None,
-            downsampling=None):
+            downsampling=None,
+            intensification_fold_size=None):
 
         # Initialize SMBO
         self.initialize(stamp=stamp,
@@ -161,7 +168,8 @@ class Driver:
                         runcount_limit=runcount_limit,
                         memory_limit=memory_limit,
                         cutoff=cutoff,
-                        downsampling=downsampling)
+                        downsampling=downsampling,
+                        intensification_fold_size=intensification_fold_size)
 
         # clean trajectory files
         self._clean_trajectory_files()

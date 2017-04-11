@@ -12,7 +12,7 @@ from pc_smac.pc_smac.pipeline.pipeline_builder import PipelineBuilder
 
 class PipelineRunner(object):
 
-    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, downsampling=None):
+    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, downsampling=None, num_cross_validation_folds=None):
         # TODO Remove runhistory from arguments
         if downsampling:
             self.X_train = data["X_train"][:downsampling]
@@ -27,6 +27,7 @@ class PipelineRunner(object):
         self.statistics = statistics
         self.pipeline_space = pipeline_space
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=False, cache_directory=None)
+        self.num_cross_validation_folds = num_cross_validation_folds if num_cross_validation_folds != None else 2
 
     def run(self, config, instance, seed):
         """
@@ -68,34 +69,30 @@ class PipelineRunner(object):
 
         # Cross validation as in scikit-learn:
         #   http://scikit-learn.org/stable/tutorial/statistical_inference/model_selection.html
-        K = 3
-        X_folds = np.array_split(self.X_train, K)
-        y_folds = np.array_split(self.y_train, K)
-        scores = list()
+        X_folds = np.array_split(self.X_train, self.num_cross_validation_folds)
+        y_folds = np.array_split(self.y_train, self.num_cross_validation_folds)
         try:
-            for k in range(0,K):
-                # Fit pipeline
-                X_train = list(X_folds)
-                X_valid = X_train.pop(k)
-                X_train = np.concatenate(X_train)
-                y_train = list(y_folds)
-                y_valid = y_train.pop(k)
-                y_train = np.concatenate(y_train)
-                pipeline.fit(X_train, y_train)
+            # Fit pipeline
+            X_train = list(X_folds)
+            X_valid = X_train.pop(int(instance))
+            X_train = np.concatenate(X_train)
+            y_train = list(y_folds)
+            y_valid = y_train.pop(int(instance))
+            y_train = np.concatenate(y_train)
+            pipeline.fit(X_train, y_train)
 
-                # Keep track of timing infomration
-                self.add_runtime_timing(self.runtime_timing, pipeline.pipeline_info.get_timing_flat())
-                print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
+            # Keep track of timing infomration
+            self.add_runtime_timing(self.runtime_timing, pipeline.pipeline_info.get_timing_flat())
+            print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
 
-                # Validate pipeline
-                y_pred = pipeline.predict(X_valid)
-                prec_score = precision_score(y_valid, y_pred, average='macro')
-                bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'],
-                                                task=self.data_info['task'])
-                print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
-                print("SCORE: {}".format(bac_score))
-                scores.append(bac_score)
-            cost = 1 - np.mean(scores)
+            # Validate pipeline
+            y_pred = pipeline.predict(X_valid)
+            #prec_score = precision_score(y_valid, y_pred, average='macro')
+            bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'],
+                                            task=self.data_info['task'])
+            #print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
+            print("SCORE: {}".format(bac_score))
+            cost = 1 - bac_score
         except ValueError as v:
             exc_info = sys.exc_info()
             cost = 1234567890
@@ -134,9 +131,10 @@ class PipelineRunner(object):
 
 class CachedPipelineRunner(PipelineRunner):
 
-    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, cache_directory=None, downsampling=None):
+    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, cache_directory=None, downsampling=None, num_cross_validation_folds=None):
 
-        super(CachedPipelineRunner,self).__init__(data, data_info, pipeline_space, runhistory, statistics, downsampling=downsampling)
+        super(CachedPipelineRunner,self).__init__(data, data_info, pipeline_space, runhistory, statistics, downsampling=downsampling,
+                                                  num_cross_validation_folds=num_cross_validation_folds)
 
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory)
         self.cached_transformer_runtime_timing = {}
@@ -157,44 +155,38 @@ class CachedPipelineRunner(PipelineRunner):
 
         pipeline = self.pipeline_builder.build_pipeline(config)
 
+        print("Num cross validation folds: {}".format(self.num_cross_validation_folds))
         # Cross validation as in scikit-learn:
         #   http://scikit-learn.org/stable/tutorial/statistical_inference/model_selection.html
-        K = 3
-        X_folds = np.array_split(self.X_train, K)
-        y_folds = np.array_split(self.y_train, K)
-        scores = list()
+        X_folds = np.array_split(self.X_train, self.num_cross_validation_folds)
+        y_folds = np.array_split(self.y_train, self.num_cross_validation_folds)
         try:
-            for k in range(0, K):
-                # Fit pipeline
-                X_train = list(X_folds)
-                X_valid = X_train.pop(k)
-                X_train = np.concatenate(X_train)
-                y_train = list(y_folds)
-                y_valid = y_train.pop(k)
-                y_train = np.concatenate(y_train)
-                pipeline.fit(X_train, y_train)
+            # Fit pipeline
+            X_train = list(X_folds)
+            X_valid = X_train.pop(int(instance))
+            X_train = np.concatenate(X_train)
+            y_train = list(y_folds)
+            y_valid = y_train.pop(int(instance))
+            y_train = np.concatenate(y_train)
+            pipeline.fit(X_train, y_train)
 
-                # Keep track of timing information
-                self.add_runtime_timing(self.cached_transformer_runtime_timing, pipeline.pipeline_info.get_cached_preprocessor_timing())
-                self.add_runtime_timing(self.runtime_timing, pipeline.pipeline_info.get_timing_flat())
-                print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
+            # Keep track of timing information
+            self.add_runtime_timing(self.cached_transformer_runtime_timing, pipeline.pipeline_info.get_cached_preprocessor_timing())
+            self.add_runtime_timing(self.runtime_timing, pipeline.pipeline_info.get_timing_flat())
+            print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
 
-                # Validate pipeline
-                score_start = time.time()
-                # TODO Does it make sense to cache the validation too? Or doesn't this take much time?
-                y_pred = pipeline.predict(X_valid)
-                #print("prediction shape: {}, length: {}".format(y_pred.shape, len(y_pred.shape)))
-                #print("validation shape: {}, length: {}".format(y_valid.shape, len(y_valid.shape)))
-                #print(y_pred)
-                #print(y_valid)
-                prec_score = precision_score(y_valid, y_pred, average='macro')
-                print(self.data_info)
-                bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'], task=self.data_info['task'])
-                print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
-                score_time = time.time() - score_start
-                print("TIME: {}, SCORE: {}".format(score_time, bac_score))
-                scores.append(bac_score)
-            cost = 1 - np.mean(scores)
+            # Validate pipeline
+            score_start = time.time()
+            # TODO Does it make sense to cache the validation too? Or doesn't this take much time?
+            y_pred = pipeline.predict(X_valid)
+
+            #prec_score = precision_score(y_valid, y_pred, average='macro')
+            print(self.data_info)
+            bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'], task=self.data_info['task'])
+            #print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
+            score_time = time.time() - score_start
+            print("TIME: {}, SCORE: {}".format(score_time, bac_score))
+            cost = 1 - bac_score
         except ValueError as v:
             exc_info = sys.exc_info()
             cost = 1234567890
