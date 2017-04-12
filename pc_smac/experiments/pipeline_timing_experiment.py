@@ -1,31 +1,12 @@
-
+import argparse
 import os
 
-import argparse
+from smac.smbo.objective import average_cost
 
-from pc_smac.pc_smac.utils.data_loader import DataLoader
-from pc_smac.pc_smac.utils.statistics import Statistics
 from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
-from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
-from pc_smac.pc_smac.pipeline_space.pipeline_step import PipelineStep, OneHotEncodingStep, ImputationStep, RescalingStep, \
-    BalancingStep, PreprocessingStep, ClassificationStep
-from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
+from pc_smac.pc_smac.data_loader.data_loader import DataLoader
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
-
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.extra_rand_trees import ExtraTreesNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.fast_ica import FastICANode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.feature_agglomeration import FeatureAgglomerationNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kitchen_sinks import RandomKitchenSinksNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.linear_svm import LinearSVMNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.nystroem_sampler import NystroemSamplerNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.polynomial import PolynomialFeaturesNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.random_trees_embedding import RandomTreesEmbeddingNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.select_percentile import SelectPercentileNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.select_rates import SelectRatesNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.no_preprocessing import NoPreprocessingNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.pca import PcaNode
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
-
+from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner
 from pc_smac.pc_smac.pipeline_space.classification_nodes.adaboost import AdaBoostNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.bernoulli_nb import BernoulliNBNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.decision_tree import DecisionTreeNode
@@ -39,10 +20,25 @@ from pc_smac.pc_smac.pipeline_space.classification_nodes.libsvm_svc import LibSV
 from pc_smac.pc_smac.pipeline_space.classification_nodes.multinomial_nb import MultinomialNBNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.passive_aggresive import PassiveAggresiveNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.qda import QDANode
-from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.random_forest import RandomForestNode
-
-from smac.smbo.objective import average_cost
+from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.extra_rand_trees import ExtraTreesNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.fast_ica import FastICANode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.feature_agglomeration import FeatureAgglomerationNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kitchen_sinks import RandomKitchenSinksNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.linear_svm import LinearSVMNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.no_preprocessing import NoPreprocessingNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.nystroem_sampler import NystroemSamplerNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.pca import PcaNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.polynomial import PolynomialFeaturesNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.random_trees_embedding import RandomTreesEmbeddingNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.select_percentile import SelectPercentileNode
+from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.select_rates import SelectRatesNode
+from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
+from pc_smac.pc_smac.pipeline_space.pipeline_step import PipelineStep, OneHotEncodingStep, ImputationStep, RescalingStep, \
+    BalancingStep
+from pc_smac.pc_smac.utils.statistics import Statistics
 
 def run_experiment(data_id, location, output_dir, prepr_name=None, class_name=None, nb_configs=100, seed=None, cache_directory=None, downsampling=None):
 

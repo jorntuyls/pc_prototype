@@ -1,13 +1,10 @@
 import argparse
 import time
-import numpy as np
 
 from sklearn.externals import joblib
 
-from pc_smac.pc_smac.utils.data_loader import DataLoader
-from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.polynomial import PolynomialFeaturesNode
+from pc_smac.pc_smac.data_loader.data_loader import DataLoader
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.kernel_pca import KernelPcaNode
-
 
 
 def run_caching_experiment(data_path):
