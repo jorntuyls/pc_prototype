@@ -128,6 +128,8 @@ class PCSMBO(BaseSolver):
                                                         incumbent=self.incumbent,
                                                         num_configurations_by_random_search_sorted=100,
                                                         num_configurations_by_local_search=10,
+                                                        num_marginalized_configurations_by_random_search=10,
+                                                        num_configs_for_marginalization=50,
                                                         random_leaf_size=self.random_leaf_size)
 
             time_spend = time.time() - start_time
