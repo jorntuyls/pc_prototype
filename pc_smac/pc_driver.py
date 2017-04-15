@@ -4,22 +4,23 @@ __author__ = 'jorntuyls'
 import os
 import time
 
-from pc_smac.pc_smac.utils.data_loader import DataLoader
+from smac.scenario.scenario import Scenario
+from smac.smbo.objective import average_cost
+from smac.stats.stats import Stats
+from smac.tae.execute_func import ExecuteTAFuncDict
+from smac.utils.io.traj_logging import TrajLogger
+
 from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
+from pc_smac.pc_smac.data_loader.data_loader import DataLoader
+from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
+from pc_smac.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
+from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
 from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
+from pc_smac.pc_smac.pipeline_space.pipeline_space_builder import PipelineSpaceBuilder
 from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, ImputationStep, RescalingStep, \
     BalancingStep, PreprocessingStep, ClassificationStep
-from pc_smac.pc_smac.pipeline_space.pipeline_space_builder import PipelineSpaceBuilder
-from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner, PipelineTester
-from pc_smac.pc_smac.pc_smbo.smbo_builder import SMBOBuilder
-from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
 from pc_smac.pc_smac.utils.statistics import Statistics
-from smac.scenario.scenario import Scenario
 
-from smac.stats.stats import Stats
-from smac.smbo.objective import average_cost
-from smac.utils.io.traj_logging import TrajLogger
-from smac.tae.execute_func import ExecuteTAFuncDict
 
 class Driver:
 

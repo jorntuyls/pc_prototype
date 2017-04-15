@@ -49,7 +49,9 @@ def run_experiment():
     scenario = Scenario(args)
 
     # Build stats
-    stats = Stats(scenario)
+    stats = Stats(scenario,
+                  output_dir=None,
+                  stamp=None)
 
     model = RandomForestWithInstances(get_types(scenario.cs))
 
