@@ -82,6 +82,7 @@ class SMBOBuilder:
                                                  success_states=[StatusType.SUCCESS])
             local_search = LocalSearch(acquisition_function=acq_func_wrapper,
                                          config_space=scenario.cs)
+            # TODO: num_configs_for_marginalization
             select_configuration = SelectConfigurationsWithMarginalization(scenario=scenario,
                                                                           stats=stats,
                                                                           runhistory=runhistory,
@@ -126,6 +127,7 @@ class SMBOBuilder:
                                                  success_states=[StatusType.SUCCESS])
             local_search = LocalSearch(acquisition_function=acq_func_wrapper,
                                        config_space=scenario.cs)
+            # TODO: num_configs_for_marginalization
             select_configuration = SelectConfigurationsWithMarginalization(scenario=scenario,
                                                                           stats=stats,
                                                                           runhistory=runhistory,
