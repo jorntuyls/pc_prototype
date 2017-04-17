@@ -93,7 +93,7 @@ class SMBOBuilder:
                                                                           constant_pipeline_steps=constant_pipeline_steps,
                                                                           variable_pipeline_steps=variable_pipeline_steps,
                                                                           num_marginalized_configurations_by_random_search=10,
-                                                                          num_configs_for_marginalization=10)
+                                                                          num_configs_for_marginalization=20)
         elif acq_func_name == 'eips':
             acquisition_func = EIPS(model)
             acq_func_wrapper = PCAquisitionFunctionWrapper(acquisition_func=acquisition_func,
@@ -138,7 +138,7 @@ class SMBOBuilder:
                                                                           constant_pipeline_steps=constant_pipeline_steps,
                                                                           variable_pipeline_steps=variable_pipeline_steps,
                                                                           num_marginalized_configurations_by_random_search=10,
-                                                                          num_configs_for_marginalization=10)
+                                                                          num_configs_for_marginalization=20)
         elif acq_func_name == 'pceips':
             acquisition_func = PCEIPS(model)
             acq_func_wrapper = PCAquisitionFunctionWrapperWithCachingReduction(acquisition_func=acquisition_func,
