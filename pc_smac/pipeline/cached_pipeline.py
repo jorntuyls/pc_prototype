@@ -4,6 +4,7 @@
 #   See PR #7990: https://github.com/scikit-learn/scikit-learn/pull/7990/
 
 import time
+import shutil
 
 from sklearn.pipeline import Pipeline, _fit_transform_one
 from sklearn.base import clone
@@ -46,9 +47,17 @@ class CachedPipeline(Pipeline):
             if transform is None:
                 pass
             elif name in self.cached_step_names:
-                Xt = self._fit_single_transform_cached(transform, name, idx_tr, Xt,
+                Xt, output_dir = self._fit_single_transform_cached(transform, name, idx_tr, Xt,
                                                                y, **fit_params_steps[name])
-                self.pipeline_info.add_cached_preprocessor_timing(name, time.time() - start_time)
+                timing = time.time() - start_time
+                # TODO Timing > 1
+                if timing > 1 and self.pipeline_info.get_cache_hits()[1] == self.pipeline_info.get_cache_hits()[0]:
+                    self.pipeline_info.add_cached_preprocessor_timing(name, timing)
+                else:
+                    print("Remove output directory: {}, timing: {}".format(output_dir, timing))
+                    start_time = time.time()
+                    shutil.rmtree(output_dir, ignore_errors=True)
+                    print("Time to remove cache: {}".format(time.time() - start_time))
             else:
                 Xt = self._fit_single_transform(transform, name, None, Xt, y, **fit_params_steps[name])
             self.pipeline_info.add_preprocessor_timing(name, time.time() - start_time)
@@ -142,15 +151,19 @@ class CachedPipeline(Pipeline):
 
         memory = self.memory
         clone_transformer = transform # clone(transform)
-        Xt, transform = memory.cache(_fit_transform_one)(
+        fit_tranform_one_cached = memory.cache(_fit_transform_one)
+        Xt, transform = fit_tranform_one_cached(
             clone_transformer, name,
+            None, X, y,
+            **fit_params_trans)
+        output_dir, _ = fit_tranform_one_cached._get_output_dir(clone_transformer, name,
             None, X, y,
             **fit_params_trans)
         self.steps[idx_tr] = (name, transform)
 
         #print("END EVALUATE _FIT_SINGLE_TRANSFORM")
 
-        return Xt
+        return Xt, output_dir
 
 def _fit_transform_one(transformer, name, weight, X, y,
                                **fit_params):
