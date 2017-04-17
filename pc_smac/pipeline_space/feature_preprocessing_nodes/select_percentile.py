@@ -61,11 +61,11 @@ class SelectPercentile(SelectPercentileBase,
 
         self.random_state = random_state  # We don't use this
         self.percentile = int(float(percentile))
-        self.original_score_func = score_func
+        self.score_func = score_func
         if score_func == "chi2":
-            self.score_func = sklearn.feature_selection.chi2
+            self.score_func_algorithm = sklearn.feature_selection.chi2
         elif score_func == "f_classif":
-            self.score_func = sklearn.feature_selection.f_classif
+            self.score_func_algorithm = sklearn.feature_selection.f_classif
         else:
             raise ValueError("score_func must be in ('chi2, 'f_classif'), "
                              "but is: %s" % score_func)
@@ -73,7 +73,7 @@ class SelectPercentile(SelectPercentileBase,
     def get_params(self, deep=True):
         return {
             'percentile': self.percentile,
-            'score_func': self.original_score_func,
+            'score_func': self.score_func,
             'random_state': self.random_state
         }
 
@@ -82,7 +82,7 @@ class SelectPercentile(SelectPercentileBase,
         import sklearn.feature_selection
 
         self.preprocessor = sklearn.feature_selection.SelectPercentile(
-            score_func=self.score_func,
+            score_func=self.score_func_algorithm,
                 percentile=self.percentile)
 
         # Because the pipeline guarantees that each feature is positive,

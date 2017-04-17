@@ -38,11 +38,11 @@ class SelectRates(PreprocessingAlgorithm):
         self.random_state = random_state  # We don't use this
         self.alpha = float(alpha)
 
-        self.original_score_func = score_func
+        self.score_func = score_func
         if score_func == "chi2":
-            self.score_func = sklearn.feature_selection.chi2
+            self.score_func_algorithm = sklearn.feature_selection.chi2
         elif score_func == "f_classif":
-            self.score_func = sklearn.feature_selection.f_classif
+            self.score_func_algorithm = sklearn.feature_selection.f_classif
         else:
             raise ValueError("score_func must be in ('chi2, 'f_classif'), "
                              "but is: %s" % score_func)
@@ -52,7 +52,7 @@ class SelectRates(PreprocessingAlgorithm):
     def get_params(self, deep=True):
         return {
             'alpha': self.alpha,
-            'score_func': self.original_score_func,
+            'score_func': self.score_func,
             'mode': self.mode,
             'random_state': self.random_state
         }
@@ -62,7 +62,7 @@ class SelectRates(PreprocessingAlgorithm):
         import sklearn.feature_selection
 
         self.preprocessor = sklearn.feature_selection.GenericUnivariateSelect(
-            score_func=self.score_func, param=self.alpha, mode=self.mode)
+            score_func=self.score_func_algorithm, param=self.alpha, mode=self.mode)
 
         # Because the pipeline guarantees that each feature is positive,
         # clip all values below zero to zero
