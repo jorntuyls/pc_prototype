@@ -51,7 +51,7 @@ class CachedPipeline(Pipeline):
                                                                y, **fit_params_steps[name])
                 timing = time.time() - start_time
                 # TODO Timing > 1
-                if timing > 1 and self.pipeline_info.get_cache_hits()[1] == self.pipeline_info.get_cache_hits()[0]:
+                if timing > 1 or self.pipeline_info.get_cache_hits()[1] == self.pipeline_info.get_cache_hits()[0]:
                     self.pipeline_info.add_cached_preprocessor_timing(name, timing)
                 else:
                     print("Remove output directory: {}, timing: {}".format(output_dir, timing))
