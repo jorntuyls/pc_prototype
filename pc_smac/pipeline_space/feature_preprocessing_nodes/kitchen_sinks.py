@@ -42,6 +42,13 @@ class RandomKitchenSinks(PreprocessingAlgorithm):
         self.n_components = n_components
         self.random_state = random_state
 
+    def get_params(self, deep=True):
+        return {
+            'gamma': self.gamma,
+            'n_components': self.n_components,
+            'random_state': self.random_state
+        }
+
     def fit(self, X, Y=None):
         import sklearn.kernel_approximation
 

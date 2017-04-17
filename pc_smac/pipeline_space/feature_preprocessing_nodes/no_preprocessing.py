@@ -26,7 +26,12 @@ class NoPreprocessing(PreprocessingAlgorithm):
 
     def __init__(self, random_state):
         """ This preprocessors does not change the data """
-        self.preprocessor = None
+        self.random_state = random_state
+
+    def get_params(self, deep=True):
+        return {
+            'random_state': self.random_state
+        }
 
     def fit(self, X, Y=None):
         self.preprocessor = 0

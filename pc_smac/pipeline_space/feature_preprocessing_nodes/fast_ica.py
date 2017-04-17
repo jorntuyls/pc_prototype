@@ -40,9 +40,19 @@ class FastICA(PreprocessingAlgorithm):
                  random_state=None):
         self.n_components = None if n_components is None else int(n_components)
         self.algorithm = algorithm
+        self.whiten_original = whiten
         self.whiten = whiten == 'True'
         self.fun = fun
         self.random_state = random_state
+
+    def get_params(self, deep=True):
+        return {
+            'n_components': self.n_components,
+            'algorithm': self.algorithm,
+            'whiten': self.whiten_original,
+            'fun': self.fun,
+            'random_state': self.random_state
+        }
 
     def fit(self, X, Y=None):
         import sklearn.decomposition

@@ -37,7 +37,14 @@ class PolynomialFeatures(PreprocessingAlgorithm):
         self.interaction_only = interaction_only.lower() == 'true'
         self.include_bias = include_bias.lower() == 'true'
         self.random_state = random_state
-        self.preprocessor = None
+
+    def get_params(self, deep=True):
+        return {
+            'interaction_only': str(self.interaction_only),
+            'include_bias': str(self.include_bias),
+            'degree': self.degree,
+            'random_state': self.random_state
+        }
 
     def fit(self, X, Y):
         import sklearn.preprocessing

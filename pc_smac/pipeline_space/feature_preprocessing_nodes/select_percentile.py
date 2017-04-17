@@ -61,6 +61,7 @@ class SelectPercentile(SelectPercentileBase,
 
         self.random_state = random_state  # We don't use this
         self.percentile = int(float(percentile))
+        self.original_score_func = score_func
         if score_func == "chi2":
             self.score_func = sklearn.feature_selection.chi2
         elif score_func == "f_classif":
@@ -68,6 +69,13 @@ class SelectPercentile(SelectPercentileBase,
         else:
             raise ValueError("score_func must be in ('chi2, 'f_classif'), "
                              "but is: %s" % score_func)
+
+    def get_params(self, deep=True):
+        return {
+            'percentile': self.percentile,
+            'score_func': self.original_score_func,
+            'random_state': self.random_state
+        }
 
     def fit(self, X, y):
         import scipy.sparse

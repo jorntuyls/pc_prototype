@@ -38,6 +38,7 @@ class SelectRates(PreprocessingAlgorithm):
         self.random_state = random_state  # We don't use this
         self.alpha = float(alpha)
 
+        self.original_score_func = score_func
         if score_func == "chi2":
             self.score_func = sklearn.feature_selection.chi2
         elif score_func == "f_classif":
@@ -47,6 +48,14 @@ class SelectRates(PreprocessingAlgorithm):
                              "but is: %s" % score_func)
 
         self.mode = mode
+
+    def get_params(self, deep=True):
+        return {
+            'alpha': self.alpha,
+            'score_func': self.original_score_func,
+            'mode': self.mode,
+            'random_state': self.random_state
+        }
 
     def fit(self, X, y):
         import scipy.sparse

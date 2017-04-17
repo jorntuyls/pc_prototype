@@ -55,7 +55,8 @@ class ExtraTreesPreprocessor(PreprocessingAlgorithm):
                              "%s" % criterion)
         self.criterion = criterion
 
-        if max_leaf_nodes_or_max_depth == "max_depth":
+        self.max_leaf_nodes_or_max_depth = max_leaf_nodes_or_max_depth
+        if self.max_leaf_nodes_or_max_depth == "max_depth":
             self.max_leaf_nodes = None
             if max_depth == "None":
                 self.max_depth = None
@@ -81,13 +82,32 @@ class ExtraTreesPreprocessor(PreprocessingAlgorithm):
             self.bootstrap = True
         elif bootstrap == "False":
             self.bootstrap = False
+        else:
+            self.bootstrap = bootstrap
 
         self.oob_score = oob_score
         self.n_jobs = int(n_jobs)
         self.random_state = random_state
         self.verbose = int(verbose)
         self.class_weight = class_weight
-        self.preprocessor = None
+
+    def get_params(self, deep=True):
+        return {
+            'n_estimators': self.n_estimators,
+            'criterion': self.criterion,
+            'min_samples_leaf': self.min_samples_leaf,
+            'min_samples_split': self.min_samples_split,
+            'max_features': self.max_features,
+            'max_leaf_nodes_or_max_depth': self.max_leaf_nodes_or_max_depth,
+            'bootstrap': self.bootstrap,
+            'max_leaf_nodes': self.max_leaf_nodes,
+            'max_depth': str(self.max_depth),
+            'oob_score': self.oob_score,
+            'n_jobs': self.n_jobs,
+            'random_state': self.random_state,
+            'verbose': self.verbose,
+            'class_weight': self.class_weight
+        }
 
     def fit(self, X, Y, sample_weight=None):
         from sklearn.ensemble import ExtraTreesClassifier

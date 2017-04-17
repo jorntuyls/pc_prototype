@@ -53,7 +53,20 @@ class LibLinear_Preprocessor(PreprocessingAlgorithm):
         self.intercept_scaling = intercept_scaling
         self.class_weight = class_weight
         self.random_state = random_state
-        self.preprocessor = None
+
+    def get_params(self, deep=True):
+        return {
+            'penalty': self.penalty,
+            'loss': self.loss,
+            'dual': self.dual,
+            'tol': self.tol,
+            'C': self.C,
+            'multi_class': self.multi_class,
+            'fit_intercept': self.fit_intercept,
+            'intercept_scaling': self.intercept_scaling,
+            'class_weight': self.class_weight,
+            'random_state': self.random_state
+        }
 
     def fit(self, X, Y):
         import sklearn.svm

@@ -49,6 +49,15 @@ class FeatureAgglomeration(PreprocessingAlgorithm):
                                          median=np.median,
                                          max=np.max)
 
+    def get_params(self, deep=True):
+        return {
+            'n_clusters': self.n_clusters,
+            'affinity': self.affinity,
+            'linkage': self.linkage,
+            'pooling_func': self.pooling_func,
+            'random_state': self.random_state
+        }
+
     def fit(self, X, Y=None):
         import sklearn.cluster
 

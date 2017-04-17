@@ -47,6 +47,16 @@ class Nystroem(PreprocessingAlgorithm):
         self.coef0 = float(coef0)
         self.random_state = random_state
 
+    def get_params(self, deep=True):
+        return {
+            'n_components': self.n_components,
+            'kernel': self.kernel,
+            'degree': self.degree,
+            'gamma': self.gamma,
+            'coef0': self.coef0,
+            'random_state': self.random_state
+        }
+
     def fit(self, X, Y=None):
         import scipy.sparse
         import sklearn.kernel_approximation

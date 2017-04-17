@@ -53,6 +53,7 @@ class CachedPipeline(Pipeline):
                 # TODO Timing > 1
                 if timing > 1 or self.pipeline_info.get_cache_hits()[1] == self.pipeline_info.get_cache_hits()[0]:
                     self.pipeline_info.add_cached_preprocessor_timing(name, timing)
+                    print("Cache output directory: {}, timing: {}".format(output_dir, timing))
                 else:
                     print("Remove output directory: {}, timing: {}".format(output_dir, timing))
                     start_time = time.time()
@@ -150,16 +151,16 @@ class CachedPipeline(Pipeline):
         FIT_SINGLE_TRANSFORM_EVALUATIONS += 1
 
         memory = self.memory
-        clone_transformer = transform # clone(transform)
+        clone_transformer = clone(transform)
         fit_tranform_one_cached = memory.cache(_fit_transform_one)
-        Xt, transform = fit_tranform_one_cached(
+        Xt, new_transform = fit_tranform_one_cached(
             clone_transformer, name,
             None, X, y,
             **fit_params_trans)
-        output_dir, _ = fit_tranform_one_cached._get_output_dir(clone_transformer, name,
+        output_dir, _ = fit_tranform_one_cached._get_output_dir(transform, name,
             None, X, y,
             **fit_params_trans)
-        self.steps[idx_tr] = (name, transform)
+        self.steps[idx_tr] = (name, new_transform)
 
         #print("END EVALUATE _FIT_SINGLE_TRANSFORM")
 

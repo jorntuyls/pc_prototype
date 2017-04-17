@@ -46,6 +46,19 @@ class RandomTreesEmbedding(PreprocessingAlgorithm):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
+    def get_params(self, deep=True):
+        return {
+            'n_estimators': self.n_estimators,
+            'max_depth': self.max_depth,
+            'min_samples_split': self.min_samples_split,
+            'min_samples_leaf': self.min_samples_leaf,
+            'max_leaf_nodes': self.max_leaf_nodes,
+            'min_weight_fraction_leaf': self.min_weight_fraction_leaf,
+            'sparse_output': self.sparse_output,
+            'n_jobs': self.n_jobs,
+            'random_state': self.random_state
+        }
+
     def fit(self, X, Y=None):
         import sklearn.ensemble
 

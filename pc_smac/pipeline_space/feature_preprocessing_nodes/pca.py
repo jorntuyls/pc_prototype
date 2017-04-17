@@ -41,6 +41,13 @@ class PCA(PreprocessingAlgorithm):
         self.whiten = whiten
         self.random_state = random_state
 
+    def get_params(self, deep=True):
+        return {
+            'keep_variance': self.keep_variance,
+            'whiten': self.whiten,
+            'random_state': self.random_state
+        }
+
     def fit(self, X, Y=None):
         import sklearn.decomposition
         n_components = float(self.keep_variance)
