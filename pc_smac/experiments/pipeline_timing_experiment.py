@@ -6,7 +6,7 @@ from smac.smbo.objective import average_cost
 from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
 from pc_smac.pc_smac.data_loader.data_loader import DataLoader
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
-from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipelineRunner
+from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineTimer, CachedPipelineTimer
 from pc_smac.pc_smac.pipeline_space.classification_nodes.adaboost import AdaBoostNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.bernoulli_nb import BernoulliNBNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.decision_tree import DecisionTreeNode
@@ -48,6 +48,7 @@ def run_experiment(data_id, location, output_dir, prepr_name=None, class_name=No
     class_names = ['adaboost', 'bernoulli_nb', 'decision_tree', 'extra_trees', 'gaussian_nb', 'gradient_boosting',
                    'k_nearest_neighbors', 'lda', 'liblinear_svc', 'libsvm_svc', 'multinomial_nb', 'passive_aggresive',
                    'qda', 'random_forest', 'sgd']
+    preprocessor_names = ['extra_rand_trees']
 
     preprocessor_nodes =  {
         'extra_rand_trees': ExtraTreesNode(),
@@ -165,7 +166,7 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         runhistory = PCRunHistory(average_cost)
 
         # Build pipeline runner
-        pipeline_runner = PipelineRunner(data, pipeline_space, runhistory, statistics,
+        pipeline_runner = PipelineTimer(data, pipeline_space, runhistory, statistics,
                        downsampling=downsampling)
         # Start timer
         statistics.start_timer()
@@ -191,7 +192,7 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         runhistory = PCRunHistory(average_cost)
 
         # Build pipeline runner
-        cached_pipeline_runner = CachedPipelineRunner(data, pipeline_space, runhistory, statistics,
+        cached_pipeline_runner = CachedPipelineTimer(data, pipeline_space, runhistory, statistics,
                                                cache_directory=cache_directory,
                                                downsampling=downsampling)
         # Start timer
