@@ -4,7 +4,7 @@ from smac.runhistory.runhistory import RunHistory
 class PCRunHistory(RunHistory):
 
     def __init__(self, aggregate_func):
-        self.cached_configurations = []
+        self.cached_configurations = {}
         super(PCRunHistory, self).__init__(aggregate_func)
 
     def add(self, config, cost, time,
@@ -16,17 +16,14 @@ class PCRunHistory(RunHistory):
             # additional_info['t_rc'] is a list of tuples (dict, time) where dict is a cached algorithm (part of pipeline)
             #   configuration and time is runtime that this algorithm configuration took
             for cached_config, runtime in additional_info['t_rc']:
-                if not self._contains_config(self.get_cached_configurations_list(), cached_config):
-                    # if the configurations are already in the cached configurations, then we don't want to add them again
-                    self.cached_configurations.append((cached_config, runtime))
-                #else:
-                    #print("deleted config: {}, {}".format(cached_config, runtime))
-
-        # If a configuration is added that exists in the cached configurations, then we want to add the dicounted cost again for the model
-        #   this ensures that the model is consistent
-        for cached_config, runtime_discount in self.get_cached_configurations():
-            if self._partially_contains_config(config, cached_config):
-                time += runtime_discount
+                print("cached config: {}".format(cached_config))
+                hash_value = hash(frozenset(cached_config.items()))
+                if not hash_value in self.cached_configurations.keys():
+                    self.cached_configurations[hash_value] = runtime
+                else:
+                    runtime_discount = self.cached_configurations[hash_value]
+                    time += runtime_discount
+        print("cached configurations reductions: {}".format(self.cached_configurations))
 
         super(PCRunHistory, self).add(config, cost, time, status, instance_id, seed, additional_info)
 
