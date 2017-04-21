@@ -5,6 +5,7 @@ class PCRunHistory(RunHistory):
 
     def __init__(self, aggregate_func):
         self.cached_configurations = {}
+        self.hash_to_configs = {}
         super(PCRunHistory, self).__init__(aggregate_func)
 
     def add(self, config, cost, time,
@@ -20,12 +21,15 @@ class PCRunHistory(RunHistory):
                 hash_value = hash(frozenset(cached_config.items()))
                 if not hash_value in self.cached_configurations.keys():
                     self.cached_configurations[hash_value] = runtime
+                    self.hash_to_configs[hash_value] = cached_config
                 else:
                     runtime_discount = self.cached_configurations[hash_value]
                     time += runtime_discount
         print("cached configurations reductions: {}".format(self.cached_configurations))
 
         super(PCRunHistory, self).add(config, cost, time, status, instance_id, seed, additional_info)
+
+
 
     def get_cached_configurations(self):
         return self.cached_configurations

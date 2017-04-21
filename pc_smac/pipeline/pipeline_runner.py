@@ -250,10 +250,10 @@ class CachedPipelineRunner(PipelineRunner):
             algo_name = splt_name[1]
             for hp in config.keys():
                 splt_hp = hp.split(":")
-                if self.pipeline_space.is_step_infront_of_step(splt_hp[0], type):
+                if self.pipeline_space.is_step_infront_of_step(splt_hp[0], type) and config[hp] != None:
                     dict[hp] = config[hp]
                 if (splt_hp[0] == type and splt_hp[1] == '__choice__') \
-                        or (splt_hp[0] == type and splt_hp[1] == algo_name):
+                        or (splt_hp[0] == type and splt_hp[1] == algo_name) and config[hp] != None:
                     dict[hp] = config[hp]
             t_rc.append((dict, timing[name]))
         return t_rc
