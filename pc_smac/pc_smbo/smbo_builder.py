@@ -11,6 +11,7 @@ from smac.intensification.intensification import Intensifier
 from smac.smbo.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization
 from smac.smbo.acquisition_func_wrapper import PCAquisitionFunctionWrapper, PCAquisitionFunctionWrapperWithCachingReduction
 from smac.initial_design.random_configuration_design import RandomConfiguration
+from smac.initial_design.multi_config_initial_design import MultiConfigInitialDesign
 from smac.utils.io.traj_logging import TrajLogger
 from smac.utils.util_funcs import get_types
 
@@ -190,11 +191,23 @@ class SMBOBuilder:
 
 
         # Build initial design
-        initial_design = RandomConfiguration(tae_runner=tae_runner,
-                                             scenario=scenario,
-                                             stats=stats,
-                                             traj_logger=traj_logger,
-                                             rng=rng)
+        # initial_design = RandomConfiguration(tae_runner=tae_runner,
+        #                                      scenario=scenario,
+        #                                      stats=stats,
+        #                                      traj_logger=traj_logger,
+        #                                      rng=rng)
+        initial_configs = scenario.cs.sample_configuration(size=10)
+        for config in initial_configs:
+            config._populate_values()
+        initial_design = MultiConfigInitialDesign(tae_runner=tae_runner,
+                                                  scenario=scenario,
+                                                  stats=stats,
+                                                  traj_logger=traj_logger,
+                                                  runhistory=runhistory,
+                                                  rng=rng,
+                                                  configs=initial_configs,
+                                                  intensifier=intensifier,
+                                                  aggregate_func=aggregate_func)
 
         # run id
         num_run = rng.randint(1234567980)
