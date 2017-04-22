@@ -93,7 +93,7 @@ class SMBOBuilder:
                                                                           rng=rng,
                                                                           constant_pipeline_steps=constant_pipeline_steps,
                                                                           variable_pipeline_steps=variable_pipeline_steps,
-                                                                          num_marginalized_configurations_by_random_search=50,
+                                                                          num_marginalized_configurations_by_random_search=20,
                                                                           num_configs_for_marginalization=40)
         elif acq_func_name == 'eips':
             acquisition_func = EIPS(model)
@@ -138,7 +138,7 @@ class SMBOBuilder:
                                                                           rng=rng,
                                                                           constant_pipeline_steps=constant_pipeline_steps,
                                                                           variable_pipeline_steps=variable_pipeline_steps,
-                                                                          num_marginalized_configurations_by_random_search=50,
+                                                                          num_marginalized_configurations_by_random_search=20,
                                                                           num_configs_for_marginalization=40)
         elif acq_func_name == 'pceips':
             acquisition_func = PCEIPS(model)
@@ -184,7 +184,7 @@ class SMBOBuilder:
                                                                           rng=rng,
                                                                           constant_pipeline_steps=constant_pipeline_steps,
                                                                           variable_pipeline_steps=variable_pipeline_steps,
-                                                                          num_marginalized_configurations_by_random_search=50,
+                                                                          num_marginalized_configurations_by_random_search=20,
                                                                           num_configs_for_marginalization=40)
         else:
             # Not a valid acquisition function
