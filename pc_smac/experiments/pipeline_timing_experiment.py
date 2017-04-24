@@ -154,7 +154,7 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
 
     for i in range(0, len(configs)):
         ## Run with caching disabled ##
-        new_stamp = stamp + "_nocaching_config"
+        new_stamp = stamp + "_nocaching_config_1"
         info = {
             'stamp': new_stamp,
             'caching': False,
@@ -176,6 +176,30 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
 
         # Save statistics
         #statistics.save()
+
+        ## Run with caching disabled second time ##
+        new_stamp = stamp + "_nocaching_config_2"
+        info = {
+            'stamp': new_stamp,
+            'caching': False,
+            'downsampling': downsampling
+        }
+        statistics = Statistics(new_stamp, output_dir,
+                                information=info)
+        # Build runhistory
+        runhistory = PCRunHistory(average_cost)
+
+        # Build pipeline runner
+        pipeline_runner = PipelineTimer(data, pipeline_space, runhistory, statistics,
+                                        downsampling=downsampling)
+        # Start timer
+        statistics.start_timer()
+
+        # Run pipeline
+        pipeline_runner.run(config=configs[i], instance=None, seed=None)
+
+        # Save statistics
+        # statistics.save()
 
 
         ## Run with caching enabled first time ##
