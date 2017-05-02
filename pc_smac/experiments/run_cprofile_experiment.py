@@ -79,7 +79,9 @@ def run_experiment():
                                                                    acquisition_func=acq_func_wrapper,
                                                                    rng=rng,
                                                                    constant_pipeline_steps=constant_pipeline_steps,
-                                                                   variable_pipeline_steps=variable_pipeline_steps)
+                                                                   variable_pipeline_steps=variable_pipeline_steps,
+                                                                   num_marginalized_configurations_by_random_search=20,
+                                                                   num_configs_for_marginalization=40)
 
     # sample configurations to fill runhistory
     sample_configs = config_space.sample_configuration(size=10)
