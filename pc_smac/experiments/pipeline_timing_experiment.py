@@ -48,7 +48,7 @@ def run_experiment(data_id, location, output_dir, prepr_name=None, class_name=No
     class_names = ['adaboost', 'bernoulli_nb', 'decision_tree', 'extra_trees', 'gaussian_nb', 'gradient_boosting',
                    'k_nearest_neighbors', 'lda', 'liblinear_svc', 'libsvm_svc', 'multinomial_nb', 'passive_aggresive',
                    'qda', 'random_forest', 'sgd']
-    preprocessor_names = ['extra_rand_trees']
+    #preprocessor_names = ['extra_rand_trees']
 
     preprocessor_nodes =  {
         'extra_rand_trees': ExtraTreesNode(),
