@@ -5,7 +5,7 @@ import os
 import time
 
 from smac.scenario.scenario import Scenario
-from smac.smbo.objective import average_cost
+from smac.optimizer.objective import average_cost
 from smac.stats.stats import Stats
 from smac.tae.execute_func import ExecuteTAFuncDict
 from smac.utils.io.traj_logging import TrajLogger

@@ -3,13 +3,13 @@ import numpy as np
 
 from smac.tae.execute_ta_run import StatusType
 from smac.runhistory.runhistory2epm import RunHistory2EPM4EIPS, RunHistory2EPM4Cost
-from smac.smbo.acquisition import EI, EIPS, PCEIPS
-from smac.smbo.local_search import LocalSearch
+from smac.optimizer.acquisition import EI, EIPS, PCEIPS
+from smac.optimizer.local_search import LocalSearch
 from smac.epm.rf_with_instances import RandomForestWithInstances
 from smac.epm.uncorrelated_mo_rf_with_instances import UncorrelatedMultiObjectiveRandomForestWithInstances
 from smac.intensification.intensification import Intensifier
-from smac.smbo.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization
-from smac.smbo.acquisition_func_wrapper import PCAquisitionFunctionWrapper, PCAquisitionFunctionWrapperWithCachingReduction
+from smac.optimizer.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization
+from smac.optimizer.acquisition_func_wrapper import PCAquisitionFunctionWrapper, PCAquisitionFunctionWrapperWithCachingReduction
 from smac.initial_design.random_configuration_design import RandomConfiguration
 from smac.initial_design.multi_config_initial_design import MultiConfigInitialDesign
 from smac.utils.io.traj_logging import TrajLogger
@@ -43,12 +43,18 @@ class SMBOBuilder:
                                   maxR=len(intensification_instances))
 
         # Build model
+        types, bounds = get_types(scenario.cs, scenario.feature_array)
+        #types = get_types(scenario.cs)
         if len(model_target_names) > 1:
             # model_target_names = ['cost','time']
             model = UncorrelatedMultiObjectiveRandomForestWithInstances(target_names=model_target_names,
-                                                                        types=get_types(scenario.cs))
+                                                                       bounds=bounds,
+                                                                       types=types)
+            # UncorrelatedMultiObjectiveRandomForestWithInstances(target_names=model_target_names,
+            #                                                    types=types)
         else:
-            model = RandomForestWithInstances(get_types(scenario.cs))
+            model = RandomForestWithInstances(types=types, bounds=bounds)
+            # model = RandomForestWithInstances(types=types)
 
         # Build acquisition function, runhistory2epm and local search
         num_params = len(scenario.cs.get_hyperparameters())
@@ -73,6 +79,7 @@ class SMBOBuilder:
                                                         constant_pipeline_steps=constant_pipeline_steps,
                                                         variable_pipeline_steps=variable_pipeline_steps)
         elif acq_func_name in ["m-ei", "pc-m-ei"]:
+            #acquisition_func = MEI(model)
             acquisition_func = EI(model)
             acq_func_wrapper = PCAquisitionFunctionWrapper(acquisition_func=acquisition_func,
                                                     config_space=scenario.cs,

@@ -12,7 +12,7 @@ from pc_smac.pc_smac.random_search.whitebox_random_search import WhiteboxRandomS
 from smac.scenario.scenario import Scenario
 from smac.stats.stats import Stats
 from smac.utils.io.traj_logging import TrajLogger
-from smac.smbo.objective import average_cost
+from smac.optimizer.objective import average_cost
 
 class WhiteBoxDriver:
 
