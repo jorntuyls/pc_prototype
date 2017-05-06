@@ -41,7 +41,7 @@ class PCSMBO(BaseSolver):
                  acquisition_func: AbstractAcquisitionFunction,
                  rng: np.random.RandomState,
                  select_configuration: SelectConfigurations,
-                 random_leaf_size: int):
+                 mrs: bool):
         '''
         Interface that contains the main Bayesian optimization loop
 
@@ -90,7 +90,7 @@ class PCSMBO(BaseSolver):
         self.rng = rng
 
         self.select_configuration = select_configuration
-        self.random_leaf_size = random_leaf_size
+        self.mrs = mrs
 
     def run(self):
         '''
@@ -128,7 +128,7 @@ class PCSMBO(BaseSolver):
                                                         incumbent=self.incumbent,
                                                         num_configurations_by_random_search_sorted=100,
                                                         num_configurations_by_local_search=10,
-                                                        random_leaf_size=self.random_leaf_size)
+                                                        mrs=self.mrs)
 
             time_spend = time.time() - start_time
             logging.debug(
@@ -143,7 +143,7 @@ class PCSMBO(BaseSolver):
                 run_history=self.runhistory,
                 aggregate_func=self.aggregate_func,
                 time_bound=max(0.01, time_spend),
-                min_number_of_runs=(1+self.random_leaf_size))
+                min_number_of_runs=2)
 
             print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
 

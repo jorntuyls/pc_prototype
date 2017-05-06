@@ -3,17 +3,17 @@ import numpy as np
 
 from smac.tae.execute_ta_run import StatusType
 from smac.runhistory.runhistory2epm import RunHistory2EPM4EIPS, RunHistory2EPM4Cost
-from smac.smbo.acquisition import EI, EIPS, PCEIPS
-from smac.smbo.local_search import LocalSearch
+from smac.optimizer.acquisition import EI, EIPS, PCEIPS
+from smac.optimizer.local_search import LocalSearch
 from smac.epm.rf_with_instances import RandomForestWithInstances
 from smac.epm.uncorrelated_mo_rf_with_instances import UncorrelatedMultiObjectiveRandomForestWithInstances
 from smac.intensification.intensification import Intensifier
-from smac.smbo.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization
-from smac.smbo.acquisition_func_wrapper import PCAquisitionFunctionWrapper, PCAquisitionFunctionWrapperWithCachingReduction
+from smac.optimizer.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization
+from smac.optimizer.acquisition_func_wrapper import PCAquisitionFunctionWrapper, PCAquisitionFunctionWrapperWithCachingReduction
 from smac.utils.util_funcs import get_types
 from smac.scenario.scenario import Scenario
 from smac.stats.stats import Stats
-from smac.smbo.objective import average_cost
+from smac.optimizer.objective import average_cost
 
 from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
 from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, ImputationStep, RescalingStep, \
@@ -51,9 +51,11 @@ def run_experiment():
     # Build stats
     stats = Stats(scenario,
                   output_dir=None,
-                  stamp=None)
+                  stamp="")
 
-    model = RandomForestWithInstances(get_types(scenario.cs))
+    types, bounds = get_types(scenario.cs, scenario.feature_array)
+
+    model = RandomForestWithInstances(types=types, bounds=bounds)
 
     constant_pipeline_steps = ["one_hot_encoder", "imputation", "rescaling",
                                "balancing", "feature_preprocessor"]
@@ -80,8 +82,8 @@ def run_experiment():
                                                                    rng=rng,
                                                                    constant_pipeline_steps=constant_pipeline_steps,
                                                                    variable_pipeline_steps=variable_pipeline_steps,
-                                                                   num_marginalized_configurations_by_random_search=20,
-                                                                   num_configs_for_marginalization=40)
+                                                                   num_marginalized_configurations_by_random_search=40,
+                                                                   num_configs_for_marginalization=200)
 
     # sample configurations to fill runhistory
     sample_configs = config_space.sample_configuration(size=10)

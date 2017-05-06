@@ -39,7 +39,7 @@ class Driver:
         except FileExistsError:
             pass
 
-    def initialize(self, stamp, acq_func, random_leaf_size, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling, intensification_fold_size):
+    def initialize(self, stamp, acq_func, mrs, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling, intensification_fold_size):
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
@@ -72,13 +72,24 @@ class Driver:
                                      information=info,
                                      total_runtime=wallclock_limit)
 
+        # The pipeline parts that get marginalized
+        constant_pipeline_steps = ["one_hot_encoder", "imputation", "rescaling",
+                                   "balancing", "feature_preprocessor"]
+
+        variable_pipeline_steps = ["classifier"]
+
+        # The pipeline parts that can get cached
+        cached_pipeline_steps = [["one_hot_encoder", "imputation"], ["one_hot_encoder", "imputation", "rescaling",
+                                                                     "balancing", "feature_preprocessor"]]
+
         # Set cache directory
         if caching:
             pr = CachedPipelineRunner(self.data, self.data_loader.info, self.pipeline_space, runhistory,
-                                                   self.statistics,
-                                                   cache_directory=cache_directory,
-                                                   downsampling=downsampling,
-                                                    num_cross_validation_folds=intensification_fold_size)
+                                      self.statistics,
+                                      cached_pipeline_steps=cached_pipeline_steps,
+                                      cache_directory=cache_directory,
+                                      downsampling=downsampling,
+                                      num_cross_validation_folds=intensification_fold_size)
         else:
             pr = PipelineRunner(self.data, self.data_loader.info, self.pipeline_space, runhistory, self.statistics,
                                              downsampling=downsampling,
@@ -128,16 +139,6 @@ class Driver:
         # Build SMBO object
         intensification_instances = [1] if intensification_fold_size == None else [i for i in range(0, intensification_fold_size)]
 
-        # The pipeline parts that get marginalized
-        constant_pipeline_steps = ["one_hot_encoder", "imputation", "rescaling",
-                                     "balancing", "feature_preprocessor"]
-
-        variable_pipeline_steps = ["classifier"]
-
-        # The pipeline parts that can get cached
-        cached_pipeline_steps = [["one_hot_encoder", "imputation"], ["one_hot_encoder", "imputation", "rescaling",
-                                     "balancing", "feature_preprocessor"]]
-
         smbo_builder = SMBOBuilder()
         self.smbo = smbo_builder.build_pc_smbo(
             tae_runner=tae_runner,
@@ -148,7 +149,7 @@ class Driver:
             acq_func_name=acq_func,
             model_target_names=model_target_names,
             logging_directory=trajectory_path,
-            random_leaf_size=random_leaf_size,
+            mrs=mrs,
             constant_pipeline_steps=constant_pipeline_steps,
             variable_pipeline_steps=variable_pipeline_steps,
             cached_pipeline_steps=cached_pipeline_steps,
@@ -158,7 +159,7 @@ class Driver:
     def run(self,
             stamp=time.time(),
             acq_func="ei",
-            random_leaf_size=1,
+            mrs=False,
             wallclock_limit=3600,
             runcount_limit=10000,
             memory_limit=6000,
@@ -167,10 +168,12 @@ class Driver:
             downsampling=None,
             intensification_fold_size=None):
 
+        random_leaf_size = None
+
         # Initialize SMBO
         self.initialize(stamp=stamp,
                         acq_func=acq_func,
-                        random_leaf_size=random_leaf_size,
+                        mrs=mrs,
                         cache_directory=cache_directory,
                         wallclock_limit=wallclock_limit,
                         runcount_limit=runcount_limit,
