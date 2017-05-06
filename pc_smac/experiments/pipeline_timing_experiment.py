@@ -6,7 +6,7 @@ from smac.smbo.objective import average_cost
 from pc_smac.pc_smac.config_space.config_space_builder import ConfigSpaceBuilder
 from pc_smac.pc_smac.data_loader.data_loader import DataLoader
 from pc_smac.pc_smac.pc_runhistory.pc_runhistory import PCRunHistory
-from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineTimer, CachedPipelineTimer
+from pc_smac.pc_smac.pipeline.pipeline_timer import PipelineTimer, CachedPipelineTimer
 from pc_smac.pc_smac.pipeline_space.classification_nodes.adaboost import AdaBoostNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.bernoulli_nb import BernoulliNBNode
 from pc_smac.pc_smac.pipeline_space.classification_nodes.decision_tree import DecisionTreeNode
