@@ -131,12 +131,14 @@ class PipelineRunner(object):
 
 class CachedPipelineRunner(PipelineRunner):
 
-    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, cache_directory=None, downsampling=None, num_cross_validation_folds=None):
+    def __init__(self, data, data_info, pipeline_space, runhistory, statistics, cached_pipeline_steps, cache_directory=None,
+                 downsampling=None, num_cross_validation_folds=None):
 
         super(CachedPipelineRunner,self).__init__(data, data_info, pipeline_space, runhistory, statistics, downsampling=downsampling,
                                                   num_cross_validation_folds=num_cross_validation_folds)
 
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory)
+        self.cached_pipeline_steps = cached_pipeline_steps
         self.cached_transformer_runtime_timing = {}
         self.cache_hits = {
             'total': 0,
@@ -210,12 +212,16 @@ class CachedPipelineRunner(PipelineRunner):
         print("Total function evaluations: {}, cache hits: {}".format(self.cache_hits['total'],
                                                                       self.cache_hits['cache_hits']))
 
+        # Calculate potential runtime reduction through caching for statistics
+        runtime_reduction_by_caching_lst = self._compute_caching_discounts([config], self.runhistory.get_cached_configurations())
+
         # Add information of this run to statistics
         run_information = {
             'cost': cost,
             'runtime': runtime,
             'pipeline_steps_timing': self.runtime_timing,
             'cache_hits': self.cache_hits['cache_hits'],
+            'runtime_reduction_by_caching': runtime_reduction_by_caching_lst[0] if runtime_reduction_by_caching_lst != [] else 0,
             'total_evaluations': self.cache_hits['total']
         }
         self.statistics.add_run(config.get_dictionary(), run_information, config_origin=config.origin)
@@ -257,6 +263,30 @@ class CachedPipelineRunner(PipelineRunner):
                     dict[hp] = config[hp]
             t_rc.append((dict, timing[name]))
         return t_rc
+
+    def _compute_caching_discounts(self, configs, cached_configs):
+        runtime_discounts = []
+        for config in configs:
+            discount = 0
+            for cached_pipeline_part in self.cached_pipeline_steps:
+                cached_values = self._get_values(config.get_dictionary(), cached_pipeline_part)
+                hash_value = hash(frozenset(cached_values.items()))
+                if hash_value in cached_configs:
+                    discount += cached_configs[hash_value]
+                    print("CACHING REDUCTION: {}, {}".format(hash_value, discount))
+                    print("Config origin: {}".format(config.origin))
+                    # print("Config: {}".format(config))
+            runtime_discounts.append(discount)
+        return runtime_discounts
+
+    def _get_values(self, config_dict, pipeline_steps):
+        value_dict = {}
+        for step_name in pipeline_steps:
+            for hp_name in config_dict:
+                splt_hp_name = hp_name.split(":")
+                if splt_hp_name[0] == step_name:
+                    value_dict[hp_name] = config_dict[hp_name]
+        return value_dict
 
 
 
