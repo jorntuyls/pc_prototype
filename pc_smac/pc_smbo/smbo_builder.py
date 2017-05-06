@@ -26,7 +26,8 @@ class SMBOBuilder:
 
     def build_pc_smbo(self, tae_runner, stats, scenario, runhistory, aggregate_func, acq_func_name, model_target_names,
                         logging_directory, random_leaf_size=1, constant_pipeline_steps=None, variable_pipeline_steps=None,
-                      intensification_instances=None):
+                      cached_pipeline_steps=None,
+                      intensification_instances=None, num_marginalized_configurations_by_random_search=20, num_configs_for_marginalization=40):
 
         # Build intensifier
         rng = np.random.RandomState()
@@ -100,8 +101,8 @@ class SMBOBuilder:
                                                                           rng=rng,
                                                                           constant_pipeline_steps=constant_pipeline_steps,
                                                                           variable_pipeline_steps=variable_pipeline_steps,
-                                                                          num_marginalized_configurations_by_random_search=20,
-                                                                          num_configs_for_marginalization=40)
+                                                                          num_marginalized_configurations_by_random_search=num_marginalized_configurations_by_random_search,
+                                                                          num_configs_for_marginalization=num_configs_for_marginalization)
         elif acq_func_name == 'eips':
             acquisition_func = EIPS(model)
             acq_func_wrapper = PCAquisitionFunctionWrapper(acquisition_func=acquisition_func,
@@ -145,19 +146,20 @@ class SMBOBuilder:
                                                                           rng=rng,
                                                                           constant_pipeline_steps=constant_pipeline_steps,
                                                                           variable_pipeline_steps=variable_pipeline_steps,
-                                                                          num_marginalized_configurations_by_random_search=20,
-                                                                          num_configs_for_marginalization=40)
+                                                                          num_marginalized_configurations_by_random_search=num_marginalized_configurations_by_random_search,
+                                                                          num_configs_for_marginalization=num_configs_for_marginalization)
         elif acq_func_name == 'pceips':
             acquisition_func = PCEIPS(model)
             acq_func_wrapper = PCAquisitionFunctionWrapperWithCachingReduction(acquisition_func=acquisition_func,
                                                                         config_space=scenario.cs,
                                                                         runhistory=runhistory,
                                                                         constant_pipeline_steps=constant_pipeline_steps,
-                                                                        variable_pipeline_steps=variable_pipeline_steps)
+                                                                        variable_pipeline_steps=variable_pipeline_steps,
+                                                                               cached_pipeline_steps=cached_pipeline_steps)
             runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
             local_search = LocalSearch(acquisition_function=acq_func_wrapper,
                                          config_space=scenario.cs)
-            if constant_pipeline_steps == None or variable_pipeline_steps == None:
+            if constant_pipeline_steps == None or variable_pipeline_steps == None or cached_pipeline_steps == None:
                 raise ValueError("Constant_pipeline_steps and variable pipeline steps should not be none\
                                     when using PCEIPS")
             select_configuration = SelectConfigurations(scenario=scenario,
@@ -175,11 +177,12 @@ class SMBOBuilder:
                                                                         config_space=scenario.cs,
                                                                         runhistory=runhistory,
                                                                         constant_pipeline_steps=constant_pipeline_steps,
-                                                                        variable_pipeline_steps=variable_pipeline_steps)
+                                                                        variable_pipeline_steps=variable_pipeline_steps,
+                                                                               cached_pipeline_steps=cached_pipeline_steps)
             runhistory2epm = RunHistory2EPM4EIPS(scenario, num_params, success_states=[StatusType.SUCCESS])
             local_search = LocalSearch(acquisition_function=acq_func_wrapper,
                                          config_space=scenario.cs)
-            if constant_pipeline_steps == None or variable_pipeline_steps == None:
+            if constant_pipeline_steps == None or variable_pipeline_steps == None or cached_pipeline_steps == None:
                 raise ValueError("Constant_pipeline_steps and variable pipeline steps should not be none\
                                     when using PCEIPS")
             select_configuration = SelectConfigurationsWithMarginalization(scenario=scenario,
@@ -191,8 +194,8 @@ class SMBOBuilder:
                                                                           rng=rng,
                                                                           constant_pipeline_steps=constant_pipeline_steps,
                                                                           variable_pipeline_steps=variable_pipeline_steps,
-                                                                          num_marginalized_configurations_by_random_search=20,
-                                                                          num_configs_for_marginalization=40)
+                                                                          num_marginalized_configurations_by_random_search=num_marginalized_configurations_by_random_search,
+                                                                          num_configs_for_marginalization=num_configs_for_marginalization)
         else:
             # Not a valid acquisition function
             raise ValueError("The provided acquisition function is not valid")
@@ -205,7 +208,7 @@ class SMBOBuilder:
         #                                      stats=stats,
         #                                      traj_logger=traj_logger,
         #                                      rng=rng)
-        initial_configs = scenario.cs.sample_configuration(size=10)
+        initial_configs = scenario.cs.sample_configuration(size=2)
         for config in initial_configs:
             config._populate_values()
         initial_design = MultiConfigInitialDesign(tae_runner=tae_runner,

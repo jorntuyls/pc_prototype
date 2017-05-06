@@ -82,7 +82,7 @@ class ImputationStep(PipelineStep):
     def __init__(self):
         name = "imputation"
         nodes = [ImputationNode()]
-        super(ImputationStep, self).__init__(name, nodes, caching=False)
+        super(ImputationStep, self).__init__(name, nodes, caching=True)
 
 class RescalingStep(PipelineStep):
 

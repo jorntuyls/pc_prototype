@@ -28,10 +28,6 @@ class Driver:
         self.data_path = data_path
         self.data_loader = DataLoader(data_path)
 
-        # test
-        #from autosklearn.pipeline.classification import SimpleClassificationPipeline
-        #s = SimpleClassificationPipeline()
-        #print(s.get_hyperparameter_search_space())
         self.pipeline_space = self._build_pipeline_space() if (pipeline_space_string == None) else self._parse_pipeline_space(pipeline_space_string)
         self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
         self.config_space = self.cs_builder.build_config_space()
@@ -131,6 +127,17 @@ class Driver:
 
         # Build SMBO object
         intensification_instances = [1] if intensification_fold_size == None else [i for i in range(0, intensification_fold_size)]
+
+        # The pipeline parts that get marginalized
+        constant_pipeline_steps = ["one_hot_encoder", "imputation", "rescaling",
+                                     "balancing", "feature_preprocessor"]
+
+        variable_pipeline_steps = ["classifier"]
+
+        # The pipeline parts that can get cached
+        cached_pipeline_steps = [["one_hot_encoder", "imputation"], ["one_hot_encoder", "imputation", "rescaling",
+                                     "balancing", "feature_preprocessor"]]
+
         smbo_builder = SMBOBuilder()
         self.smbo = smbo_builder.build_pc_smbo(
             tae_runner=tae_runner,
@@ -142,9 +149,9 @@ class Driver:
             model_target_names=model_target_names,
             logging_directory=trajectory_path,
             random_leaf_size=random_leaf_size,
-            constant_pipeline_steps=["one_hot_encoder", "imputation", "rescaling",
-                                     "balancing", "feature_preprocessor"],
-            variable_pipeline_steps=["classifier"],
+            constant_pipeline_steps=constant_pipeline_steps,
+            variable_pipeline_steps=variable_pipeline_steps,
+            cached_pipeline_steps=cached_pipeline_steps,
             intensification_instances=intensification_instances)
 
 
@@ -233,15 +240,3 @@ class Driver:
                                                            classifier_names=classifier_names)
 
 
-
-# if __name__ == "__main__":
-#     from pc_smac.pc_smac.local_data_paths import data_path, output_dir, cache_directory
-#     d = Driver(data_path=data_path, output_dir=output_dir)
-#     d.run(stamp="test",
-#          acq_func="pceips",
-#          wallclock_limit=10,
-#          runcount_limit=2,
-#          memory_limit=4000000,
-#          cutoff=3600,
-#          cache_directory=cache_directory,
-#          downsampling=1000)
