@@ -5,6 +5,7 @@
 
 import time
 import shutil
+import numpy as np
 
 from sklearn.pipeline import Pipeline, _fit_transform_one
 from sklearn.base import clone
@@ -43,12 +44,12 @@ class CachedPipeline(Pipeline):
         Xt = X
         for idx_tr, (name, transform) in enumerate(self.steps[:-1]):
             start_time = time.time()
-
             if transform is None:
                 pass
             elif name in self.cached_step_names:
-                Xt, output_dir = self._fit_single_transform_cached(transform, name, idx_tr, Xt,
-                                                               y, **fit_params_steps[name])
+                hash_Xt = hash(str(Xt))
+                Xt, output_dir = self._fit_single_transform_cached(transform, name, hash_Xt, idx_tr, Xt,
+                                                                    y, **fit_params_steps[name])
                 timing = time.time() - start_time
                 # TODO Timing > 1
                 if timing > 1 or self.pipeline_info.get_cache_hits()[1] == self.pipeline_info.get_cache_hits()[0]:
@@ -96,8 +97,9 @@ class CachedPipeline(Pipeline):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator is not None:
             start_time = time.time()
-            self._final_estimator.fit(Xt, y, **fit_params)
-            self.pipeline_info.add_estimator_timing(self.steps[-1][0], time.time() - start_time)
+            # TODO
+            #self._final_estimator.fit(Xt, y, **fit_params)
+            #self.pipeline_info.add_estimator_timing(self.steps[-1][0], time.time() - start_time)
         return self
 
     def score(self, X, y, sample_weight=None):
@@ -144,7 +146,7 @@ class CachedPipeline(Pipeline):
             return res
         return res * weight
 
-    def _fit_single_transform_cached(self, transform, name, idx_tr,  X, y, **fit_params_trans):
+    def _fit_single_transform_cached(self, transform, name, hash_X, idx_tr,  X, y, **fit_params_trans):
 
         #print("EVALUATE _FIT_SINGLE_TRANSFORM")
         global FIT_SINGLE_TRANSFORM_EVALUATIONS
@@ -152,12 +154,12 @@ class CachedPipeline(Pipeline):
 
         memory = self.memory
         clone_transformer = clone(transform)
-        fit_tranform_one_cached = memory.cache(_fit_transform_one)
+        fit_tranform_one_cached = memory.cache(_fit_transform_one, ignore=["X", "y"])
         Xt, new_transform = fit_tranform_one_cached(
-            clone_transformer, name,
+            clone_transformer, name, hash_X,
             None, X, y,
             **fit_params_trans)
-        output_dir, _ = fit_tranform_one_cached._get_output_dir(transform, name,
+        output_dir, _ = fit_tranform_one_cached._get_output_dir(transform, name, hash_X,
             None, X, y,
             **fit_params_trans)
         self.steps[idx_tr] = (name, new_transform)
@@ -166,7 +168,7 @@ class CachedPipeline(Pipeline):
 
         return Xt, output_dir
 
-def _fit_transform_one(transformer, name, weight, X, y,
+def _fit_transform_one(transformer, name, hash_X, weight, X, y,
                                **fit_params):
     global FIT_TRANSFORM_ONE_EVALUATIONS
     FIT_TRANSFORM_ONE_EVALUATIONS += 1
@@ -176,6 +178,7 @@ def _fit_transform_one(transformer, name, weight, X, y,
     else:
         res = transformer.fit(X, y, **fit_params).transform(X)
     # if we have a weight for this transformer, multiply output
+    res = res.astype(np.float32)
     if weight is None:
         return res, transformer
     return res * weight, transformer
