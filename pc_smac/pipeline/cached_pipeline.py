@@ -97,9 +97,8 @@ class CachedPipeline(Pipeline):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator is not None:
             start_time = time.time()
-            # TODO
-            #self._final_estimator.fit(Xt, y, **fit_params)
-            #self.pipeline_info.add_estimator_timing(self.steps[-1][0], time.time() - start_time)
+            self._final_estimator.fit(Xt, y, **fit_params)
+            self.pipeline_info.add_estimator_timing(self.steps[-1][0], time.time() - start_time)
         return self
 
     def score(self, X, y, sample_weight=None):
