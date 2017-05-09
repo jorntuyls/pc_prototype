@@ -124,7 +124,7 @@ class PCSMBO(BaseSolver):
 
             self.logger.debug("Search for next configuration")
             # get all found configurations sorted according to acq
-            challengers_smac, challengers_random = self.select_configuration.run(X, Y,
+            challengers = self.select_configuration.run(X, Y,
                                                         incumbent=self.incumbent,
                                                         num_configurations_by_random_search_sorted=100,
                                                         num_configurations_by_local_search=10,
@@ -137,15 +137,7 @@ class PCSMBO(BaseSolver):
             self.logger.debug("Intensify")
 
             self.incumbent, inc_perf = self.intensifier.intensify(
-                challengers=challengers_random,
-                incumbent=self.incumbent,
-                run_history=self.runhistory,
-                aggregate_func=self.aggregate_func,
-                time_bound=max(0.01, time_spend / 2.),
-                min_number_of_runs=1)
-
-            self.incumbent, inc_perf = self.intensifier.intensify(
-                challengers=challengers_smac,
+                challengers=challengers,
                 incumbent=self.incumbent,
                 run_history=self.runhistory,
                 aggregate_func=self.aggregate_func,
