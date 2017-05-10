@@ -141,7 +141,7 @@ class PCSMBO(BaseSolver):
                 incumbent=self.incumbent,
                 run_history=self.runhistory,
                 aggregate_func=self.aggregate_func,
-                time_bound=max(0.01, time_spend / 2.),
+                time_bound=max(0.01, time_spend),
                 min_number_of_runs=1)
 
             print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
