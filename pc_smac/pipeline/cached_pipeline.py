@@ -47,8 +47,8 @@ class CachedPipeline(Pipeline):
             if transform is None:
                 pass
             elif name in self.cached_step_names:
-                hash_Xt = hash(str(Xt))
-                #hash_Xt = 1
+                #hash_Xt = hash(str(Xt))
+                hash_Xt = 1
                 Xt, output_dir = self._fit_single_transform_cached(transform, name, hash_Xt, idx_tr, Xt,
                                                                     y, **fit_params_steps[name])
                 timing = time.time() - start_time
@@ -154,7 +154,7 @@ class CachedPipeline(Pipeline):
 
         memory = self.memory
         clone_transformer = clone(transform)
-        fit_tranform_one_cached = memory.cache(_fit_transform_one, ignore=["X", "y"])
+        fit_tranform_one_cached = memory.cache(_fit_transform_one, ignore=[])
         Xt, new_transform = fit_tranform_one_cached(
             clone_transformer, name, hash_X,
             None, X, y,
