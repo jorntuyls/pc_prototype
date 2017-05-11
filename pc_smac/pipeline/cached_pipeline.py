@@ -154,7 +154,7 @@ class CachedPipeline(Pipeline):
 
         memory = self.memory
         clone_transformer = clone(transform)
-        fit_tranform_one_cached = memory.cache(_fit_transform_one, ignore=[])
+        fit_tranform_one_cached = memory.cache(_fit_transform_one)
         Xt, new_transform = fit_tranform_one_cached(
             clone_transformer, name, hash_X,
             None, X, y,

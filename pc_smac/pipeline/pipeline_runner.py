@@ -273,8 +273,8 @@ class CachedPipelineRunner(PipelineRunner):
                 hash_value = hash(frozenset(cached_values.items()))
                 if hash_value in cached_configs:
                     discount += cached_configs[hash_value]
-                    print("CACHING REDUCTION: {}, {}".format(hash_value, discount))
-                    print("Config origin: {}".format(config.origin))
+                    #print("CACHING REDUCTION: {}, {}".format(hash_value, discount))
+                    #print("Config origin: {}".format(config.origin))
                     # print("Config: {}".format(config))
             runtime_discounts.append(discount)
         return runtime_discounts

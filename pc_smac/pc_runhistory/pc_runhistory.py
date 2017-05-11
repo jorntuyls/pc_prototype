@@ -39,37 +39,3 @@ class PCRunHistory(RunHistory):
 
     def get_all_configs(self):
         return list(self.config_ids.keys())
-
-    # #### PRIVATE METHODS ####
-    #
-    # def _partially_contains_config(self, config1, config2):
-    #     '''
-    #
-    #     Parameters
-    #     ----------
-    #     config1
-    #     config2
-    #
-    #     Returns
-    #     -------
-    #         if config1 contains config2, but config1 can also contains more hyperparameters
-    #
-    #     '''
-    #     r = [key for key in config2.keys() if config2[key] != config1[key]]
-    #     if r == []:
-    #         return True
-    #     return False
-    #
-    # def _contains_config(self, config_list, config):
-    #     return_value = False
-    #     for config_l in config_list:
-    #         if self._is_equal(config_l, config):
-    #             return_value = True
-    #     return return_value
-    #
-    # def _is_equal(self, config1, config2):
-    #     r = [key for key in config1.keys() if (key not in config2.keys() or config1[key] != config2[key])]
-    #     s = [key for key in config2.keys() if (key not in config1.keys() or config2[key] != config1[key])]
-    #     if s == [] and r == []:
-    #         return True
-    #     return False

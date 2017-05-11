@@ -136,6 +136,7 @@ class PCSMBO(BaseSolver):
 
             self.logger.debug("Intensify")
 
+            start_time = time.time()
             self.incumbent, inc_perf = self.intensifier.intensify(
                 challengers=challengers_random,
                 incumbent=self.incumbent,
@@ -143,13 +144,14 @@ class PCSMBO(BaseSolver):
                 aggregate_func=self.aggregate_func,
                 time_bound=max(0.01, time_spend / 2.),
                 min_number_of_runs=1)
+            stop_time = time.time()
 
             self.incumbent, inc_perf = self.intensifier.intensify(
                 challengers=challengers_smac,
                 incumbent=self.incumbent,
                 run_history=self.runhistory,
                 aggregate_func=self.aggregate_func,
-                time_bound=max(0.01, time_spend / 2.),
+                time_bound=max(0.01, stop_time-start_time),
                 min_number_of_runs=1)
 
             print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
