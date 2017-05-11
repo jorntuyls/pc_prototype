@@ -80,7 +80,7 @@ class CachedPipelineTimer(PipelineTimer):
         super(CachedPipelineTimer, self).__init__(data, pipeline_space, runhistory, statistics,
                                                    downsampling=downsampling)
 
-        self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory)
+        self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory, min_runtime_for_caching=0)
         self.cached_transformer_runtime_timing = {}
         self.cache_hits = {
             'total': 0,

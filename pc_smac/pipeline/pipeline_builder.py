@@ -9,7 +9,7 @@ from pc_smac.pc_smac.pipeline.pipeline import OwnPipeline
 
 class PipelineBuilder:
 
-    def __init__(self, pipeline_space, caching, cache_directory=None):
+    def __init__(self, pipeline_space, caching, cache_directory=None, min_runtime_for_caching=1):
         if (caching == False) and (cache_directory != None):
             raise ValueError("Caching is disabled but a cache directory is given!")
 
@@ -21,6 +21,8 @@ class PipelineBuilder:
         elif self.caching:
             self.cachedir = tempfile.mkdtemp(prefix="cache_")
             print(self.cachedir)
+
+        self.min_runtime_for_caching = min_runtime_for_caching
 
     def build_pipeline(self, config):
         # pipeline_steps is a list of pipeline step names (e.g. feature_preprocessor, classifier)
@@ -47,7 +49,8 @@ class PipelineBuilder:
                     cached_step_names.append(name)
             return CachedPipeline(concrete_steps,
                                   cached_step_names=cached_step_names,
-                                  memory=Memory(cachedir=self.cachedir, verbose=0))
+                                  memory=Memory(cachedir=self.cachedir, verbose=0),
+                                  min_runtime_for_caching=self.min_runtime_for_caching)
         return OwnPipeline(concrete_steps)
 
     def clean_cache(self):

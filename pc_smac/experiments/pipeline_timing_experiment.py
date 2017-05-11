@@ -284,3 +284,12 @@ if __name__ == "__main__":
                    seed=args.seed,
                    cache_directory=args.cachedir,
                    downsampling=args.downsampling)
+    # run_experiment(data_id="554_bac",
+    #                location="/Users/jorntuyls/Documents/workspaces/thesis/data",
+    #                output_dir="/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output",
+    #                prepr_name="extra_rand_trees",
+    #                class_name="sgd",
+    #                nb_configs=1,
+    #                seed=1,
+    #                cache_directory="/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/cache",
+    #                downsampling=None)

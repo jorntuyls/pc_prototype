@@ -3,10 +3,17 @@ import os
 import argparse
 import time
 import json
+import numpy as np
+import tempfile
 
 from sklearn.externals import joblib
+from sklearn.externals.joblib import Memory
 
 from pc_smac.pc_smac.data_loader.data_loader import DataLoader
+from pc_smac.pc_smac.pipeline.cached_pipeline import CachedPipeline
+
+from pc_smac.pc_smac.pipeline_space.data_preprocessing_nodes.one_hot_encoding import OneHotEncodeingNode
+
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.extra_rand_trees import ExtraTreesNode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.fast_ica import FastICANode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.feature_agglomeration import FeatureAgglomerationNode
@@ -20,6 +27,8 @@ from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.polynomial impor
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.random_trees_embedding import RandomTreesEmbeddingNode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.select_percentile import SelectPercentileNode
 from pc_smac.pc_smac.pipeline_space.feature_preprocessing_nodes.select_rates import SelectRatesNode
+
+from pc_smac.pc_smac.pipeline_space.classification_nodes.sgd import SGDNode
 
 
 def run_caching_experiment(stamp, data_path, data_set_id, prepr_name, cache_dir=None, output_dir=None):
@@ -138,6 +147,70 @@ def run_caching_experiment(stamp, data_path, data_set_id, prepr_name, cache_dir=
 
     print(X1 == X2)
 
+def run_float32_experiment():
+    cachedir = tempfile.mkdtemp(dir="/Users/jorntuyls/Desktop/cache", prefix="cache_")
+
+    # CACHED RUN
+    one_hot_encoder = OneHotEncodeingNode().initialize_algorithm(hyperparameters={})
+    kitchen_sinks = RandomKitchenSinksNode().initialize_algorithm(hyperparameters={})
+    sgd = SGDNode().initialize_algorithm(hyperparameters={})
+    steps = [one_hot_encoder, kitchen_sinks, sgd]
+
+    pipeline = CachedPipeline(steps=steps, cached_step_names=["feature_preprocessor:kitchen_sinks"], memory=Memory(cachedir=cachedir, verbose=0))
+
+    X = np.random.randn(50000, 5000)
+
+    print("fit")
+    start_time = time.time()
+    pipeline.fit(X)
+    print("Fit timing: {}".format(time.time() - start_time))
+    print("after fit")
+
+    # CACHE
+    one_hot_encoder = OneHotEncodeingNode().initialize_algorithm(hyperparameters={})
+    kitchen_sinks = RandomKitchenSinksNode().initialize_algorithm(hyperparameters={})
+    sgd = SGDNode().initialize_algorithm(hyperparameters={})
+    steps = [one_hot_encoder, kitchen_sinks, sgd]
+
+    pipeline = CachedPipeline(steps=steps, cached_step_names=["feature_preprocessor:kitchen_sinks"],
+                              memory=Memory(cachedir=cachedir, verbose=0))
+
+    print("fit cache")
+    start_time = time.time()
+    pipeline.fit(X)
+    print("Load result timing: {}".format(time.time() - start_time))
+    print("after fit cache")
+
+    # NO CACHE HIT
+    one_hot_encoder = OneHotEncodeingNode().initialize_algorithm(hyperparameters={"use_minimum_fraction": "False"})
+    kitchen_sinks = RandomKitchenSinksNode().initialize_algorithm(hyperparameters={})
+    sgd = SGDNode().initialize_algorithm(hyperparameters={})
+    steps = [one_hot_encoder, kitchen_sinks, sgd]
+
+    pipeline = CachedPipeline(steps=steps, cached_step_names=["feature_preprocessor:kitchen_sinks"],
+                              memory=Memory(cachedir=cachedir, verbose=0))
+    print("fit other encoder")
+    start_time = time.time()
+    pipeline.fit(X)
+    print("Fit other encoder timing: {}".format(time.time() - start_time))
+
+    # NO CACHE HIT 2
+    one_hot_encoder = OneHotEncodeingNode().initialize_algorithm(hyperparameters={})
+    kitchen_sinks = RandomKitchenSinksNode().initialize_algorithm(hyperparameters={})
+    sgd = SGDNode().initialize_algorithm(hyperparameters={})
+    steps = [one_hot_encoder, kitchen_sinks, sgd]
+
+    pipeline = CachedPipeline(steps=steps, cached_step_names=["feature_preprocessor:kitchen_sinks"],
+                              memory=Memory(cachedir=cachedir, verbose=0))
+
+    X = np.random.randn(20000, 2000)
+
+    print("fit other encoder 2")
+    start_time = time.time()
+    pipeline.fit(X)
+    print("Fit other encoder timing 2: {}".format(time.time() - start_time))
+
+
 def save_json(lst, destination_file):
     if not os.path.exists(destination_file):
         open_file(destination_file)
@@ -166,11 +239,14 @@ def parse_arguments():
     return args
 
 if __name__ == "__main__":
-    args = parse_arguments()
-    run_caching_experiment(stamp=args.stamp,
-                           data_path=args.location,
-                           data_set_id=args.dataid,
-                           prepr_name=args.pname,
-                           cache_dir=args.cachedir,
-                           output_dir=args.outputdir)
+    # args = parse_arguments()
+    # run_caching_experiment(stamp=args.stamp,
+    #                        data_path=args.location,
+    #                        data_set_id=args.dataid,
+    #                        prepr_name=args.pname,
+    #                        cache_dir=args.cachedir,
+    #                        output_dir=args.outputdir)
+    run_float32_experiment()
+
+
 
