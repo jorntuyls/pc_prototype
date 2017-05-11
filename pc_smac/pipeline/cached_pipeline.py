@@ -18,7 +18,7 @@ FIT_TRANSFORM_ONE_EVALUATIONS = 0
 
 class CachedPipeline(Pipeline):
 
-    def __init__(self, steps, cached_step_names, memory=Memory(cachedir=None, verbose=0)):
+    def __init__(self, steps, cached_step_names, memory=Memory(cachedir=None, verbose=0), min_runtime_for_caching=1):
         self.memory = memory
         if isinstance(memory, six.string_types):
             self.memory = Memory(cachedir=memory, verbose=0)
@@ -30,6 +30,7 @@ class CachedPipeline(Pipeline):
         FIT_TRANSFORM_ONE_EVALUATIONS = 0
 
         self.cached_step_names = cached_step_names
+        self.min_runtime_for_caching = min_runtime_for_caching
 
         super(CachedPipeline, self).__init__(steps)
 
@@ -53,7 +54,7 @@ class CachedPipeline(Pipeline):
                                                                     y, **fit_params_steps[name])
                 timing = time.time() - start_time
                 # TODO Timing > 1
-                if timing > 1 or self.pipeline_info.get_cache_hits()[1] == self.pipeline_info.get_cache_hits()[0]:
+                if timing > self.min_runtime_for_caching or self.pipeline_info.get_cache_hits()[1] == self.pipeline_info.get_cache_hits()[0]:
                     self.pipeline_info.add_cached_preprocessor_timing(name, timing)
                     print("Cache output directory: {}, timing: {}".format(output_dir, timing))
                 else:
