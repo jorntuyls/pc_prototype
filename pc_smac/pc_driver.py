@@ -30,7 +30,7 @@ class Driver:
 
         self.pipeline_space = self._build_pipeline_space() if (pipeline_space_string == None) else self._parse_pipeline_space(pipeline_space_string)
         self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
-        self.config_space = self.cs_builder.build_config_space()
+        self.config_space = self.cs_builder.build_config_space(dataset_properties=self.data_loader.info)
 
         self.output_dir = output_dir if output_dir else os.path.dirname(os.path.abspath(__file__)) + "/output/"
         try:

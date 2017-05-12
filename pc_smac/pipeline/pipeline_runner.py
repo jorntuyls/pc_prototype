@@ -5,7 +5,8 @@ import sys
 import numpy as np
 import time
 
-from sklearn.metrics import precision_score
+from sklearn.model_selection import StratifiedKFold
+
 from pc_smac.pc_smac.utils.metrics import calculate_bac_score
 
 from pc_smac.pc_smac.pipeline.pipeline_builder import PipelineBuilder
@@ -28,6 +29,10 @@ class PipelineRunner(object):
         self.pipeline_space = pipeline_space
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=False, cache_directory=None)
         self.num_cross_validation_folds = num_cross_validation_folds if num_cross_validation_folds != None else 2
+
+        self.cv = StratifiedKFold(n_splits=self.num_cross_validation_folds,
+                                  shuffle=True,
+                                  random_state=1)
 
     def run(self, config, instance, seed):
         """
@@ -67,18 +72,20 @@ class PipelineRunner(object):
 
         pipeline = self.pipeline_builder.build_pipeline(config)
 
-        # Cross validation as in scikit-learn:
-        #   http://scikit-learn.org/stable/tutorial/statistical_inference/model_selection.html
-        X_folds = np.array_split(self.X_train, self.num_cross_validation_folds)
-        y_folds = np.array_split(self.y_train, self.num_cross_validation_folds)
+        for i, (train_split, test_split) in enumerate(self.cv.split(self.X_train, self.y_train)):
+            if i != int(instance):
+                continue
+            else:
+                break
+
+        X_train = self.X_train[train_split]
+        X_valid = self.X_train[test_split]
+
+        y_train = self.y_train[train_split]
+        y_valid = self.y_train[test_split]
+
         try:
             # Fit pipeline
-            X_train = list(X_folds)
-            X_valid = X_train.pop(int(instance))
-            X_train = np.concatenate(X_train)
-            y_train = list(y_folds)
-            y_valid = y_train.pop(int(instance))
-            y_train = np.concatenate(y_train)
             pipeline.fit(X_train, y_train)
 
             # Keep track of timing infomration
@@ -158,18 +165,21 @@ class CachedPipelineRunner(PipelineRunner):
         pipeline = self.pipeline_builder.build_pipeline(config)
 
         print("Num cross validation folds: {}".format(self.num_cross_validation_folds))
-        # Cross validation as in scikit-learn:
-        #   http://scikit-learn.org/stable/tutorial/statistical_inference/model_selection.html
-        X_folds = np.array_split(self.X_train, self.num_cross_validation_folds)
-        y_folds = np.array_split(self.y_train, self.num_cross_validation_folds)
+
+        for i, (train_split, test_split) in enumerate(self.cv.split(self.X_train, self.y_train)):
+            if i != int(instance):
+                continue
+            else:
+                break
+
+        X_train = self.X_train[train_split]
+        X_valid = self.X_train[test_split]
+
+        y_train = self.y_train[train_split]
+        y_valid = self.y_train[test_split]
+
         try:
             # Fit pipeline
-            X_train = list(X_folds)
-            X_valid = X_train.pop(int(instance))
-            X_train = np.concatenate(X_train)
-            y_train = list(y_folds)
-            y_valid = y_train.pop(int(instance))
-            y_train = np.concatenate(y_train)
             pipeline.fit(X_train, y_train)
 
             # Keep track of timing information
