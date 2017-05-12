@@ -4,7 +4,7 @@
 
 ## Intallation
 
-Use python 3.5.
+Use python 3.6.
 
 ### Unix
 
@@ -37,3 +37,7 @@ Clone repository and install requirements.
 ```
 pip install -r requirements.txt
 ```
+
+### Use OpenML dataloader
+
+To use the OpenML dataloader, install OpenML-python (https://openml.github.io/openml-python/stable/).
