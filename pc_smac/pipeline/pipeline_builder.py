@@ -24,7 +24,7 @@ class PipelineBuilder:
 
         self.min_runtime_for_caching = min_runtime_for_caching
 
-    def build_pipeline(self, config, run_instance):
+    def build_pipeline(self, config, run_instance=None):
         # pipeline_steps is a list of pipeline step names (e.g. feature_preprocessor, classifier)
         pipeline_steps = self.pipeline_space.get_pipeline_step_names()
         concrete_steps = []
