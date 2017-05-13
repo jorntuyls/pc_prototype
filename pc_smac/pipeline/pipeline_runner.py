@@ -156,7 +156,7 @@ class CachedPipelineRunner(PipelineRunner):
         self.runtime_timing = {}
         additional_info = {}
 
-        pipeline = self.pipeline_builder.build_pipeline(config)
+        pipeline = self.pipeline_builder.build_pipeline(config, run_instance=int(instance))
 
         print("Num cross validation folds: {}".format(self.num_cross_validation_folds))
         # Cross validation as in scikit-learn:

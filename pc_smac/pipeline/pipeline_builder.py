@@ -24,7 +24,7 @@ class PipelineBuilder:
 
         self.min_runtime_for_caching = min_runtime_for_caching
 
-    def build_pipeline(self, config):
+    def build_pipeline(self, config, run_instance):
         # pipeline_steps is a list of pipeline step names (e.g. feature_preprocessor, classifier)
         pipeline_steps = self.pipeline_space.get_pipeline_step_names()
         concrete_steps = []
@@ -50,7 +50,8 @@ class PipelineBuilder:
             return CachedPipeline(concrete_steps,
                                   cached_step_names=cached_step_names,
                                   memory=Memory(cachedir=self.cachedir, verbose=0),
-                                  min_runtime_for_caching=self.min_runtime_for_caching)
+                                  min_runtime_for_caching=self.min_runtime_for_caching,
+                                  run_instance=run_instance)
         return OwnPipeline(concrete_steps)
 
     def clean_cache(self):

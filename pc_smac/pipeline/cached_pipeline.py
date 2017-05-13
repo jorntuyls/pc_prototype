@@ -53,7 +53,7 @@ class CachedPipeline(Pipeline):
                 #hash_Xt = hash(str(Xt))
                 #hash_Xt = 1
                 previous_transformers = self.steps[:idx_tr]
-                print(previous_transformers)
+                print(previous_transformers, self.run_instance)
                 Xt, output_dir = self._fit_single_transform_cached(transform, name, previous_transformers, self.run_instance, idx_tr, Xt,
                                                                     y, **fit_params_steps[name])
                 timing = time.time() - start_time
