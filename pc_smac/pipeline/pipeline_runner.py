@@ -106,6 +106,7 @@ class PipelineRunner(object):
 
         # Add information of this run to statistics
         run_information = {
+            'instance': int(instance),
             'cost': cost,
             'runtime': runtime,
             'pipeline_steps_timing': self.runtime_timing
@@ -217,6 +218,7 @@ class CachedPipelineRunner(PipelineRunner):
 
         # Add information of this run to statistics
         run_information = {
+            'instance': int(instance),
             'cost': cost,
             'runtime': runtime,
             'pipeline_steps_timing': self.runtime_timing,

@@ -18,7 +18,7 @@ FIT_TRANSFORM_ONE_EVALUATIONS = 0
 
 class CachedPipeline(Pipeline):
 
-    def __init__(self, steps, cached_step_names, memory=Memory(cachedir=None, verbose=0), min_runtime_for_caching=1):
+    def __init__(self, steps, cached_step_names, memory=Memory(cachedir=None, verbose=0), min_runtime_for_caching=1, run_instance=None):
         self.memory = memory
         if isinstance(memory, six.string_types):
             self.memory = Memory(cachedir=memory, verbose=0)
@@ -31,6 +31,8 @@ class CachedPipeline(Pipeline):
 
         self.cached_step_names = cached_step_names
         self.min_runtime_for_caching = min_runtime_for_caching
+
+        self.run_instance = run_instance
 
         super(CachedPipeline, self).__init__(steps)
 
@@ -48,9 +50,11 @@ class CachedPipeline(Pipeline):
             if transform is None:
                 pass
             elif name in self.cached_step_names:
-                hash_Xt = hash(str(Xt))
+                #hash_Xt = hash(str(Xt))
                 #hash_Xt = 1
-                Xt, output_dir = self._fit_single_transform_cached(transform, name, hash_Xt, idx_tr, Xt,
+                previous_transformers = self.steps[:idx_tr]
+                print(previous_transformers)
+                Xt, output_dir = self._fit_single_transform_cached(transform, name, previous_transformers, self.run_instance, idx_tr, Xt,
                                                                     y, **fit_params_steps[name])
                 timing = time.time() - start_time
                 # TODO Timing > 1
@@ -147,7 +151,7 @@ class CachedPipeline(Pipeline):
             return res
         return res * weight
 
-    def _fit_single_transform_cached(self, transform, name, hash_X, idx_tr,  X, y, **fit_params_trans):
+    def _fit_single_transform_cached(self, transform, name, previous_transformers, run_instance, idx_tr,  X, y, **fit_params_trans):
 
         #print("EVALUATE _FIT_SINGLE_TRANSFORM")
         global FIT_SINGLE_TRANSFORM_EVALUATIONS
@@ -157,10 +161,11 @@ class CachedPipeline(Pipeline):
         clone_transformer = clone(transform)
         fit_tranform_one_cached = memory.cache(_fit_transform_one, ignore=["X", "y"])
         Xt, new_transform = fit_tranform_one_cached(
-            clone_transformer, name, hash_X,
+            clone_transformer, name, previous_transformers, run_instance,
             None, X, y,
             **fit_params_trans)
-        output_dir, _ = fit_tranform_one_cached._get_output_dir(transform, name, hash_X,
+        output_dir, _ = fit_tranform_one_cached._get_output_dir(
+            transform, name, previous_transformers, run_instance,
             None, X, y,
             **fit_params_trans)
         self.steps[idx_tr] = (name, new_transform)
@@ -169,7 +174,7 @@ class CachedPipeline(Pipeline):
 
         return Xt, output_dir
 
-def _fit_transform_one(transformer, name, hash_X, weight, X, y,
+def _fit_transform_one(transformer, name, previous_transformers, run_instance, weight, X, y,
                                **fit_params):
     global FIT_TRANSFORM_ONE_EVALUATIONS
     FIT_TRANSFORM_ONE_EVALUATIONS += 1
