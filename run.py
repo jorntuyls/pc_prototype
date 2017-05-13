@@ -3,10 +3,6 @@ import argparse
 
 from pc_smac.pc_smac.pc_driver import Driver
 
-from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
-from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, ImputationStep, RescalingStep, \
-    BalancingStep, PreprocessingStep, ClassificationStep
-
 
 def run_smac(acq_func, mrs, wallclock_limit, runcount_limit, memory_limit, cutoff, data_path, stamp, output_dir, cache_directory,
              downsampling, intensification_fold_size, pipeline_space_string):
@@ -55,4 +51,5 @@ if __name__ == "__main__":
              args.downsampling,
              args.intensification_fold_size,
              args.pipeline_space)
+
 

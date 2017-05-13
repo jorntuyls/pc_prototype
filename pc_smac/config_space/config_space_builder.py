@@ -19,7 +19,10 @@ class ConfigSpaceBuilder:
     def build_config_space(self, seed=None, dataset_properties=None):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         pipeline = self.pipeline_space.get_pipeline_steps_names_and_objects()
-        vanilla_cs = self._get_hyperparameter_search_space(cs, {}, exclude=None, include=None, pipeline=pipeline)
+        vanilla_cs = self._get_hyperparameter_search_space(cs, dataset_properties,
+                                                           exclude=None,
+                                                           include=None,
+                                                           pipeline=pipeline)
         cs = self.add_forbidden_clauses(vanilla_cs, pipeline, dataset_properties)
         print(cs)
         return cs
@@ -33,15 +36,17 @@ class ConfigSpaceBuilder:
     #             cs.add_configuration_space(node.get_name(), sub_cs)
     #     return cs
 
-    def _get_hyperparameter_search_space_pipeline_step(self, ps, include=None):
-        cs = ConfigurationSpace()
-        choice = cs.add_hyperparameter(CategoricalHyperparameter('__choice__',
-                                                        ps.get_node_names()))
+    def _get_hyperparameter_search_space_pipeline_step(self, ps, include=None, dataset_properties=None):
+        if include is not None:
+            nodes = include
+        else:
+            nodes = ps.get_nodes()
 
-        for node in ps.get_nodes():
-            if include is not None and node not in include:
-                continue
-            sub_cs = node.get_hyperparameter_search_space()
+        cs = ConfigurationSpace()
+        choice = cs.add_hyperparameter(CategoricalHyperparameter('__choice__', [node.get_name() for node in nodes]))
+
+        for node in nodes:
+            sub_cs = node.get_hyperparameter_search_space(dataset_properties=dataset_properties)
             parent_hyperparameter = {'parent': choice, 'value': node.get_name()}
             cs.add_configuration_space(node.get_name(), sub_cs, parent_hyperparameter=parent_hyperparameter)
         return cs
@@ -94,7 +99,8 @@ class ConfigSpaceBuilder:
             # if the node isn't a choice we can add it immediately because it
             #  must be active (if it wouldn't, np.sum(matches) would be zero
             if not is_choice:
-                sub_cs = self._get_hyperparameter_search_space_pipeline_step(node)
+                sub_cs = self._get_hyperparameter_search_space_pipeline_step(node,
+                                                                             dataset_properties=dataset_properties)
                 cs.add_configuration_space(node_name, sub_cs)
             # If the node isn't a choice, we have to figure out which of it's
             #  choices are actually legal choices
@@ -104,7 +110,9 @@ class ConfigSpaceBuilder:
                                         dataset_properties,
                                         include.get(node_name),
                                         exclude.get(node_name))
-                sub_cs = self._get_hyperparameter_search_space_pipeline_step(node, include=choices_list)
+                sub_cs = self._get_hyperparameter_search_space_pipeline_step(node,
+                                                                             include=choices_list,
+                                                                             dataset_properties=dataset_properties)
                 cs.add_configuration_space(node_name, sub_cs)
 
         # And now add forbidden parameter configurations

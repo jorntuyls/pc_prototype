@@ -180,6 +180,11 @@ class DataLoader:
             info['format'] = 'dense'
             info['is_sparse'] = 0
 
+
+        # Added JT
+        if info['format'] == 'sparse':
+            info['sparse'] = True
+
         return info
 
     def _load_type(self, filename):
