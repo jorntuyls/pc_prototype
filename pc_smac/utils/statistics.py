@@ -109,7 +109,7 @@ class Statistics(object):
             'wallclock_time': time_point,
             'eval': len(lst) + 1,
             'incumbent': config,
-            'config_origing': config_origin
+            'config_origin': config_origin
         })
         lst.append(run)
         return run

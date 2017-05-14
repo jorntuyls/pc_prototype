@@ -142,7 +142,7 @@ class CachedPipelineRunner(PipelineRunner):
     def __init__(self, data, data_info, pipeline_space, runhistory, statistics, cached_pipeline_steps, cache_directory=None,
                  downsampling=None, num_cross_validation_folds=None):
 
-        super(CachedPipelineRunner,self).__init__(data, data_info, pipeline_space, runhistory, statistics, downsampling=downsampling,
+        super(CachedPipelineRunner, self).__init__(data, data_info, pipeline_space, runhistory, statistics, downsampling=downsampling,
                                                   num_cross_validation_folds=num_cross_validation_folds)
 
         self.pipeline_builder = PipelineBuilder(pipeline_space, caching=True, cache_directory=cache_directory)
@@ -224,7 +224,10 @@ class CachedPipelineRunner(PipelineRunner):
                                                                       self.cache_hits['cache_hits']))
 
         # Calculate potential runtime reduction through caching for statistics
-        runtime_reduction_by_caching_lst = self._compute_caching_discounts([config], self.runhistory.get_cached_configurations())
+        if self.runhistory:
+            runtime_reduction_by_caching_lst = self._compute_caching_discounts([config], self.runhistory.get_cached_configurations())
+        else:
+            runtime_reduction_by_caching_lst = []
 
         # Add information of this run to statistics
         run_information = {

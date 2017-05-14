@@ -3,6 +3,8 @@ import inspect
 import logging
 import pynisher
 
+import numpy as np
+
 from ConfigSpace.configuration_space import Configuration
 
 from smac.tae.execute_ta_run import StatusType
@@ -32,12 +34,12 @@ class RandomSearch(object):
         start_time = self.statistics.start_timer()
 
         incumbent = self.config_space.sample_configuration()
-        _, incumbent_cost, _, _ = self.run_with_limits(incumbent, instance=None, cutoff=cutoff, seed=None)
+        _, incumbent_cost, _, _ = self.run_with_limits(incumbent, instance=1, cutoff=cutoff, seed=None)
         self.statistics.add_new_incumbent(incumbent.get_dictionary(), {'cost': incumbent_cost})
 
         while not(self.statistics.is_budget_exhausted()):
             rand_config = self.config_space.sample_configuration()
-            _, cost, _, additional_info = self.run_with_limits(rand_config, instance=None, cutoff=cutoff, seed=None)
+            _, cost, _, additional_info = self.run_with_limits(rand_config, instance=1, cutoff=cutoff, seed=None)
             if cost < incumbent_cost:
                 incumbent = rand_config
                 incumbent_cost = cost
@@ -98,8 +100,10 @@ class TreeRandomSearch(RandomSearch):
                  statistics,
                  constant_pipeline_steps,
                  variable_pipeline_steps,
-                 number_leafs_split):
-        self.number_leafs_split = number_leafs_split
+                 splitting_number,
+                 random_splitting_enabled=False):
+        self.splitting_number = splitting_number
+        self.random_splitting_enabled = random_splitting_enabled
         self.constant_pipeline_steps = constant_pipeline_steps
         self.variable_pipeline_steps = variable_pipeline_steps
         super(TreeRandomSearch, self).__init__(config_space=config_space,
@@ -113,14 +117,14 @@ class TreeRandomSearch(RandomSearch):
         start_time = self.statistics.start_timer()
 
         incumbent = self.config_space.sample_configuration()
-        _, incumbent_cost, _, _ = self.run_with_limits(incumbent, instance=None, cutoff=cutoff, seed=None)
+        _, incumbent_cost, _, _ = self.run_with_limits(incumbent, instance=1, cutoff=cutoff, seed=None)
         self.statistics.add_new_incumbent(incumbent.get_dictionary(), {'cost': incumbent_cost})
 
         while not(self.statistics.is_budget_exhausted()):
             configs = self.sample_batch_of_configurations()
 
             for config in configs:
-                _, cost, additional_info, _ = self.run_with_limits(config, instance=None, cutoff=cutoff, seed=None)
+                _, cost, additional_info, _ = self.run_with_limits(config, instance=1, cutoff=cutoff, seed=None)
                 if cost < incumbent_cost:
                     incumbent = config
                     incumbent_cost = cost
@@ -133,46 +137,44 @@ class TreeRandomSearch(RandomSearch):
         start_config = self.config_space.sample_configuration()
         batch_of_configs = [start_config]
 
-        i = 1
-        while i < self.number_leafs_split:
-            try:
-                next_config = self.config_space.sample_configuration()
-                # TODO hack for now to combine preprocessing part of one configuration with classification part of all the others
-                next_config_combined = self.combine_configurations(start_config, next_config)
-                print("Iteration: {}, config_combined: {}".format(i, next_config_combined))
-                batch_of_configs.append(next_config_combined)
-                i += 1
-            except ValueError as v:
-                pass
-        print("BATCH: {}".format(batch_of_configs))
+        if self.random_splitting_enabled:
+            batch_size = np.random.randint(1, self.splitting_number)
+        else:
+            batch_size = self.splitting_number
+
+        while len(batch_of_configs) < batch_size:
+            next_config = self.config_space.sample_configuration()
+            complemented_vector_values = self._get_vector_values(next_config, self.variable_pipeline_steps)
+            # TODO hack for now to combine preprocessing part of one configuration with classification part of all the others
+            next_config_combined = self._combine_configurations_batch_vector(start_config, [complemented_vector_values])
+            batch_of_configs.extend(next_config_combined)
         return batch_of_configs
 
-    def combine_configurations(self, start_config, new_config):
-        constant_values = self._get_values(start_config.get_dictionary(), self.constant_pipeline_steps)
-        new_config_values = {}
-        new_config_values.update(constant_values)
+    def _combine_configurations_batch_vector(self, start_config, complemented_configs_values):
+        constant_vector_values = self._get_vector_values(start_config, self.constant_pipeline_steps)
+        batch = []
 
-        variable_values = self._get_values(new_config.get_dictionary(), self.variable_pipeline_steps)
-        new_config_values.update(variable_values)
+        for complemented_config_values in complemented_configs_values:
+            vector = np.ndarray(len(self.config_space._hyperparameters),
+                                dtype=np.float)
 
-        return Configuration(configuration_space=self.config_space,
-                             values=new_config_values)
+            vector[:] = np.NaN
 
-    # def combine_configurations(self, configs):
-    #     default = configs.pop()
-    #     constant_values = self._get_values(default.get_dictionary(), self.constant_pipeline_steps)
-    #     new_configs = [default]
-    #
-    #     for config in configs:
-    #         new_config_values = {}
-    #         new_config_values.update(constant_values)
-    #         variable_values = self._get_values(config.get_dictionary(), self.variable_pipeline_steps)
-    #         new_config_values.update(variable_values)
-    #         new_configs.append(Configuration(configuration_space=self.config_space,
-    #                                          values=new_config_values))
-    #
-    #     return new_configs
+            for key in constant_vector_values:
+                vector[key] = constant_vector_values[key]
 
+            for key in complemented_config_values:
+                vector[key] = complemented_config_values[key]
+
+            try:
+                self.config_space._check_forbidden(vector)
+                config_object = Configuration(configuration_space=self.config_space,
+                                              vector=vector)
+                batch.append(config_object)
+            except ValueError as v:
+                pass
+
+        return batch
 
     def _get_values(self, config_dict, pipeline_steps):
         value_dict = {}
@@ -183,3 +185,13 @@ class TreeRandomSearch(RandomSearch):
                     value_dict[hp_name] = config_dict[hp_name]
         return value_dict
 
+    def _get_vector_values(self, config, pipeline_steps):
+        vector = config.get_array()
+        value_dict = {}
+        for hp_name in config.get_dictionary():
+            for step_name in pipeline_steps:
+                splt_hp_name = hp_name.split(":")
+                if splt_hp_name[0] == step_name:
+                    item_idx = self.config_space._hyperparameter_idx[hp_name]
+                    value_dict[item_idx] = vector[item_idx]
+        return value_dict
