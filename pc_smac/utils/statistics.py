@@ -9,11 +9,13 @@ from ConfigSpace.hyperparameters import FloatHyperparameter, IntegerHyperparamet
 
 class Statistics(object):
 
-    def __init__(self, stamp, output_dir, information: dict, total_runtime=None, time_precision=None):
+    def __init__(self, stamp, output_dir, information: dict, total_runtime=None, run_limit=None, time_precision=None):
         self.stamp = stamp
         self.output_dir = self._set_output_dir(output_dir)
         self.stat_information = information
         self.total_runtime = total_runtime
+        self.run_limit = run_limit
+        self.nb_runs = 0
         self.time_precision = time_precision
 
         self.runs = []
@@ -48,6 +50,9 @@ class Statistics(object):
         # Append run directly to json file
         self._save_json([run], self.run_file)
         return time_point
+
+    def add_run_nb(self):
+        self.nb_runs += 1
 
     def get_run_trajectory(self):
         return self.runs
@@ -92,7 +97,13 @@ class Statistics(object):
         #self._save_info_file(info_strng, info_file)
 
     def is_budget_exhausted(self):
-        return time.time() - self.start_time > self.total_runtime
+        if self.total_runtime and self.run_limit:
+            return (time.time() - self.start_time > self.total_runtime) or (self.nb_runs > self.run_limit)
+        elif self.total_runtime:
+            return time.time() - self.start_time > self.total_runtime
+        elif self.run_limit:
+            return self.nb_runs > self.run_limit
+        return False
 
     def clean_files(self):
         self._clean_files([self.run_file, self.inc_file])

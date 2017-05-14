@@ -35,11 +35,14 @@ class RandomSearch(object):
 
         incumbent = self.config_space.sample_configuration()
         _, incumbent_cost, _, _ = self.run_with_limits(incumbent, instance=1, cutoff=cutoff, seed=None)
+        self.statistics.add_run_nb()
         self.statistics.add_new_incumbent(incumbent.get_dictionary(), {'cost': incumbent_cost})
 
         while not(self.statistics.is_budget_exhausted()):
             rand_config = self.config_space.sample_configuration()
             _, cost, _, additional_info = self.run_with_limits(rand_config, instance=1, cutoff=cutoff, seed=None)
+            self.statistics.add_run_nb()
+
             if cost < incumbent_cost:
                 incumbent = rand_config
                 incumbent_cost = cost
@@ -118,6 +121,7 @@ class TreeRandomSearch(RandomSearch):
 
         incumbent = self.config_space.sample_configuration()
         _, incumbent_cost, _, _ = self.run_with_limits(incumbent, instance=1, cutoff=cutoff, seed=None)
+        self.statistics.add_run_nb()
         self.statistics.add_new_incumbent(incumbent.get_dictionary(), {'cost': incumbent_cost})
 
         while not(self.statistics.is_budget_exhausted()):
@@ -125,6 +129,8 @@ class TreeRandomSearch(RandomSearch):
 
             for config in configs:
                 _, cost, additional_info, _ = self.run_with_limits(config, instance=1, cutoff=cutoff, seed=None)
+                self.statistics.add_run_nb()
+
                 if cost < incumbent_cost:
                     incumbent = config
                     incumbent_cost = cost

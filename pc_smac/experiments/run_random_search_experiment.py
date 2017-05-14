@@ -11,7 +11,7 @@ from pc_smac.pc_smac.random_search.random_search import RandomSearch, TreeRandom
 from pc_smac.pc_smac.utils.statistics import Statistics
 
 
-def run_random_search(stamp, data_path, version, wallclock_limit, memory_limit, cutoff, splitting_number, random_splitting_enabled,
+def run_random_search(stamp, data_path, version, wallclock_limit, run_limit, memory_limit, cutoff, splitting_number, random_splitting_enabled,
                       seed=None, output_dir=None, cache_directory=None, downsampling=None):
     # data set
     data_set = data_path.split("/")[-1]
@@ -27,6 +27,8 @@ def run_random_search(stamp, data_path, version, wallclock_limit, memory_limit, 
     try:
         if output_dir == None:
             output_dir = os.path.dirname(os.path.abspath(__file__)) + "/results/"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
     except FileExistsError:
         pass
 
@@ -63,7 +65,8 @@ def run_random_search(stamp, data_path, version, wallclock_limit, memory_limit, 
     statistics = Statistics(stamp,
                             output_dir,
                             information=info,
-                            total_runtime=wallclock_limit)
+                            total_runtime=wallclock_limit,
+                            run_limit=run_limit)
     statistics.clean_files()
 
     # The pipeline parts that can get cached
@@ -138,6 +141,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--version", type=str, help="Random search version")
     parser.add_argument("-w", "--wallclock", type=int, help="Wallclock limit")
+    parser.add_argument("-r", "--run_limit", type=int, default=10000, help="Run limit")
     parser.add_argument("-m", "--memory", type=int, help="Memory limit")
     parser.add_argument("-c", "--cutoff", type=int, help="Cutoff")
     parser.add_argument("-l", "--location", type=str, help="Data location")
@@ -156,6 +160,7 @@ if __name__ == "__main__":
                       data_path=args.location,
                       version=args.version,
                       wallclock_limit=args.wallclock,
+                      run_limit=args.run_limit,
                       memory_limit=args.memory,
                       cutoff=args.cutoff,
                       splitting_number=args.splitting_number,
