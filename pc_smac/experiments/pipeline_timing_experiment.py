@@ -172,7 +172,7 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         statistics.start_timer()
 
         # Run pipeline
-        pipeline_runner.run(config=configs[i], instance=None, seed=None)
+        pipeline_runner.run(config=configs[i], instance=1, seed=None)
 
         # Save statistics
         #statistics.save()
@@ -196,7 +196,7 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         statistics.start_timer()
 
         # Run pipeline
-        pipeline_runner.run(config=configs[i], instance=None, seed=None)
+        pipeline_runner.run(config=configs[i], instance=1, seed=None)
 
         # Save statistics
         # statistics.save()
@@ -223,7 +223,7 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         statistics.start_timer()
 
         # Run pipeline
-        cached_pipeline_runner.run(config=configs[i], instance=None, seed=None)
+        cached_pipeline_runner.run(config=configs[i], instance=1, seed=None)
 
         # Save statistics
         #statistics.save()
@@ -247,7 +247,7 @@ def run_experiment_on_data(stamp, data_path, output_dir, pipeline_space, configs
         statistics.start_timer()
 
         # Run pipeline
-        cached_pipeline_runner.run(config=configs[i], instance=None, seed=None)
+        cached_pipeline_runner.run(config=configs[i], instance=1, seed=None)
 
         # clean cache
         cached_pipeline_runner.clean_cache()

@@ -16,7 +16,7 @@ class ConfigSpaceBuilder:
     def __init__(self, pipeline_space):
         self.pipeline_space = pipeline_space
 
-    def build_config_space(self, seed=None, dataset_properties=None):
+    def build_config_space(self, seed=None, dataset_properties={}):
         cs = ConfigurationSpace() if seed == None else ConfigurationSpace(seed=seed)
         pipeline = self.pipeline_space.get_pipeline_steps_names_and_objects()
         vanilla_cs = self._get_hyperparameter_search_space(cs, dataset_properties,
@@ -36,7 +36,7 @@ class ConfigSpaceBuilder:
     #             cs.add_configuration_space(node.get_name(), sub_cs)
     #     return cs
 
-    def _get_hyperparameter_search_space_pipeline_step(self, ps, include=None, dataset_properties=None):
+    def _get_hyperparameter_search_space_pipeline_step(self, ps, include=None, dataset_properties={}):
         if include is not None:
             nodes = include
         else:
