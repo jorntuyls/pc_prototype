@@ -166,6 +166,9 @@ class PCSMBO(BaseSolver):
                                                   num_configurations_by_local_search=10,
                                                   double_intensification=self.double_intensification)
 
+                print([type(challenger) for challenger in challengers])
+                #print([type(challenger) for challenger in challengers if str(type(challenger)) != "<class 'ConfigSpace.configuration_space.Configuration'>"])
+
                 time_spend = time.time() - start_time
                 logging.debug(
                     "Time spend to choose next configurations: %.2f sec" % (time_spend))
