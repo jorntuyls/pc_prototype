@@ -91,6 +91,7 @@ class PCSMBO(BaseSolver):
 
         self.select_configuration = select_configuration
         self.double_intensification = double_intensification
+        print("Initialize PCSMBO: double intensification: {}".format(self.double_intensification))
 
     def run(self):
         '''
@@ -167,6 +168,7 @@ class PCSMBO(BaseSolver):
                                                   double_intensification=self.double_intensification)
 
                 print([type(challenger) for challenger in challengers])
+                print("double intensification: {}".format(self.double_intensification))
                 #print([type(challenger) for challenger in challengers if str(type(challenger)) != "<class 'ConfigSpace.configuration_space.Configuration'>"])
 
                 time_spend = time.time() - start_time
