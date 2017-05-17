@@ -39,7 +39,7 @@ class Driver:
         except FileExistsError:
             pass
 
-    def initialize(self, stamp, acq_func, mrs, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling, intensification_fold_size):
+    def initialize(self, stamp, acq_func, double_intensification, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling, intensification_fold_size):
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
@@ -149,17 +149,19 @@ class Driver:
             acq_func_name=acq_func,
             model_target_names=model_target_names,
             logging_directory=trajectory_path,
-            mrs=mrs,
+            double_intensification=double_intensification,
             constant_pipeline_steps=constant_pipeline_steps,
             variable_pipeline_steps=variable_pipeline_steps,
             cached_pipeline_steps=cached_pipeline_steps,
-            intensification_instances=intensification_instances)
+            intensification_instances=intensification_instances,
+            num_marginalized_configurations_by_random_search=20,
+            num_configs_for_marginalization=40)
 
 
     def run(self,
             stamp=time.time(),
             acq_func="ei",
-            mrs=False,
+            double_intensification=False,
             wallclock_limit=3600,
             runcount_limit=10000,
             memory_limit=6000,
@@ -173,7 +175,7 @@ class Driver:
         # Initialize SMBO
         self.initialize(stamp=stamp,
                         acq_func=acq_func,
-                        mrs=mrs,
+                        double_intensification=double_intensification,
                         cache_directory=cache_directory,
                         wallclock_limit=wallclock_limit,
                         runcount_limit=runcount_limit,

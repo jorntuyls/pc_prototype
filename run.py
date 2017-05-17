@@ -4,12 +4,13 @@ import argparse
 from pc_smac.pc_smac.pc_driver import Driver
 
 
-def run_smac(acq_func, mrs, wallclock_limit, runcount_limit, memory_limit, cutoff, data_path, stamp, output_dir, cache_directory,
+def run_smac(acq_func, double_intensification, wallclock_limit, runcount_limit, memory_limit, cutoff, data_path, stamp, output_dir, cache_directory,
              downsampling, intensification_fold_size, pipeline_space_string):
     d = Driver(data_path=data_path, output_dir=output_dir, pipeline_space_string=pipeline_space_string)
+    double_intensification_bool = True if double_intensification == 1 else False
     return d.run(stamp=stamp,
                  acq_func=acq_func,
-                 mrs=mrs,
+                 double_intensification=double_intensification_bool,
                  wallclock_limit=wallclock_limit,
                  runcount_limit=runcount_limit,
                  memory_limit=memory_limit,
@@ -22,7 +23,7 @@ def run_smac(acq_func, mrs, wallclock_limit, runcount_limit, memory_limit, cutof
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--acquisition", type=str, help="Acquisition value, in ['ei', 'eips', 'pceips']")
-    parser.add_argument("-mrs", "--multi_step_random_search", type=bool, default=False, help="Is multi-step random search enabled")
+    parser.add_argument("-di", "--double_intensification", type=int, default=0, help="Is double intensification enabled?")
     parser.add_argument("-w", "--wallclock", type=int, help="Wallclock limit")
     parser.add_argument("-r", "--runlimit", type=int, default=10000, help="Limitation of the number of runs")
     parser.add_argument("-m", "--memory", type=int, default=6000, help="Memory limit")
@@ -39,7 +40,7 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     run_smac(args.acquisition,
-             args.multi_step_random_search,
+             args.double_intensification,
              args.wallclock,
              args.runlimit,
              args.memory,

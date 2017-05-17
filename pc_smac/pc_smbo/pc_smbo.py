@@ -41,7 +41,7 @@ class PCSMBO(BaseSolver):
                  acquisition_func: AbstractAcquisitionFunction,
                  rng: np.random.RandomState,
                  select_configuration: SelectConfigurations,
-                 mrs: bool):
+                 double_intensification: bool):
         '''
         Interface that contains the main Bayesian optimization loop
 
@@ -90,7 +90,7 @@ class PCSMBO(BaseSolver):
         self.rng = rng
 
         self.select_configuration = select_configuration
-        self.mrs = mrs
+        self.double_intensification = double_intensification
 
     def run(self):
         '''
@@ -123,36 +123,62 @@ class PCSMBO(BaseSolver):
             print("Shapes: {}, {}".format(X.shape, Y.shape))
 
             self.logger.debug("Search for next configuration")
-            # get all found configurations sorted according to acq
-            challengers_smac, challengers_random = self.select_configuration.run(X, Y,
-                                                        incumbent=self.incumbent,
-                                                        num_configurations_by_random_search_sorted=100,
-                                                        num_configurations_by_local_search=10,
-                                                        mrs=self.mrs)
+            if self.double_intensification:
+                # get all found configurations sorted according to acq
+                challengers_smac, challengers_random = \
+                    self.select_configuration.run(X, Y,
+                                                  incumbent=self.incumbent,
+                                                  num_configurations_by_random_search_sorted=100,
+                                                  num_configurations_by_local_search=10,
+                                                  double_intensification=self.double_intensification)
 
-            time_spend = time.time() - start_time
-            logging.debug(
-                "Time spend to choose next configurations: %.2f sec" % (time_spend))
+                time_spend = time.time() - start_time
+                logging.debug(
+                    "Time spend to choose next configurations: %.2f sec" % (time_spend))
 
-            self.logger.debug("Intensify")
+                self.logger.debug("Intensify")
 
-            start_time = time.time()
-            self.incumbent, inc_perf = self.intensifier.intensify(
-                challengers=challengers_random,
-                incumbent=self.incumbent,
-                run_history=self.runhistory,
-                aggregate_func=self.aggregate_func,
-                time_bound=max(0.01, time_spend / 2.),
-                min_number_of_runs=1)
-            stop_time = time.time()
+                start_time_random = time.time()
+                self.incumbent, inc_perf = self.intensifier.intensify(
+                    challengers=challengers_random,
+                    incumbent=self.incumbent,
+                    run_history=self.runhistory,
+                    aggregate_func=self.aggregate_func,
+                    time_bound=max(0.01, time_spend / 2.),
+                    min_number_of_runs=1)
+                time_spend_random = time.time() - start_time_random
 
-            self.incumbent, inc_perf = self.intensifier.intensify(
-                challengers=challengers_smac,
-                incumbent=self.incumbent,
-                run_history=self.runhistory,
-                aggregate_func=self.aggregate_func,
-                time_bound=max(0.01, stop_time-start_time),
-                min_number_of_runs=1)
+                print("IN BETWEEN INTENSIFICATIONS")
+
+                self.incumbent, inc_perf = self.intensifier.intensify(
+                    challengers=challengers_smac,
+                    incumbent=self.incumbent,
+                    run_history=self.runhistory,
+                    aggregate_func=self.aggregate_func,
+                    time_bound=max(0.01, time_spend_random),
+                    min_number_of_runs=1)
+            else:
+                # get all found configurations sorted according to acq
+                challengers = \
+                    self.select_configuration.run(X, Y,
+                                                  incumbent=self.incumbent,
+                                                  num_configurations_by_random_search_sorted=100,
+                                                  num_configurations_by_local_search=10,
+                                                  double_intensification=self.double_intensification)
+
+                time_spend = time.time() - start_time
+                logging.debug(
+                    "Time spend to choose next configurations: %.2f sec" % (time_spend))
+
+                self.logger.debug("Intensify")
+
+                self.incumbent, inc_perf = self.intensifier.intensify(
+                    challengers=challengers,
+                    incumbent=self.incumbent,
+                    run_history=self.runhistory,
+                    aggregate_func=self.aggregate_func,
+                    time_bound=max(0.01, time_spend),
+                    min_number_of_runs=2)
 
             print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
 

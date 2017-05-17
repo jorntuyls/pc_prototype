@@ -25,7 +25,7 @@ class SMBOBuilder:
         pass
 
     def build_pc_smbo(self, tae_runner, stats, scenario, runhistory, aggregate_func, acq_func_name, model_target_names,
-                        logging_directory, mrs=False, constant_pipeline_steps=None, variable_pipeline_steps=None,
+                        logging_directory, double_intensification=False, constant_pipeline_steps=None, variable_pipeline_steps=None,
                       cached_pipeline_steps=None,
                       intensification_instances=None, num_marginalized_configurations_by_random_search=20, num_configs_for_marginalization=40):
 
@@ -238,6 +238,6 @@ class SMBOBuilder:
                       acquisition_func=acquisition_func,
                       rng=rng,
                       select_configuration=select_configuration,
-                      mrs=mrs)
+                      double_intensification=double_intensification)
 
         return smbo
