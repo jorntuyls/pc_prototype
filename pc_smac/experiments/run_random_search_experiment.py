@@ -73,7 +73,7 @@ def run_random_search(stamp, data_path, version, wallclock_limit, run_limit, mem
     cached_pipeline_steps = [["one_hot_encoder", "imputation", "rescaling",
                                                 "balancing", "feature_preprocessor"]]
 
-    num_cross_validation_folds = 5
+    num_cross_validation_folds = 10
     # Build pipeline runner
     if version == '2step':
         pipeline_runner = CachedPipelineRunner(data=data,
