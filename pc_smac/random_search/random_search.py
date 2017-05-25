@@ -239,12 +239,7 @@ class SigmoidRandomSearch(RandomSearch):
         random_timing = 0
         incumbent_timing = 0
         while not(self.statistics.is_budget_exhausted()):
-            print(incumbent_lst)
-            print(random_timing)
-            print(incumbent_timing)
-            print(self.splitting_number)
             sigmoid_value = 1.0/(1.0 + np.exp(-len(incumbent_lst)/self.splitting_number+2))
-            print("Sigmoid: {}".format(sigmoid_value))
             if incumbent_lst != [] and incumbent_timing < sigmoid_value * (incumbent_timing + random_timing):
                 start_config = random.choice(incumbent_lst)
                 challenger_lst = []
