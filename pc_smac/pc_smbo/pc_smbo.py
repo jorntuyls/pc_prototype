@@ -165,7 +165,7 @@ class PCSMBO(BaseSolver):
                                                   num_configurations_by_random_search_sorted=100,
                                                   num_configurations_by_local_search=10,
                                                   double_intensification=self.double_intensification)
-                
+
                 time_spend = time.time() - start_time
                 logging.debug(
                     "Time spend to choose next configurations: %.2f sec" % (time_spend))

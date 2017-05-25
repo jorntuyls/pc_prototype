@@ -7,7 +7,7 @@ from pc_smac.pc_smac.pipeline.pipeline_runner import PipelineRunner, CachedPipel
 from pc_smac.pc_smac.pipeline_space.pipeline_space import PipelineSpace
 from pc_smac.pc_smac.pipeline_space.pipeline_step import OneHotEncodingStep, ImputationStep, RescalingStep, \
     BalancingStep, PreprocessingStep, ClassificationStep
-from pc_smac.pc_smac.random_search.random_search import RandomSearch, TreeRandomSearch
+from pc_smac.pc_smac.random_search.random_search import RandomSearch, TreeRandomSearch, SigmoidRandomSearch
 from pc_smac.pc_smac.utils.statistics import Statistics
 
 
@@ -95,6 +95,26 @@ def run_random_search(stamp, data_path, version, wallclock_limit, run_limit, mem
                                          variable_pipeline_steps=["classifier"],
                                          splitting_number=splitting_number,
                                          random_splitting_enabled=random_splitting_enabled)
+    elif version == 'sigmoid':
+        pipeline_runner = CachedPipelineRunner(data=data,
+                                               data_info=dataset_properties,
+                                               pipeline_space=pipeline_space,
+                                               runhistory=None,
+                                               cached_pipeline_steps=cached_pipeline_steps,
+                                               statistics=statistics,
+                                               cache_directory=cache_directory,
+                                               downsampling=downsampling,
+                                               num_cross_validation_folds=num_cross_validation_folds)
+        random_search = SigmoidRandomSearch(config_space=config_space,
+                                         pipeline_runner=pipeline_runner,
+                                         wallclock_limit=wallclock_limit,
+                                         memory_limit=memory_limit,
+                                         statistics=statistics,
+                                         constant_pipeline_steps=["one_hot_encoder", "imputation", "rescaling",
+                                                                  "balancing", "feature_preprocessor"],
+                                         variable_pipeline_steps=["classifier"],
+                                         splitting_number=splitting_number,
+                                         random_splitting_enabled=False)
     else:
         pipeline_runner = PipelineRunner(data=data,
                                          data_info=dataset_properties,
