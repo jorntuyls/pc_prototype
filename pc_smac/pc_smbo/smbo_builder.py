@@ -59,7 +59,7 @@ class SMBOBuilder:
 
         # Build acquisition function, runhistory2epm and local search
         num_params = len(scenario.cs.get_hyperparameters())
-        if acq_func_name == "ei":
+        if acq_func_name in ["ei", "pc-ei"]:
             acquisition_func = EI(model)
             acq_func_wrapper = PCAquisitionFunctionWrapper(acquisition_func=acquisition_func,
                                                            config_space=scenario.cs,
@@ -103,7 +103,7 @@ class SMBOBuilder:
                                                                           variable_pipeline_steps=variable_pipeline_steps,
                                                                           num_marginalized_configurations_by_random_search=num_marginalized_configurations_by_random_search,
                                                                           num_configs_for_marginalization=num_configs_for_marginalization)
-        elif acq_func_name == 'eips':
+        elif acq_func_name in ['eips', 'pc-eips']:
             acquisition_func = EIPS(model)
             acq_func_wrapper = PCAquisitionFunctionWrapper(acquisition_func=acquisition_func,
                                                     config_space=scenario.cs,

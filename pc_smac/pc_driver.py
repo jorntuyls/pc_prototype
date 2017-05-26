@@ -96,9 +96,9 @@ class Driver:
                                             num_cross_validation_folds=intensification_fold_size)
 
         # Choose acquisition function
-        if acq_func in ["eips", "m-eips", "pc-m-eips", "pceips", "pc-m-pceips"]:
+        if acq_func in ["eips", "pc-eips", "m-eips", "pc-m-eips", "pceips", "pc-m-pceips"]:
             model_target_names = ['cost', 'time']
-        elif acq_func in ["ei", "m-ei", "pc-m-ei"]:
+        elif acq_func in ["ei", "pc-ei", "m-ei", "pc-m-ei"]:
             model_target_names = ['cost']
         else:
             # Not a valid acquisition function
