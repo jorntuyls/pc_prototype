@@ -9,7 +9,8 @@ from smac.epm.rf_with_instances import RandomForestWithInstances
 from smac.epm.uncorrelated_mo_rf_with_instances import UncorrelatedMultiObjectiveRandomForestWithInstances
 from smac.epm.random_epm import RandomEPM
 from smac.intensification.intensification import Intensifier
-from smac.optimizer.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization, SelectConfigurationsRandom
+from smac.optimizer.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization, \
+                                            SelectConfigurationsRandom, SelectConfigurationsMRS
 from smac.optimizer.acquisition_func_wrapper import PCAquisitionFunctionWrapper, PCAquisitionFunctionWrapperWithCachingReduction
 from smac.initial_design.random_configuration_design import RandomConfiguration
 from smac.initial_design.multi_config_initial_design import MultiConfigInitialDesign
@@ -28,7 +29,8 @@ class SMBOBuilder:
     def build_pc_smbo(self, tae_runner, stats, scenario, runhistory, aggregate_func, acq_func_name, model_target_names,
                         logging_directory, double_intensification=False, constant_pipeline_steps=None, variable_pipeline_steps=None,
                       cached_pipeline_steps=None, seed=None,
-                      intensification_instances=None, num_marginalized_configurations_by_random_search=20, num_configs_for_marginalization=40):
+                      intensification_instances=None, num_marginalized_configurations_by_random_search=20, num_configs_for_marginalization=40,
+                      random_splitting_number=5, random_splitting_enabled=False):
 
         # Build intensifier
         rng = np.random.RandomState(seed)
@@ -203,6 +205,14 @@ class SMBOBuilder:
             runhistory2epm = RunHistory2EPM4Cost(scenario, num_params,
                                                  success_states=[StatusType.SUCCESS])
             select_configuration = SelectConfigurationsRandom(scenario=scenario)
+        elif acq_func_name == "pc-roar-mrs":
+            runhistory2epm = RunHistory2EPM4Cost(scenario, num_params,
+                                                 success_states=[StatusType.SUCCESS])
+            select_configuration = SelectConfigurationsMRS(scenario=scenario,
+                                                           constant_pipeline_steps=constant_pipeline_steps,
+                                                           variable_pipeline_steps=variable_pipeline_steps,
+                                                           splitting_number=random_splitting_number,
+                                                           random_splitting_enabled=random_splitting_enabled)
         else:
             # Not a valid acquisition function
             raise ValueError("The provided acquisition function is not valid")

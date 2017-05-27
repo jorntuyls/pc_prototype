@@ -39,7 +39,9 @@ class Driver:
         except FileExistsError:
             pass
 
-    def initialize(self, stamp, acq_func, double_intensification, cache_directory, wallclock_limit, runcount_limit, cutoff, memory_limit, downsampling, intensification_fold_size):
+    def initialize(self, stamp, acq_func, double_intensification, cache_directory, wallclock_limit, runcount_limit,
+                   cutoff, memory_limit, downsampling, intensification_fold_size,
+                   random_splitting_number, random_splitting_enabled):
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
@@ -100,7 +102,7 @@ class Driver:
             model_target_names = ['cost', 'time']
         elif acq_func in ["ei", "pc-ei", "m-ei", "pc-m-ei"]:
             model_target_names = ['cost']
-        elif acq_func in ["roar"]:
+        elif acq_func in ["roar", "pc-roar-mrs"]:
             model_target_names = []
         else:
             # Not a valid acquisition function
@@ -157,7 +159,9 @@ class Driver:
             cached_pipeline_steps=cached_pipeline_steps,
             intensification_instances=intensification_instances,
             num_marginalized_configurations_by_random_search=20,
-            num_configs_for_marginalization=40)
+            num_configs_for_marginalization=40,
+            random_splitting_number=random_splitting_number,
+            random_splitting_enabled=random_splitting_enabled)
 
 
     def run(self,
@@ -170,7 +174,9 @@ class Driver:
             cutoff=3600,
             cache_directory=None,
             downsampling=None,
-            intensification_fold_size=None):
+            intensification_fold_size=None,
+            random_splitting_number=5,
+            random_splitting_enabled=False):
 
         random_leaf_size = None
 
@@ -184,7 +190,9 @@ class Driver:
                         memory_limit=memory_limit,
                         cutoff=cutoff,
                         downsampling=downsampling,
-                        intensification_fold_size=intensification_fold_size)
+                        intensification_fold_size=intensification_fold_size,
+                        random_splitting_number=random_splitting_number,
+                        random_splitting_enabled=random_splitting_enabled)
 
         # clean trajectory files
         self._clean_trajectory_files()

@@ -156,6 +156,7 @@ class PCSMBO(BaseSolver):
                                                   num_configurations_by_random_search_sorted=100,
                                                   num_configurations_by_local_search=10,
                                                   double_intensification=self.double_intensification)
+                print("Challengers: {}".format(challengers))
 
                 time_spend = time.time() - start_time
                 logging.debug(
@@ -169,7 +170,7 @@ class PCSMBO(BaseSolver):
                     run_history=self.runhistory,
                     aggregate_func=self.aggregate_func,
                     time_bound=max(0.01, time_spend),
-                    min_number_of_runs=1)
+                    min_number_of_runs=2)
 
             print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
 

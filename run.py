@@ -5,9 +5,10 @@ from pc_smac.pc_smac.pc_driver import Driver
 
 
 def run_smac(acq_func, double_intensification, wallclock_limit, runcount_limit, memory_limit, cutoff, data_path, stamp, output_dir, cache_directory,
-             downsampling, intensification_fold_size, pipeline_space_string):
+             downsampling, intensification_fold_size, pipeline_space_string, random_spliting_number, random_spliting_enabled):
     d = Driver(data_path=data_path, output_dir=output_dir, pipeline_space_string=pipeline_space_string)
     double_intensification_bool = True if double_intensification == 1 else False
+    random_spliting_enabled_bool = True if random_spliting_enabled == 1 else False
     return d.run(stamp=stamp,
                  acq_func=acq_func,
                  double_intensification=double_intensification_bool,
@@ -17,7 +18,9 @@ def run_smac(acq_func, double_intensification, wallclock_limit, runcount_limit, 
                  cutoff=cutoff,
                  cache_directory=cache_directory,
                  downsampling=downsampling,
-                 intensification_fold_size=intensification_fold_size)
+                 intensification_fold_size=intensification_fold_size,
+                 random_splitting_number=random_spliting_number,
+                 random_splitting_enabled=random_spliting_enabled_bool)
 
 
 def parse_arguments():
@@ -35,6 +38,8 @@ def parse_arguments():
     parser.add_argument("-ds", "--downsampling", type=int, default=None, help="Downsampling of data")
     parser.add_argument("-ifs", "--intensification_fold_size", type=int, default=None, help="Intensification fold size")
     parser.add_argument("-ps", "--pipeline_space", type=str, default=None, help="Scenario to execute")
+    parser.add_argument("-sn", "--splitting_number", type=int, default=5, help="Splitting number for MRS")
+    parser.add_argument("-rs", "--random_splitting", type=int, default=0, help="Int to indicate if random splitting is enable in MRS")
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -51,6 +56,8 @@ if __name__ == "__main__":
              args.cachedir,
              args.downsampling,
              args.intensification_fold_size,
-             args.pipeline_space)
+             args.pipeline_space,
+             args.splitting_number,
+             args.random_splitting)
 
 
