@@ -54,11 +54,13 @@ class CachedPipeline(Pipeline):
                 #hash_Xt = 1
                 previous_transformers = self.steps[:idx_tr]
                 print(previous_transformers, self.run_instance)
+                cache_hits_before = self.pipeline_info.get_cache_hits()[1]
                 Xt, output_dir = self._fit_single_transform_cached(transform, name, previous_transformers, self.run_instance, idx_tr, Xt,
                                                                     y, **fit_params_steps[name])
                 timing = time.time() - start_time
                 # TODO Timing > 1
-                if timing > self.min_runtime_for_caching or self.pipeline_info.get_cache_hits()[1] == self.pipeline_info.get_cache_hits()[0]:
+                cache_hits_after = self.pipeline_info.get_cache_hits()[1]
+                if timing > self.min_runtime_for_caching or (cache_hits_after > cache_hits_before):
                     self.pipeline_info.add_cached_preprocessor_timing(name, timing)
                     print("Cache output directory: {}, timing: {}".format(output_dir, timing))
                 else:
