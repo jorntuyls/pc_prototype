@@ -100,6 +100,8 @@ class Driver:
             model_target_names = ['cost', 'time']
         elif acq_func in ["ei", "pc-ei", "m-ei", "pc-m-ei"]:
             model_target_names = ['cost']
+        elif acq_func in ["roar"]:
+            model_target_names = []
         else:
             # Not a valid acquisition function
             raise ValueError("The provided acquisition function is not valid")

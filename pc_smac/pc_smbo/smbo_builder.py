@@ -7,8 +7,9 @@ from smac.optimizer.acquisition import EI, EIPS, PCEIPS
 from smac.optimizer.local_search import LocalSearch
 from smac.epm.rf_with_instances import RandomForestWithInstances
 from smac.epm.uncorrelated_mo_rf_with_instances import UncorrelatedMultiObjectiveRandomForestWithInstances
+from smac.epm.random_epm import RandomEPM
 from smac.intensification.intensification import Intensifier
-from smac.optimizer.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization
+from smac.optimizer.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization, SelectConfigurationsRandom
 from smac.optimizer.acquisition_func_wrapper import PCAquisitionFunctionWrapper, PCAquisitionFunctionWrapperWithCachingReduction
 from smac.initial_design.random_configuration_design import RandomConfiguration
 from smac.initial_design.multi_config_initial_design import MultiConfigInitialDesign
@@ -26,11 +27,11 @@ class SMBOBuilder:
 
     def build_pc_smbo(self, tae_runner, stats, scenario, runhistory, aggregate_func, acq_func_name, model_target_names,
                         logging_directory, double_intensification=False, constant_pipeline_steps=None, variable_pipeline_steps=None,
-                      cached_pipeline_steps=None,
+                      cached_pipeline_steps=None, seed=None,
                       intensification_instances=None, num_marginalized_configurations_by_random_search=20, num_configs_for_marginalization=40):
 
         # Build intensifier
-        rng = np.random.RandomState()
+        rng = np.random.RandomState(seed)
         traj_logger = TrajLogger(logging_directory, stats)
         intensifier = Intensifier(tae_runner=tae_runner,
                                   stats=stats,
@@ -53,8 +54,10 @@ class SMBOBuilder:
                                                                        types=types)
             # UncorrelatedMultiObjectiveRandomForestWithInstances(target_names=model_target_names,
             #                                                    types=types)
-        else:
+        elif len(model_target_names) == 1:
             model = RandomForestWithInstances(types=types, bounds=bounds)
+        else:
+            model = RandomEPM(rng=rng)
             # model = RandomForestWithInstances(types=types)
 
         # Build acquisition function, runhistory2epm and local search
@@ -196,6 +199,10 @@ class SMBOBuilder:
                                                                           variable_pipeline_steps=variable_pipeline_steps,
                                                                           num_marginalized_configurations_by_random_search=num_marginalized_configurations_by_random_search,
                                                                           num_configs_for_marginalization=num_configs_for_marginalization)
+        elif acq_func_name == "roar":
+            runhistory2epm = RunHistory2EPM4Cost(scenario, num_params,
+                                                 success_states=[StatusType.SUCCESS])
+            select_configuration = SelectConfigurationsRandom(scenario=scenario)
         else:
             # Not a valid acquisition function
             raise ValueError("The provided acquisition function is not valid")
@@ -234,8 +241,6 @@ class SMBOBuilder:
                       aggregate_func=aggregate_func,
                       num_run=num_run,
                       model=model,
-                      acq_optimizer=local_search,
-                      acquisition_func=acquisition_func,
                       rng=rng,
                       select_configuration=select_configuration,
                       double_intensification=double_intensification)

@@ -10,7 +10,6 @@ import typing
 import time
 import random
 
-from smac.optimizer.acquisition import AbstractAcquisitionFunction
 from smac.optimizer.base_solver import BaseSolver
 from smac.epm.rf_with_instances import RandomForestWithInstances
 from smac.optimizer.local_search import LocalSearch
@@ -37,8 +36,6 @@ class PCSMBO(BaseSolver):
                  aggregate_func: callable,
                  num_run: int,
                  model: RandomForestWithInstances,
-                 acq_optimizer: LocalSearch,
-                 acquisition_func: AbstractAcquisitionFunction,
                  rng: np.random.RandomState,
                  select_configuration: SelectConfigurations,
                  double_intensification: bool):
@@ -65,10 +62,6 @@ class PCSMBO(BaseSolver):
             id of this run (used for pSMAC)
         model: RandomForestWithInstances
             empirical performance model (right now, we support only RandomForestWithInstances)
-        acq_optimizer: LocalSearch
-            optimizer on acquisition function (right now, we support only a local search)
-        acquisition_function : AcquisitionFunction
-            Object that implements the AbstractAcquisitionFunction (i.e., infill criterion for acq_optimizer)
         rng: np.random.RandomState
             Random number generator
         '''
@@ -85,8 +78,6 @@ class PCSMBO(BaseSolver):
         self.aggregate_func = aggregate_func
         self.num_run = num_run
         self.model = model
-        self.acq_optimizer = acq_optimizer
-        self.acquisition_func = acquisition_func
         self.rng = rng
 
         self.select_configuration = select_configuration
@@ -178,7 +169,7 @@ class PCSMBO(BaseSolver):
                     run_history=self.runhistory,
                     aggregate_func=self.aggregate_func,
                     time_bound=max(0.01, time_spend),
-                    min_number_of_runs=2)
+                    min_number_of_runs=1)
 
             print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
 
