@@ -10,14 +10,14 @@ from smac.epm.uncorrelated_mo_rf_with_instances import UncorrelatedMultiObjectiv
 from smac.epm.random_epm import RandomEPM
 from smac.intensification.intensification import Intensifier
 from smac.optimizer.select_configurations import SelectConfigurations, SelectConfigurationsWithMarginalization, \
-                                            SelectConfigurationsRandom, SelectConfigurationsMRS
+                                            SelectConfigurationsRandom, SelectConfigurationsMRS, SelectConfigurationsSigmoidRS
 from smac.optimizer.acquisition_func_wrapper import PCAquisitionFunctionWrapper, PCAquisitionFunctionWrapperWithCachingReduction
 from smac.initial_design.random_configuration_design import RandomConfiguration
 from smac.initial_design.multi_config_initial_design import MultiConfigInitialDesign
 from smac.utils.io.traj_logging import TrajLogger
 from smac.utils.util_funcs import get_types
 
-from pc_smac.pc_smac.pc_smbo.pc_smbo import PCSMBO
+from pc_smac.pc_smac.pc_smbo.pc_smbo import PCSMBO, PCSMBOSigmoidRandomSearch
 
 
 
@@ -213,6 +213,13 @@ class SMBOBuilder:
                                                            variable_pipeline_steps=variable_pipeline_steps,
                                                            splitting_number=random_splitting_number,
                                                            random_splitting_enabled=random_splitting_enabled)
+        elif acq_func_name == "pc-roar-sigmoid-rs":
+            runhistory2epm = RunHistory2EPM4Cost(scenario, num_params,
+                                                 success_states=[StatusType.SUCCESS])
+            select_configuration = SelectConfigurationsSigmoidRS(scenario=scenario,
+                                                                 constant_pipeline_steps=constant_pipeline_steps,
+                                                                 variable_pipeline_steps=variable_pipeline_steps,
+                                                                 fraction=random_splitting_number)
         else:
             # Not a valid acquisition function
             raise ValueError("The provided acquisition function is not valid")
@@ -242,17 +249,30 @@ class SMBOBuilder:
         num_run = rng.randint(1234567980)
 
         # Build pc_smbo
-        smbo = PCSMBO(scenario=scenario,
-                      stats=stats,
-                      initial_design=initial_design,
-                      runhistory=runhistory,
-                      runhistory2epm=runhistory2epm,
-                      intensifier=intensifier,
-                      aggregate_func=aggregate_func,
-                      num_run=num_run,
-                      model=model,
-                      rng=rng,
-                      select_configuration=select_configuration,
-                      double_intensification=double_intensification)
+        if acq_func_name not in ['pc-roar-sigmoid-rs']:
+            smbo = PCSMBO(scenario=scenario,
+                          stats=stats,
+                          initial_design=initial_design,
+                          runhistory=runhistory,
+                          runhistory2epm=runhistory2epm,
+                          intensifier=intensifier,
+                          aggregate_func=aggregate_func,
+                          num_run=num_run,
+                          model=model,
+                          rng=rng,
+                          select_configuration=select_configuration,
+                          double_intensification=double_intensification)
+        else:
+            smbo = PCSMBOSigmoidRandomSearch(scenario=scenario,
+                          stats=stats,
+                          initial_design=initial_design,
+                          runhistory=runhistory,
+                          runhistory2epm=runhistory2epm,
+                          intensifier=intensifier,
+                          aggregate_func=aggregate_func,
+                          num_run=num_run,
+                          model=model,
+                          rng=rng,
+                          select_configuration=select_configuration)
 
         return smbo

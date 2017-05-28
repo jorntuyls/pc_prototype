@@ -192,3 +192,140 @@ class PCSMBO(BaseSolver):
             self.stats.print_stats(debug_out=True)
 
         return self.incumbent
+
+
+class PCSMBOSigmoidRandomSearch(BaseSolver):
+
+    def __init__(self,
+                 scenario: Scenario,
+                 stats: Stats,
+                 initial_design: InitialDesign,
+                 runhistory: RunHistory,
+                 runhistory2epm: AbstractRunHistory2EPM,
+                 intensifier: Intensifier,
+                 aggregate_func: callable,
+                 num_run: int,
+                 model: RandomForestWithInstances,
+                 rng: np.random.RandomState,
+                 select_configuration: SelectConfigurations):
+        '''
+        Interface that contains the main Bayesian optimization loop
+
+        Parameters
+        ----------
+        scenario: smac.scenario.scenario.Scenario
+            Scenario object
+        stats: Stats
+            statistics object with configuration budgets
+        initial_design: InitialDesign
+            initial sampling design
+        runhistory: RunHistory
+            runhistory with all runs so far
+        runhistory2epm : AbstractRunHistory2EPM
+            Object that implements the AbstractRunHistory2EPM to convert runhistory data into EPM data
+        intensifier: Intensifier
+            intensification of new challengers against incumbent configuration (probably with some kind of racing on the instances)
+        aggregate_func: callable
+            how to aggregate the runs in the runhistory to get the performance of a configuration
+        num_run: int
+            id of this run (used for pSMAC)
+        model: RandomForestWithInstances
+            empirical performance model (right now, we support only RandomForestWithInstances)
+        rng: np.random.RandomState
+            Random number generator
+        '''
+        self.logger = logging.getLogger("SMBO")
+        self.incumbent = None
+
+        self.scenario = scenario
+        self.config_space = scenario.cs
+        self.stats = stats
+        self.initial_design = initial_design
+        self.runhistory = runhistory
+        self.rh2EPM = runhistory2epm
+        self.intensifier = intensifier
+        self.aggregate_func = aggregate_func
+        self.num_run = num_run
+        self.model = model
+        self.rng = rng
+
+        self.select_configuration = select_configuration
+
+    def run(self):
+        '''
+        Runs the Bayesian optimization loop
+
+        Returns
+        ----------
+        incumbent: np.array(1, H)
+            The best found configuration
+        '''
+        self.stats.start_timing()
+        try:
+            self.incumbent = self.initial_design.run()
+        except FirstRunCrashedException as err:
+            if self.scenario.abort_on_first_run_crash:
+                raise
+
+        # Main BO loop
+        iteration = 1
+        intensification_runtime = 0
+        while True:
+            if self.scenario.shared_model:
+                pSMAC.read(run_history=self.runhistory,
+                           output_directory=self.scenario.output_dir,
+                           configuration_space=self.config_space,
+                           logger=self.logger)
+
+            start_time = time.time()
+
+            X, Y = self.rh2EPM.transform(self.runhistory)
+            print("Shapes: {}, {}".format(X.shape, Y.shape))
+
+            self.logger.debug("Search for next configuration")
+            # get all found configurations sorted according to acq
+            challengers = \
+                self.select_configuration.run(X, Y,
+                                              incumbent=self.incumbent,
+                                              timing_previous_run=intensification_runtime,
+                                              num_configurations_by_random_search_sorted=100,
+                                              num_configurations_by_local_search=10)
+            print("Challengers: {}".format(challengers))
+
+            time_spend = time.time() - start_time
+            logging.debug(
+                "Time spend to choose next configurations: %.2f sec" % (time_spend))
+
+            self.logger.debug("Intensify")
+
+            start_time = time.time()
+            self.incumbent, inc_perf = self.intensifier.intensify(
+                challengers=challengers,
+                incumbent=self.incumbent,
+                run_history=self.runhistory,
+                aggregate_func=self.aggregate_func,
+                time_bound=max(0.01, time_spend),
+                min_number_of_runs=2)
+            intensification_runtime = time.time() - start_time
+            print("Intensification runtime: {}".format(intensification_runtime))
+
+            print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
+
+            if self.scenario.shared_model:
+                pSMAC.write(run_history=self.runhistory,
+                            output_directory=self.scenario.output_dir,
+                            num_run=self.num_run)
+
+            iteration += 1
+
+            logging.debug("Remaining budget: %f (wallclock), %f (ta costs), %f (target runs)" % (
+                self.stats.get_remaing_time_budget(),
+                self.stats.get_remaining_ta_budget(),
+                self.stats.get_remaining_ta_runs()))
+
+            if self.stats.is_budget_exhausted():
+                break
+
+            self.stats.print_stats(debug_out=True)
+
+        return self.incumbent
