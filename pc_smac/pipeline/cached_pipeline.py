@@ -53,7 +53,7 @@ class CachedPipeline(Pipeline):
                 #hash_Xt = hash(str(Xt))
                 #hash_Xt = 1
                 previous_transformers = self.steps[:idx_tr]
-                print(previous_transformers, self.run_instance)
+                #print(previous_transformers, self.run_instance)
                 cache_hits_before = self.pipeline_info.get_cache_hits()[1]
                 Xt, output_dir = self._fit_single_transform_cached(transform, name, previous_transformers, self.run_instance, idx_tr, Xt,
                                                                     y, **fit_params_steps[name])
@@ -62,12 +62,12 @@ class CachedPipeline(Pipeline):
                 cache_hits_after = self.pipeline_info.get_cache_hits()[1]
                 if timing > self.min_runtime_for_caching or (cache_hits_after > cache_hits_before):
                     self.pipeline_info.add_cached_preprocessor_timing(name, timing)
-                    print("Cache output directory: {}, timing: {}".format(output_dir, timing))
+                    #print("Cache output directory: {}, timing: {}".format(output_dir, timing))
                 else:
-                    print("Remove output directory: {}, timing: {}".format(output_dir, timing))
+                    #print("Remove output directory: {}, timing: {}".format(output_dir, timing))
                     start_time = time.time()
                     shutil.rmtree(output_dir, ignore_errors=True)
-                    print("Time to remove cache: {}".format(time.time() - start_time))
+                    #print("Time to remove cache: {}".format(time.time() - start_time))
             else:
                 Xt = self._fit_single_transform(transform, name, None, Xt, y, **fit_params_steps[name])
             self.pipeline_info.add_preprocessor_timing(name, time.time() - start_time)
@@ -140,7 +140,7 @@ class CachedPipeline(Pipeline):
         return self.steps[-1][-1].score(Xt, y, **score_params)
 
     def _single_transform(self, transform, X):
-        print("EVALUATE _SINGLE_TRANSFORM")
+        #print("EVALUATE _SINGLE_TRANSFORM")
         return transform.transform(X)
 
     def _fit_single_transform(self, transformer, name, weight, X, y, **fit_params):

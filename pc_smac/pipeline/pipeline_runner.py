@@ -62,8 +62,8 @@ class PipelineRunner(object):
                     all further additional run information
         """
 
-        print("start tae_runner")
-        print(config, instance, seed)
+        #print("start tae_runner")
+        #print(config, instance, seed)
         # start timer
         start_timer = time.time()
 
@@ -90,7 +90,7 @@ class PipelineRunner(object):
 
             # Keep track of timing infomration
             self.add_runtime_timing(self.runtime_timing, pipeline.pipeline_info.get_timing_flat())
-            print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
+            #print("TIMING: {}".format(pipeline.pipeline_info.get_timing()))
 
             # Validate pipeline
             y_pred = pipeline.predict(X_valid)
@@ -98,7 +98,7 @@ class PipelineRunner(object):
             bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'],
                                             task=self.data_info['task'])
             #print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
-            print("SCORE: {}".format(bac_score))
+            #print("SCORE: {}".format(bac_score))
             cost = 1 - bac_score
         except ValueError as v:
             exc_info = sys.exc_info()
@@ -109,7 +109,7 @@ class PipelineRunner(object):
 
         # Calculate score and total runtime
         runtime = time.time() - start_timer
-        print("cost: {}, time: {}".format(cost, runtime))
+        #print("cost: {}, time: {}".format(cost, runtime))
 
         # Add information of this run to statistics
         run_information = {
@@ -120,7 +120,7 @@ class PipelineRunner(object):
         }
         self.statistics.add_run(config.get_dictionary(), run_information, config_origin=config.origin)
 
-        print("stop tae_runner")
+        #print("stop tae_runner")
         return cost, additional_info
 
     def add_runtime_timing(self, dct, timing):
@@ -155,8 +155,8 @@ class CachedPipelineRunner(PipelineRunner):
 
     def run(self, config, instance, seed):
 
-        print("start cached tae_runner")
-        print(config, instance, seed)
+        #print("start cached tae_runner")
+        #print(config, instance, seed)
         # start timer
         start_timer = time.time()
 
@@ -165,7 +165,7 @@ class CachedPipelineRunner(PipelineRunner):
 
         pipeline = self.pipeline_builder.build_pipeline(config, run_instance=int(instance))
 
-        print("Num cross validation folds: {}".format(self.num_cross_validation_folds))
+        #print("Num cross validation folds: {}".format(self.num_cross_validation_folds))
 
         for i, (train_split, test_split) in enumerate(self.cv.split(self.X_train, self.y_train)):
             if i != int(instance):
@@ -194,11 +194,11 @@ class CachedPipelineRunner(PipelineRunner):
             y_pred = pipeline.predict(X_valid)
 
             #prec_score = precision_score(y_valid, y_pred, average='macro')
-            print(self.data_info)
+            #print(self.data_info)
             bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'], task=self.data_info['task'])
             #print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
             score_time = time.time() - score_start
-            print("TIME: {}, SCORE: {}".format(score_time, bac_score))
+            #print("TIME: {}, SCORE: {}".format(score_time, bac_score))
             cost = 1 - bac_score
         except ValueError as v:
             exc_info = sys.exc_info()
@@ -219,9 +219,9 @@ class CachedPipelineRunner(PipelineRunner):
 
         # Calculate score and total runtime
         runtime = time.time() - start_timer
-        print("cost: {}, time: {}".format(cost, runtime))
-        print("Total function evaluations: {}, cache hits: {}".format(self.cache_hits['total'],
-                                                                      self.cache_hits['cache_hits']))
+        #print("cost: {}, time: {}".format(cost, runtime))
+        #print("Total function evaluations: {}, cache hits: {}".format(self.cache_hits['total'],
+        #                                                              self.cache_hits['cache_hits']))
 
         # Calculate potential runtime reduction through caching for statistics
         if self.runhistory:
@@ -241,7 +241,7 @@ class CachedPipelineRunner(PipelineRunner):
         }
         self.statistics.add_run(config.get_dictionary(), run_information, config_origin=config.origin)
 
-        print("stop cached tae_runner")
+        #print("stop cached tae_runner")
         return cost, additional_info
 
     def clean_cache(self):

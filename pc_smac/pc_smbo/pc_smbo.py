@@ -280,7 +280,7 @@ class PCSMBOSigmoidRandomSearch(BaseSolver):
             start_time = time.time()
 
             X, Y = self.rh2EPM.transform(self.runhistory)
-            print("Shapes: {}, {}".format(X.shape, Y.shape))
+            #print("Shapes: {}, {}".format(X.shape, Y.shape))
 
             self.logger.debug("Search for next configuration")
             # get all found configurations sorted according to acq
@@ -290,7 +290,7 @@ class PCSMBOSigmoidRandomSearch(BaseSolver):
                                               timing_previous_run=intensification_runtime,
                                               num_configurations_by_random_search_sorted=100,
                                               num_configurations_by_local_search=10)
-            print("Challengers: {}".format(challengers))
+            #print("Challengers: {}".format(challengers))
 
             time_spend = time.time() - start_time
             logging.debug(
@@ -307,9 +307,9 @@ class PCSMBOSigmoidRandomSearch(BaseSolver):
                 time_bound=max(0.01, time_spend),
                 min_number_of_runs=2)
             intensification_runtime = time.time() - start_time
-            print("Intensification runtime: {}".format(intensification_runtime))
+            #print("Intensification runtime: {}".format(intensification_runtime))
 
-            print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
+            #print("Incumbent: {}, Performance: {}".format(self.incumbent, inc_perf))
 
             if self.scenario.shared_model:
                 pSMAC.write(run_history=self.runhistory,
