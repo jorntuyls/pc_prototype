@@ -111,7 +111,7 @@ class PCSMBO(BaseSolver):
             start_time = time.time()
 
             X, Y = self.rh2EPM.transform(self.runhistory)
-            print("Shapes: {}, {}".format(X.shape, Y.shape))
+            #print("Shapes: {}, {}".format(X.shape, Y.shape))
 
             self.logger.debug("Search for next configuration")
             if self.double_intensification:
@@ -139,7 +139,7 @@ class PCSMBO(BaseSolver):
                     min_number_of_runs=1)
                 time_spend_random = time.time() - start_time_random
 
-                print("IN BETWEEN INTENSIFICATIONS")
+                #print("IN BETWEEN INTENSIFICATIONS")
 
                 self.incumbent, inc_perf = self.intensifier.intensify(
                     challengers=challengers_smac,
@@ -156,7 +156,7 @@ class PCSMBO(BaseSolver):
                                                   num_configurations_by_random_search_sorted=100,
                                                   num_configurations_by_local_search=10,
                                                   double_intensification=self.double_intensification)
-                print("Challengers: {}".format(challengers))
+                #print("Challengers: {}".format(challengers))
 
                 time_spend = time.time() - start_time
                 logging.debug(
