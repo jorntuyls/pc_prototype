@@ -96,12 +96,12 @@ class PipelineRunner(object):
             # Validate pipeline
             y_pred = pipeline.predict(X_valid)
             #prec_score = precision_score(y_valid, y_pred, average='macro')
-            acc_score = accuracy_score(y_valid, y_pred=y_pred)
-            # bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'],
-            #                                task=self.data_info['task'])
+            #acc_score = accuracy_score(y_valid, y_pred=y_pred)
+            bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'],
+                                            task=self.data_info['task'])
             #print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
             #print("SCORE: {}".format(bac_score))
-            cost = 1 - acc_score
+            cost = 1 - bac_score
         except ValueError as v:
             exc_info = sys.exc_info()
             cost = 1234567890
@@ -196,13 +196,13 @@ class CachedPipelineRunner(PipelineRunner):
             y_pred = pipeline.predict(X_valid)
 
             #prec_score = precision_score(y_valid, y_pred, average='macro')
-            acc_score = accuracy_score(y_valid, y_pred=y_pred)
+            #acc_score = accuracy_score(y_valid, y_pred=y_pred)
 
-            #bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'], task=self.data_info['task'])
+            bac_score = calculate_bac_score(y_valid, y_pred, num_labels=self.data_info['label_num'], task=self.data_info['task'])
             #print("SCORES: PRECISION: {}, BAC: {}".format(prec_score, bac_score))
             score_time = time.time() - score_start
             #print("TIME: {}, SCORE: {}".format(score_time, bac_score))
-            cost = 1 - acc_score
+            cost = 1 - bac_score
         except ValueError as v:
             exc_info = sys.exc_info()
             cost = 1234567890
@@ -332,8 +332,8 @@ class PipelineTester(object):
             pipeline.fit(self.X_train, self.y_train)
             y_pred = pipeline.predict(self.X_test)
             #score = precision_score(self.y_test, y_pred, average='macro')
-            #score = calculate_bac_score(self.y_test, y_pred, num_labels=self.data_info['label_num'], task=self.data_info['task'])
-            score = accuracy_score(self.y_test, y_pred=y_pred)
+            score = calculate_bac_score(self.y_test, y_pred, num_labels=self.data_info['label_num'], task=self.data_info['task'])
+            #score = accuracy_score(self.y_test, y_pred=y_pred)
         except ValueError as v:
             score = 0
 
