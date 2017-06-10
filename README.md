@@ -6,10 +6,16 @@ SMAC for automatic algorithm selection and hyperparameter optimization of Scikit
 
 Use python 3.6.
 
+We recommend using an anaconda environment. Some commands on this page only work in an anconda environment. Therefore, first download and install [anaconda](https://www.continuum.io/downloads) or [miniconda](https://conda.io/miniconda.html). Then create an environment called pcsmac with following command
+```
+conda create -n pcsmac python=3.6
+```
+
 ### Unix
 
-Install SMAC3 with pipeline caching integration from command line.
+Install SMAC3 with pipeline caching integration from command line. Install SWIG for the C++ random forest.
 ```
+conda install swig
 git clone https://github.com/jtuyls/SMAC3_4_PC.git
 cd SMAC3_4_PC
 cat requirements.txt | xargs -n 1 -L 1 pip install
@@ -22,10 +28,11 @@ pip install -r requirements.txt
 
 ### MAC OS X
 
-For installation on Mac OS X there is a problem with installing SMAC3 as above. SMAC is dependenct on pyrfr that uses the gcc compiler for c++ while Mac OS X uses the clang compiler. Therefore use an anaconda environment and install a gcc compiler within anaconda.
+For installation on Mac OS X there is a problem with installing SMAC3 as above. SMAC is dependenct on pyrfr that uses the gcc compiler for c++ while Mac OS X uses the clang compiler. Therefore we install a gcc compiler within anaconda. Furthermore, install SWIG for the C++ random forest.
 
 Install SMAC3 with pipeline caching integration from commandline in anaconda environment. Therefore first install pyrfr separately with anaconda gcc compiler.
 ```
+conda install swig
 conda install gcc
 CC=/Users/[username]/anaconda/bin/gcc pip install pyrfr --no-cache-dir
 git clone https://github.com/jtuyls/SMAC3_4_PC.git
