@@ -27,7 +27,7 @@ For installation on Mac OS X there is a problem with installing SMAC3 as above. 
 Install SMAC3 with pipeline caching integration from commandline in anaconda environment. Therefore first install pyrfr separately with anaconda gcc compiler.
 ```
 conda install gcc
-CC=/Users/username/anaconda/bin/gcc pip install pyrfr --no-cache-dir
+CC=/Users/[username]/anaconda/bin/gcc pip install pyrfr --no-cache-dir
 git clone https://github.com/jtuyls/SMAC3_4_PC.git
 cd SMAC3_4_PC
 cat requirements.txt | xargs -n 1 -L 1 pip install
