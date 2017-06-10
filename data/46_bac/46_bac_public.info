@@ -1,0 +1,15 @@
+task = 'multiclass.classification'
+has_categorical = 1
+feat_type = 'Categorical'
+train_num = 2137
+metric = 'bac_metric'
+test_num = 1053
+target_type = 'Categorical'
+label_num = 3
+target_num = 1
+is_sparse = 0
+has_missing = 0
+usage = 'ParamSklearn Configuration for AutoML challenge 2015'
+feat_num = 60
+valid_num = 10
+name = '46_bac'
