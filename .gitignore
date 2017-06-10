@@ -8,3 +8,6 @@
 
 # ignore plotting script
 plot.sh
+
+# ignore shell files with commands for running
+*.sh
