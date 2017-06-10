@@ -31,7 +31,7 @@ def parse_arguments():
     parser.add_argument("-r", "--runlimit", type=int, default=10000, help="Limitation of the number of runs")
     parser.add_argument("-m", "--memory", type=int, default=6000, help="Memory limit")
     parser.add_argument("-c", "--cutoff", type=int, default=3600, help="Cutoff time for one run")
-    parser.add_argument("-l", "--location", type=str, help="Data location")
+    parser.add_argument("-l", "--location", type=str, default=None, help="Data location")
     parser.add_argument("-s", "--stamp", type=str, default="stamp", help="Stamp for output files")
     parser.add_argument("-o", "--outputdir", type=str, default=None, help="Output directory")
     parser.add_argument("-cd", "--cachedir", type=str, default=None, help="Cache directory")

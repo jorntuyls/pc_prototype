@@ -2,7 +2,9 @@
 __author__ = 'jorntuyls'
 
 import os
+from os.path import dirname
 import time
+import shutil
 
 from smac.scenario.scenario import Scenario
 from smac.optimizer.objective import average_cost
@@ -25,14 +27,20 @@ from pc_smac.pc_smac.utils.statistics import Statistics
 class Driver:
 
     def __init__(self, data_path, output_dir=None, pipeline_space_string=None):
-        self.data_path = data_path
-        self.data_loader = DataLoader(data_path)
+        if data_path == None:
+            current_directory = dirname(dirname(os.path.abspath(__file__)))
+            self.data_path = os.path.join(current_directory, 'data/46_bac')
+        else:
+            self.data_path = data_path
+
+        self.data_loader = DataLoader(self.data_path)
 
         self.pipeline_space = self._build_pipeline_space() if (pipeline_space_string == None) else self._parse_pipeline_space(pipeline_space_string)
         self.cs_builder = ConfigSpaceBuilder(self.pipeline_space)
         self.config_space = self.cs_builder.build_config_space(dataset_properties=self.data_loader.info)
 
-        self.output_dir = output_dir if output_dir else os.path.dirname(os.path.abspath(__file__)) + "/output/"
+        self.output_dir = output_dir if output_dir else \
+                                os.path.join(dirname(dirname(os.path.abspath(__file__))), 'output')
         try:
             if not os.path.exists(self.output_dir):
                 os.makedirs(self.output_dir)
@@ -45,10 +53,18 @@ class Driver:
         # Check if caching is enabled
         caching = True if acq_func[:2] == "pc" else False
 
+        # Make a cache directory
+        if cache_directory == None:
+            current_directory = dirname(dirname(os.path.abspath(__file__)))
+            self.cache_directory = os.path.join(current_directory, 'cache')
+        else:
+            self.cache_directory = cache_directory
+
+
         # Check if cache_directory exists
         try:
-            if cache_directory and not os.path.exists(cache_directory):
-                os.makedirs(cache_directory)
+            if not os.path.exists(self.cache_directory):
+                os.makedirs(self.cache_directory)
         except FileExistsError:
             pass
 
@@ -64,7 +80,7 @@ class Driver:
             'stamp': stamp,
             'caching': caching,
             'acquisition_function': acq_func,
-            'cache_directory': cache_directory,
+            'cache_directory': self.cache_directory,
             'wallclock_limit': wallclock_limit,
             'downsampling': downsampling
         }
@@ -89,7 +105,7 @@ class Driver:
             pr = CachedPipelineRunner(self.data, self.data_loader.info, self.pipeline_space, runhistory,
                                       self.statistics,
                                       cached_pipeline_steps=cached_pipeline_steps,
-                                      cache_directory=cache_directory,
+                                      cache_directory=self.cache_directory,
                                       downsampling=downsampling,
                                       num_cross_validation_folds=intensification_fold_size)
         else:
@@ -216,6 +232,9 @@ class Driver:
         for traj in trajectory:
             traj['incumbent'] = traj['incumbent'].get_dictionary()
         self.statistics.add_incumbents_trajectory(trajectory)
+
+        # Clean cache after running
+        # shutil.rmtree(dir_name)
 
         return incumbent
 
