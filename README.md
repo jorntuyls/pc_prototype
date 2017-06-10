@@ -61,7 +61,7 @@ python -m pc_smac.run -a=[acquistion function, STRING: e.g pc-m-pceips]
 
 ### Example
 
-Execute following command to test optimization with pipeline caching (and marginalization) for 1800 seconds or 100 evaluations on OpenML dataset 46 [link](https://www.openml.org/d/46).
+Execute following command to test optimization with pipeline caching (and marginalization) for 1800 seconds or 100 evaluations on [OpenML dataset 46](https://www.openml.org/d/46).
 
 ```
 python -m pc_smac.run -a=pc-m-pceips -di=0 -w=1800 -r=100 -c=100 -m=4000 -s=pc-m-pceips
