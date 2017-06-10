@@ -1,2 +1,0 @@
-cd /Users/jorntuyls/Documents/workspaces/thesis
-python -m pc_smac.pc_smac.experiments.run_whitebox_random_search_experiment -l=12 -w=4000 -n=20 -t=beale -x 0.1 0.9 -y 0.25 0.25 -o=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output/

@@ -1,2 +1,0 @@
-cd /Users/jorntuyls/Documents/workspaces/thesis
-python -m pc_smac.pc_smac.experiments.pipeline_timing_experiment -n=1 -s=1 -d=554_bac -p=extra_rand_trees -c=sgd -l=/Users/jorntuyls/Documents/workspaces/thesis/data -o=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/output -cd=/Users/jorntuyls/Documents/workspaces/thesis/pc_smac/cache
